@@ -1,0 +1,44 @@
+{
+  "name": "mini-project-3004",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "dev:api": "cd apps/api && npm run dev",
+    "dev:web": "cd apps/web && npm run dev",
+    "start": "turbo run start --filter=web"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/react-icons": "^3.0.0",
+    "@types/react-router-dom": "^5.3.3",
+    "css-loader": "^7.1.2",
+    "eslint-plugin-react": "^7.37.2",
+    "prettier": "^3.2.5",
+    "style-loader": "^4.0.0",
+    "turbo": "^2.2.3",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@10.7.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "chart.js": "^4.4.6",
+    "js-cookie": "^3.0.5",
+    "jsonwebtoken": "^9.0.2",
+    "react-chartjs-2": "^5.2.0",
+    "react-icons": "^5.3.0",
+    "react-router-dom": "^6.27.0",
+    "sweetalert2-react-content": "^5.0.7",
+    "zod": "^3.23.8"
+  }
+}
