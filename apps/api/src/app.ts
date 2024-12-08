@@ -2,6 +2,8 @@ import express from "express";
 import environment from "dotenv";
 import cors from "cors";
 
+import superAdminRouter from "./routers/superAdmin.router"
+
 
 
 environment.config();
@@ -15,6 +17,8 @@ app.use(
     origin: ["http://localhost:3300", "https://event-idham-gilang.vercel.app/"],
   })
 );
+
+app.use("/api/superadmin", superAdminRouter);
 
 
 app.listen(PORT, "0.0.0.0", () => {
