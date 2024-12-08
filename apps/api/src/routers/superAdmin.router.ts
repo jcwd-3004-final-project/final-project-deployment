@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { SuperAdminController } from "../controllers/superAdmin.controller";
-import { AuthenticateJwtMiddleware } from "../middlewares/auth.middleware";
+import { AuthenticateJwtMiddleware } from "../middlewares/superAdmin.middleware";
 
 const router = Router();
 const superAdminController = new SuperAdminController();
