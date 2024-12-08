@@ -4,7 +4,6 @@ import express from 'express';
 import authRouter from '../src/routers/auth.router';
 import passport from 'passport';
 import '../passport-config'
-
 import superAdminRouter from "./routers/superAdmin.router"
 
 
@@ -22,9 +21,8 @@ app.use(
 );
 app.use(passport.initialize());
 app.use('/v1/api/auth', authRouter);
-
-
 app.use("/api/superadmin", superAdminRouter);
+
 
 
 app.listen(PORT, "0.0.0.0", () => {
