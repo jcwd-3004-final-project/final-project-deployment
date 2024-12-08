@@ -17,14 +17,18 @@ model User {
   id            Int           @id @default(autoincrement())
   email         String        @unique
   password      String?
-  name          String
+  first_name    String
+  last_name     String
+  phone_number  String
   role          Role          @default(USER)
   isVerified    Boolean       @default(false)
   googleId      String?
   facebookId    String?
+  avatar        String?
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  last_activity DateTime      @default(now()) // Added default value
 
   addresses     Address[]
   orders        Order[]
@@ -38,6 +42,7 @@ model User {
   store         Store?        @relation(fields: [storeId], references: [store_id])
   storeId       Int?
 }
+
 
 model Address {
   address_id          Int      @id @default(autoincrement())
@@ -244,7 +249,7 @@ model Token {
   id        Int       @id @default(autoincrement())
   user      User      @relation(fields: [userId], references: [id])
   userId    Int
-  token     String
+  token     String    @unique // Made token field unique
   type      TokenType
   expiresAt DateTime
   createdAt DateTime  @default(now())
@@ -312,4 +317,5 @@ enum StockAdjustmentReason {
 enum TokenType {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+  REFRESH_TOKEN // Added REFRESH_TOKEN
 }
