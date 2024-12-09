@@ -21,7 +21,7 @@ app.use(
 );
 app.use(passport.initialize());
 app.use('/v1/api/auth', authRouter);
-app.use("/api/superadmin", superAdminRouter);
+app.use("v1/api/superadmin", superAdminRouter);
 
 
 

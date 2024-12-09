@@ -1,8 +1,10 @@
-import { z as validate } from 'zod'
+import * as z from "zod";
 
-export const storeSchema = validate.object({
-	store_name: validate.string().min(1, "Name is required"),
-	address: validate.string().min(1, "Address is required"),
-	latitude: validate.number().positive(""),
-    longitude: validate.number().positive(""),
+export const storeSchema = z.object({
+    name: z.string(),
+    address: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+    maxDeliveryDistance: z.number(),
 });
+

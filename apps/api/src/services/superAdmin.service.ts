@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-import { Store, User, StoreAdmin } from "../models/admin.models"; // Make sure this imports Prisma models
+import { PrismaClient, Role, AdjustmentType, StockAdjustmentReason } from "@prisma/client";
 import { storeSchema } from "../validator/store.schema";
 
 export class SuperAdminServices {
@@ -10,89 +9,132 @@ export class SuperAdminServices {
     }
 
     // Create a new store
-    async createStore(data: Store) {
-        const validateData = storeSchema.parse(data); // Validate input using your schema
+    async createStore(data: any) {
+        const validateData = storeSchema.parse(data);
         return this.prisma.store.create({
             data: {
-                store_name: validateData.store_name,
+                name: validateData.name, // Matches "name" in schema
                 address: validateData.address,
                 latitude: validateData.latitude,
                 longitude: validateData.longitude,
-            }
+                maxDeliveryDistance: validateData.maxDeliveryDistance,
+            },
         });
     }
 
     // Get all stores
     async getAllStores() {
-        return this.prisma.store.findMany(); // Use Prisma's findMany to get stores
+        return this.prisma.store.findMany({
+            include: {
+                storeAdmins: true, // Include related admins
+                storeProducts: true,
+            },
+        });
     }
 
-    // Get store by ID
+    // Get a store by ID
     async getStoreById(storeId: number) {
         return this.prisma.store.findUnique({
-            where: {
-                id: storeId,
-            }
+            where: { store_id: storeId },
+            include: {
+                storeAdmins: true, // Include related admins
+                storeProducts: true,
+            },
         });
     }
 
     // Update store details
-    async updateStore(storeId: number, data: Store) {
-        const validateData = storeSchema.parse(data); // Validate input using your schema
+    async updateStore(storeId: number, data: any) {
+        const validateData = storeSchema.parse(data);
         return this.prisma.store.update({
-            where: {
-                id: storeId,
-            },
+            where: { store_id: storeId },
             data: {
-                store_name: validateData.store_name,
+                name: validateData.name,
                 address: validateData.address,
                 latitude: validateData.latitude,
                 longitude: validateData.longitude,
-            }
+                maxDeliveryDistance: validateData.maxDeliveryDistance,
+            },
         });
     }
 
     // Delete a store
     async deleteStore(storeId: number) {
         return this.prisma.store.delete({
-            where: {
-                id: storeId,
-            }
+            where: { store_id: storeId },
         });
     }
 
-    // Assign store admin
+    // Assign a user as a store admin
     async assignStoreAdmin(storeId: number, userId: number): Promise<void> {
         const store = await this.prisma.store.findUnique({
-            where: { id: storeId }
+            where: { store_id: storeId },
         });
         const user = await this.prisma.user.findUnique({
-            where: { id: userId }
+            where: { id: userId },
         });
 
-        if (!store) {
-            throw new Error('Store not found');
-        }
+        if (!store) throw new Error('Store not found');
+        if (!user) throw new Error('User not found');
 
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        // Check if user is already a store admin
-        const existingAdmin = await this.prisma.storeAdmin.findFirst({
-            where: { storeId, userId }
+        // Update the user's role and assign to the store
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                role: Role.STORE_ADMIN,
+                store: {
+                    connect: { store_id: storeId }, // Assign store
+                },
+            },
         });
+    }
 
-        if (existingAdmin) {
-            throw new Error('User is already a store admin for this store');
-        }
+    // Get all users with a specific role
+    async getUsersByRole(role: Role) {
+        return this.prisma.user.findMany({
+            where: { role },
+            include: {
+                store: true, // Include related store for store admins
+            },
+        });
+    }
 
-        // Add the user as a store admin
-        await this.prisma.storeAdmin.create({
+    // Get products for a specific store
+    async getStoreProducts(storeId: number) {
+        return this.prisma.storeProduct.findMany({
+            where: { storeId },
+            include: {
+                product: true, // Include product details
+            },
+        });
+    }
+
+    // Add a product to a store's inventory
+    async addStoreProduct(storeId: number, productId: number, stock: number) {
+        return this.prisma.storeProduct.create({
             data: {
                 storeId,
-                userId
-            }
+                productId,
+                stock,
+            },
+        });
+    }
+
+    // Adjust stock for a store product
+    async adjustProductStock(
+        storeProductId: number,
+        adjustmentType: AdjustmentType, // Use the enum type
+        quantity: number,
+        reason: StockAdjustmentReason // Use the enum type
+    ) {
+        // Create the stock adjustment record
+        return this.prisma.stockAdjustment.create({
+            data: {
+                storeProductId,
+                adjustmentType,
+                quantity,
+                reason,
+            },
         });
     }
 }
