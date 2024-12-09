@@ -19,7 +19,7 @@ model User {
   password      String?
   first_name    String
   last_name     String
-  phone_number  String
+  phone_number  String?
   role          Role          @default(USER)
   isVerified    Boolean       @default(false)
   googleId      String?
