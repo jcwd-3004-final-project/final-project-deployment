@@ -14,10 +14,9 @@ passport.use(
     {
       clientID: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      callbackURL: '/auth/google/callback',
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:8000/v1/api/auth/google/callback',
     },
     (accessToken, refreshToken, profile, done) => {
-      // Pass the profile to the controller via req.user
       done(null, profile);
     }
   )
