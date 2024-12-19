@@ -1,40 +1,88 @@
-"use server";
+"use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { SelectScrollable } from "./category";
+import { PlaceholdersAndVanishInput } from "./ui/placeholders-and-vanish-input";
 
-function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Toggle login state
-  const [location, setLocation] = useState(""); // Dynamic location
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // For top menu (burger menu)
+interface NavbarProps {
+  onSearchChange?: (query: string) => void;
+  onCategoryChange?: (category: string) => void;
+  onSearchSubmit?: () => void;
+}
 
-  // Simulate fetching location after login
+function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProps) {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [location, setLocation] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  const router = useRouter();
+
+  useEffect(() => {
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem("accessToken") : null;
+    setIsLoggedIn(!!accessToken);
+  }, []);
+
   useEffect(() => {
     if (isLoggedIn) {
-      // Simulate an API call
       setTimeout(() => {
         setLocation("📍 Jakarta");
-      }, 1000); // Mocking delay
+      }, 1000);
     } else {
-      setLocation(""); // Clear location when logged out
+      setLocation("");
     }
   }, [isLoggedIn]);
 
+  const handleSearchSubmit = (value: string) => {
+    // Submit pencarian
+    if (onSearchChange) {
+      onSearchChange(value);
+    }
+    // Setelah pencarian dilakukan, scroll ke product-section
+    if (onSearchSubmit) {
+      onSearchSubmit();
+    }
+  };
+
+  const handleValueChange = (value: string) => {
+    // Jika input kosong, tampilkan semua produk kembali
+    if (value === "" && onSearchChange) {
+      onSearchChange("");
+    }
+  };
+
+  const handleCategorySelect = (category: string) => {
+    if (onCategoryChange) {
+      onCategoryChange(category);
+    }
+  };
+
+  const placeholders = [
+    "Search for items...",
+    "Try searching 'apples'",
+    "Try searching 'bread'",
+    "Find organic products..."
+  ];
+
+  const handleLoginClick = () => {
+    router.push("/auth/login");
+  };
+
+  const handleSignUpClick = () => {
+    router.push("/auth/register");
+  };
+
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
-      {/* Top Section */}
       <div className="flex items-center justify-between px-4 py-2 border-b">
-        {/* Brand */}
-        <div className="text-lg font-bold text-green-600">PESANAJA</div>
+        <div className="text-lg font-bold text-green-600 cursor-pointer" onClick={() => router.push('/')}>PESANAJA</div>
 
         {/* Search Bar (Hidden on Small Devices) */}
         <div className="hidden md:flex flex-1 mx-4 max-w-lg">
-          <input
-            type="text"
-            placeholder="Search for items..."
-            className="flex-1 px-4 text-black py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400"
+          <PlaceholdersAndVanishInput
+            placeholders={placeholders}
+            onSubmit={handleSearchSubmit}
+            onValueChange={handleValueChange}
           />
-          <button className="px-4 py-2 bg-green-600 text-black rounded-r-md hover:bg-green-700">
-            🔍
-          </button>
         </div>
 
         {/* Auth / Profile Section */}
@@ -48,12 +96,15 @@ function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setIsLoggedIn(true)}
+                onClick={handleLoginClick}
                 className="px-4 py-2 text-sm text-green-600 border border-green-600 rounded-md hover:bg-green-50"
               >
                 Login
               </button>
-              <button className="px-4 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700">
+              <button 
+                onClick={handleSignUpClick}
+                className="px-4 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700"
+              >
                 Sign Up
               </button>
             </div>
@@ -72,16 +123,13 @@ function Navbar() {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden flex flex-col gap-4 px-4 py-2 bg-gray-50 border-b">
-          {/* Search Bar */}
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Search for items..."
-              className="flex-1 px-4 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400"
+          {/* Search Bar (Mobile) */}
+          <div className="flex w-full max-w-full">
+            <PlaceholdersAndVanishInput
+              placeholders={placeholders}
+              onSubmit={handleSearchSubmit}
+              onValueChange={handleValueChange}
             />
-            <button className="px-4 py-2 bg-green-600 text-white rounded-r-md hover:bg-green-700">
-              🔍
-            </button>
           </div>
 
           {/* Location */}
@@ -96,32 +144,44 @@ function Navbar() {
           ) : (
             <>
               <button
-                onClick={() => setIsLoggedIn(true)}
+                onClick={handleLoginClick}
                 className="px-4 py-2 text-sm text-green-600 border border-green-600 rounded-md hover:bg-green-50"
               >
                 Login
               </button>
-              <button className="px-4 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700">
+              <button 
+                onClick={handleSignUpClick}
+                className="px-4 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700"
+              >
                 Sign Up
               </button>
             </>
           )}
 
           {/* Nav Links */}
-          <a href="#" className="text-gray-700 font-medium hover:text-green-600">
+          <a
+            href="#"
+            className="text-gray-700 font-medium hover:text-green-600"
+          >
             Home
           </a>
-          <a href="#" className="text-gray-700 font-medium hover:text-green-600">
+          <a
+            href="#"
+            className="text-gray-700 font-medium hover:text-green-600"
+          >
             Promotions
           </a>
 
           {/* Categories Button */}
-          <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-            📋 Browse All Categories
-          </button>
+          <div className="flex items-center justify-center gap-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+            <SelectScrollable onCategorySelect={handleCategorySelect} />
+          </div>
 
           {/* Call Center */}
-          <a href="tel:6287855294573" className="text-green-600 font-medium hover:underline">
+          <a
+            href="tel:6287855294573"
+            className="text-green-600 font-medium hover:underline"
+          >
             📞 62-878-5529-4573
           </a>
         </div>
@@ -130,22 +190,27 @@ function Navbar() {
       {/* Bottom Section (Hidden on Small Devices) */}
       <div className="hidden md:flex items-center justify-between px-4 py-2">
         {/* Categories Button */}
-        <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-          📋 Browse All Categories
-        </button>
-
-        {/* Nav Links */}
+        <div className="flex items-center gap-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+          <SelectScrollable onCategorySelect={handleCategorySelect} />
+        </div>
         <div className="flex gap-6">
-          <a href="#" className="text-gray-700 font-medium hover:text-green-600">
+          <a
+            href="#"
+            className="text-gray-700 font-medium hover:text-green-600"
+          >
             Home
           </a>
-          <a href="#" className="text-gray-700 font-medium hover:text-green-600">
+          <a
+            href="#"
+            className="text-gray-700 font-medium hover:text-green-600"
+          >
             Promotions
           </a>
         </div>
-
-        {/* Call Center */}
-        <a href="tel:6287855294573" className="text-green-600 font-medium hover:underline">
+        <a
+          href="tel:6287855294573"
+          className="text-green-600 font-medium hover:underline"
+        >
           📞 62-878-5529-4573
         </a>
       </div>
