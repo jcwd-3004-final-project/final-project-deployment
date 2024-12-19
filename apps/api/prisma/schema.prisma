@@ -85,6 +85,7 @@ model Product {
   category          Category        @relation(fields: [categoryId], references: [id])
   categoryId        Int
   images            Image[]
+  stockQuantity     Int             @default(0) // Tambahkan atribut ini
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
@@ -93,8 +94,18 @@ model Product {
   orderItems        OrderItem[]
   discounts         Discount[]      @relation("ProductDiscounts")
   vouchers          Voucher[]       @relation("ProductVouchers")
+  stockLogs         StockLog[]      // Relasi dengan StockLog
 }
 
+model StockLog {
+  id                Int             @id @default(autoincrement())
+  productId         Int
+  changeQuantity    Int
+  reason            String
+  createdAt         DateTime        @default(now())
+
+  product           Product         @relation(fields: [productId], references: [id])
+}
 
 
 model Image {
