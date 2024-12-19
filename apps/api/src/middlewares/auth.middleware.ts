@@ -1,12 +1,13 @@
 // auth.middleware.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import prisma from '../models/models';
+import { PrismaClient, User } from '@prisma/client'; // Import User type
+const prisma = new PrismaClient();
 
 const JWT_ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET || 'your_access_token_secret';
 
 export interface AuthenticatedRequest extends Request {
-  user?: any;
+  user?: User; // Use User type from Prisma here
 }
 
 export const authenticate = async (
@@ -30,7 +31,7 @@ export const authenticate = async (
       return res.status(401).json({ error: 'User not found' });
     }
 
-    req.user = user;
+    req.user = user; // req.user is now typed as User
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired access token' });
