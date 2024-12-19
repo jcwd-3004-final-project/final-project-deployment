@@ -22,7 +22,7 @@ export interface AuthenticatedUser {
   email: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string;
+  phoneNumber: string | null; // Now it accepts string or null
   role: Role;
   isVerified: boolean;
   avatar: string | null;

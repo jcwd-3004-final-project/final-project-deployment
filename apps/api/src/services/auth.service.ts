@@ -198,10 +198,10 @@ export class AuthService {
       email: rest.email,
       firstName: rest.first_name,
       lastName: rest.last_name,
-      phoneNumber: rest.phone_number,
+      phoneNumber: rest.phone_number ||'',
       role: rest.role,
       isVerified: rest.isVerified,
-      avatar: rest.avatar,
+      avatar: rest.avatar, // Provide a fallback value (e.g., empty string)
     };
   }
 
