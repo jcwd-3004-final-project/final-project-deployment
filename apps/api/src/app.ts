@@ -5,25 +5,40 @@ import authRouter from '../src/routers/auth.router';
 import passport from 'passport';
 import '../passport-config'
 import superAdminRouter from "./routers/superAdmin.router"
+import userRouter from "./routers/user.routes"
 
-
-
+require('dotenv').config();
 environment.config();
 
 const app = express();
 const PORT = parseInt(process.env.SERVER_PORT_DEV as string);
 
 app.use(express.json());
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://event-idham-gilang.vercel.app/", "http://localhost:3000"],
+    origin: [
+      "http://localhost:3000",
+      "https://event-idham-gilang.vercel.app/",
+      "http://localhost:3000"
+    ],
   })
 );
+
 app.use(passport.initialize());
+
+// Logging middleware
+app.use((req, res, next) => {
+  // console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  // console.log('Headers:', req.headers);
+  // console.log('Body:', req.body);
+  next();
+});
+
+// Routes
 app.use('/v1/api/auth', authRouter);
-app.use("v1/api/superadmin", superAdminRouter);
-
-
+app.use("/v1/api/superadmin", superAdminRouter);
+app.use("/v1/api/user", userRouter);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);
