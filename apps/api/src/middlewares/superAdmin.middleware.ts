@@ -7,7 +7,7 @@ environment.config();
 export class AuthenticateJwtMiddleware {
   authenticateJwt(req: Request, res: Response, next: NextFunction): any {
     const token = req.headers.authorization?.split(" ")[1] as string;
-    const JWT_SECRET = process.env.JWT_SECRET as string;
+    const JWT_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET as string;
 
     if (!token) {
       return res.status(401).send({
