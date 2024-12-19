@@ -30,6 +30,7 @@ export class AuthenticateJwtMiddleware {
   }
 
   authorizeRole(roles: string): any {
+    console.log(roles)
     return (req: Request, res: Response, next: NextFunction) => {
       if (!roles.includes((req as any).user.role)) {
         return res.status(403).send({
