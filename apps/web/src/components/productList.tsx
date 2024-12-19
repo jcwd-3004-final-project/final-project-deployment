@@ -6,6 +6,7 @@ export type Product = {
   name: string;
   price: number;
   stock: number;
+  category: string;
 };
 
 type ProductListProps = {
@@ -40,9 +41,9 @@ const ProductList: React.FC<ProductListProps> = ({ products }) => {
               {product.stock > 0 ? "In Stock" : "Out of Stock"}
             </p>
             <button
-              className={`w-full mt-4 py-2 bg-blue-500 text-white font-semibold rounded-md ${
+              className={`w-full mt-4 py-2 bg-green-500 text-white font-semibold rounded-md ${
                 product.stock > 0
-                  ? "hover:bg-blue-600"
+                  ? "hover:bg-green-600"
                   : "bg-gray-400 cursor-not-allowed"
               }`}
               disabled={product.stock <= 0}
