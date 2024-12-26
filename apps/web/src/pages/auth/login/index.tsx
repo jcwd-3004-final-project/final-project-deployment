@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import type { NextPage } from 'next';
-import { useRouter } from 'next/router';
-import { loginUser } from '@/lib/authApi';
+import React, { useState } from "react";
+import type { NextPage } from "next";
+import { useRouter } from "next/router";
+import { loginUser } from "@/lib/authApi";
 
 interface FormState {
   email: string;
@@ -21,8 +21,8 @@ interface User {
 
 const LoginPage: NextPage = () => {
   const [form, setForm] = useState<FormState>({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
 
   const [error, setError] = useState<string>('');
@@ -31,13 +31,14 @@ const LoginPage: NextPage = () => {
   const router = useRouter(); // gunakan useRouter untuk navigasi
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true); // Mulai loading
+
     try {
       const data = await loginUser(form);
       // data: { accessToken, refreshToken, user }
@@ -51,13 +52,13 @@ const LoginPage: NextPage = () => {
       }
 
       // Simpan token ke localStorage atau cookie (sesuai kebutuhan)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
       }
 
       // Setelah login berhasil, arahkan ke halaman Home
-      router.push('/');
+      router.push("/");
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Login gagal.');
     } finally {
@@ -69,6 +70,7 @@ const LoginPage: NextPage = () => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <form 
         className="bg-white p-6 text-black rounded shadow-md w-full max-w-md"
+
         onSubmit={handleSubmit}
       >
         <h2 className="text-2xl font-bold mb-4">Login</h2>
@@ -76,8 +78,10 @@ const LoginPage: NextPage = () => {
         {error && <p className="text-red-600 mb-2">{error}</p>}
 
         <div className="mb-4">
-          <label className="block mb-2" htmlFor="email">Email</label>
-          <input 
+          <label className="block mb-2" htmlFor="email">
+            Email
+          </label>
+          <input
             className="w-full border p-2 rounded"
             type="email"
             name="email"
@@ -89,8 +93,10 @@ const LoginPage: NextPage = () => {
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2" htmlFor="password">Password</label>
-          <input 
+          <label className="block mb-2" htmlFor="password">
+            Password
+          </label>
+          <input
             className="w-full border p-2 rounded"
             type="password"
             name="password"

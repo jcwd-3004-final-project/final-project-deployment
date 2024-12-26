@@ -1,12 +1,24 @@
+// components/ProductList.tsx
 import React from "react";
+import Image from "next/image";
+import Link from "next/link"; // Pastikan Link diimpor
+import { useCart } from "@/context/cartContext";
+import { formatRupiah } from "@/utils/formatRupiah";
+
+export type Category = {
+  id: number;
+  name: string;
+};
 
 export type Product = {
   id: number;
-  image: string;
+  images: string[];
   name: string;
+  description: string;
   price: number;
-  stock: number;
-  category: string;
+  categoryId: number;
+  stockQuantity: number;
+  category: Category;
 };
 
 type ProductListProps = {
@@ -14,44 +26,63 @@ type ProductListProps = {
 };
 
 const ProductList: React.FC<ProductListProps> = ({ products }) => {
+  const { addToCart } = useCart();
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
       {products.map((product) => (
         <div
           key={product.id}
-          className="bg-white border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+          className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col"
         >
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-48 object-cover"
-            
-          />
-          <div className="p-4">
-            <h3 className="text-lg font-semibold text-gray-800">
-              {product.name}
-            </h3>
-            <p className="text-xl font-bold text-gray-900 mt-2">
-              ${product.price}
+          {/* Link ke halaman detail produk */}
+          <Link href={`/user/product/productDetail/${product.id}`} passHref>
+            <p className="flex-1">
+              {/* Kontainer Gambar dengan Aspect Ratio Lebih Rendah */}
+              <div className="relative w-full aspect-[4/3]">
+                <Image
+                  src={product.images[0]}
+                  alt={product.name}
+                  layout="fill"
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+                  objectFit="contain"
+                  className="rounded-t-lg bg-gray-100"
+                />
+              </div>
+
+              {/* Informasi Produk */}
+              <div className="p-2 sm:p-3">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-800 truncate">
+                  {product.name}
+                </h3>
+                <p className="text-md sm:text-lg font-bold text-gray-900 mt-1 sm:mt-1.5">
+                  {formatRupiah(product.price)}
+                </p>
+                <p
+                  className={`text-xs sm:text-sm mt-1 ${
+                    product.stockQuantity > 0
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {product.stockQuantity > 0 ? "Tersedia" : "Stok Habis"}
+                </p>
+              </div>
             </p>
-            <p
-              className={`text-sm mt-1 ${
-                product.stock > 0 ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              {product.stock > 0 ? "In Stock" : "Out of Stock"}
-            </p>
-            <button
-              className={`w-full mt-4 py-2 bg-green-500 text-white font-semibold rounded-md ${
-                product.stock > 0
-                  ? "hover:bg-green-600"
-                  : "bg-gray-400 cursor-not-allowed"
-              }`}
-              disabled={product.stock <= 0}
-            >
-              Add to Cart
-            </button>
-          </div>
+          </Link>
+
+          {/* Tombol Tambah ke Keranjang */}
+          <button
+            onClick={() => addToCart(product)}
+            className={`w-full py-1 sm:py-1.5 bg-green-500 text-white font-semibold rounded-b-lg ${
+              product.stockQuantity > 0
+                ? "hover:bg-green-600"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+            disabled={product.stockQuantity <= 0}
+          >
+            Tambah ke Keranjang
+          </button>
         </div>
       ))}
     </div>
