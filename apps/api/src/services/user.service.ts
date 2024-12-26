@@ -1,40 +1,22 @@
-import { PrismaClient } from '@prisma/client';
-import axios from 'axios';
+import { PrismaClient } from "@prisma/client";
+import axios from "axios";
+import { AddressInput, ShippingCostInput } from "../models/user.models";
 
 const prisma = new PrismaClient();
-
-interface AddressInput {
-  addressLine?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-  country?: string;
-  latitude: number;
-  longitude: number;
-  isDefault?: boolean;
-}
-
-interface ShippingCostInput {
-  origin: string;       // City or sub-district ID as required by RAJA Ongkir
-  destination: string;  // City or sub-district ID as required by RAJA Ongkir
-  weight: number;       // Weight in grams
-  courier: string;      // e.g. "jne", "pos", "tiki"
-}
+const RAJA_ONGKIR_BASE_URL = "https://api.rajaongkir.com/starter";
 
 export class UserService {
-  // Fetch user's addresses
+  // -------------------------
+  // Address Methods
+  // -------------------------
   async getUserAddresses(userId: number) {
-    return prisma.address.findMany({
-      where: { userId: userId },
-    });
+    return prisma.address.findMany({ where: { userId } });
   }
 
-  // Add a new address for user
   async addUserAddress(userId: number, data: AddressInput) {
-    // If isDefault is true, unset the current default address for the user
     if (data.isDefault === true) {
       await prisma.address.updateMany({
-        where: { userId: userId, isDefault: true },
+        where: { userId, isDefault: true },
         data: { isDefault: false },
       });
     }
@@ -56,17 +38,15 @@ export class UserService {
     return newAddress;
   }
 
-  // Update an existing address
   async updateUserAddress(userId: number, addressId: number, data: AddressInput) {
     const address = await prisma.address.findUnique({ where: { address_id: addressId } });
     if (!address || address.userId !== userId) {
-      throw new Error('Address not found or not authorized');
+      throw new Error("Address not found or not authorized");
     }
 
-    // If isDefault is set to true, make sure to unset others
     if (data.isDefault === true) {
       await prisma.address.updateMany({
-        where: { userId: userId, isDefault: true },
+        where: { userId, isDefault: true },
         data: { isDefault: false },
       });
     }
@@ -88,59 +68,146 @@ export class UserService {
     return updatedAddress;
   }
 
-  // Delete an address
   async deleteUserAddress(userId: number, addressId: number) {
     const address = await prisma.address.findUnique({ where: { address_id: addressId } });
     if (!address || address.userId !== userId) {
-      throw new Error('Address not found or not authorized');
+      throw new Error("Address not found or not authorized");
     }
 
     await prisma.address.delete({ where: { address_id: addressId } });
-    return { message: 'Address deleted successfully' };
+    return { message: "Address deleted successfully" };
   }
 
-  // Set a shipping address at checkout
-  // Typically, you'd have an order or a cart checkout process; here's a simplified version:
   async setShippingAddressForOrder(userId: number, orderId: number, addressId: number) {
     const address = await prisma.address.findUnique({ where: { address_id: addressId } });
     if (!address || address.userId !== userId) {
-      throw new Error('Address not found or not authorized');
+      throw new Error("Address not found or not authorized");
     }
 
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order || order.userId !== userId) {
-      throw new Error('Order not found or not authorized');
+      throw new Error("Order not found or not authorized");
     }
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: {
-        shippingAddressId: addressId,
-      },
+      data: { shippingAddressId: addressId },
     });
 
     return updatedOrder;
   }
 
-  // Calculate shipping costs using RAJA Ongkir API
-  async calculateShippingCost({ origin, destination, weight, courier }: ShippingCostInput) {
-    // Replace with your RAJA Ongkir API key and endpoint as per their documentation
-    const RAJA_ONGKIR_API_KEY = process.env.RAJA_ONGKIR_API_KEY;
-    const RAJA_ONGKIR_COST_URL = 'https://api.rajaongkir.com/starter/cost';
+  // -------------------------
+  // RajaOngkir Helpers
+  // -------------------------
+  private async getProvinceIdByName(provinceName: string): Promise<string> {
+    if (!provinceName) throw new Error("No state/province provided");
 
-    const response = await axios.post(RAJA_ONGKIR_COST_URL, {
-      origin,
-      destination,
-      weight,
-      courier
-    }, {
-      headers: {
-        key: RAJA_ONGKIR_API_KEY,
-        'Content-Type': 'application/json'
-      }
+    const apiKey = process.env.RAJA_ONGKIR_API_KEY as string;
+    const url = `${RAJA_ONGKIR_BASE_URL}/province`;
+
+    const response = await axios.get(url, {
+      headers: { key: apiKey },
     });
 
-    // The response format depends on RAJA Ongkir's API response
-    return response.data;
+    const provinces = response.data?.rajaongkir?.results;
+    if (!provinces) {
+      throw new Error("Failed to fetch provinces from RajaOngkir");
+    }
+
+    // Find province where 'province' matches our provinceName
+    const found = provinces.find(
+      (p: any) => p.province.toLowerCase() === provinceName.toLowerCase()
+    );
+    // console.log(found)
+
+    if (!found) {
+      throw new Error(`Province not found for name: ${provinceName}`);
+    }
+
+    return found.province_id; // e.g. "12"
+  }
+
+  private async getCityIdByProvinceAndCityName(provinceId: string, cityName: string): Promise<string> {
+    if (!cityName) throw new Error("No city provided");
+
+    const apiKey = process.env.RAJA_ONGKIR_API_KEY as string;
+    const url = `${RAJA_ONGKIR_BASE_URL}/city?province=${provinceId}`;
+
+    const response = await axios.get(url, {
+      headers: { key: apiKey },
+    });
+
+    const cities = response.data?.rajaongkir?.results;
+    if (!cities) {
+      throw new Error("Failed to fetch cities from RajaOngkir");
+    }
+
+    // Find city where 'city_name' matches our cityName
+    const foundCity = cities.find(
+      (c: any) => c.city_name.toLowerCase() === cityName.toLowerCase()
+    );
+
+    if (!foundCity) {
+      throw new Error(
+        `City not found for name: ${cityName}, in province_id: ${provinceId}`
+      );
+    }
+    // console.log(foundCity)
+    return foundCity.city_id; // e.g. "176"
+  }
+
+  private async buildLocationCode(state: string, city: string): Promise<string> {
+    const provinceId = await this.getProvinceIdByName(state);
+    const cityId = await this.getCityIdByProvinceAndCityName(provinceId, city);
+    // e.g. "12" + "176" => "12176"
+    return `${cityId}`;
+  }
+
+  async calculateShippingCost({ origin, destination, weight, courier }: ShippingCostInput) {
+    const RAJA_ONGKIR_API_KEY = process.env.RAJA_ONGKIR_API_KEY;
+    const RAJA_ONGKIR_COST_URL = `https://api.rajaongkir.com/starter/cost`;
+    // console.log("origin : ", origin, "destination : ", destination, "weight :", weight, "courier : ", courier )
+    const response = await axios.post(
+      RAJA_ONGKIR_COST_URL,
+      { origin, destination, weight, courier },
+      {
+        headers: {
+          key: RAJA_ONGKIR_API_KEY as string,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    // console.log(response.data)
+    const costs = response.data?.rajaongkir?.results?.[0]?.costs;
+    if (!costs || costs.length === 0) {
+      throw new Error("No shipping cost found from RajaOngkir");
+    }
+
+    // We'll take the first available service for simplicity
+    const shippingCost = costs[0].cost[0].value;
+    return shippingCost;
+  }
+
+  // Public method to build location code from `state`/`city`,
+  // then call calculateShippingCost
+  async getAutoShippingCost(
+    storeState: string,
+    storeCity: string,
+    addressState: string,
+    addressCity: string,
+    weight: number,
+    courier: string
+  ): Promise<number> {
+    const originCode = await this.buildLocationCode(storeState, storeCity);
+    const destinationCode = await this.buildLocationCode(addressState, addressCity);
+
+    const cost = await this.calculateShippingCost({
+      origin: originCode,
+      destination: destinationCode,
+      weight,
+      courier,
+    });
+    return cost;
   }
 }

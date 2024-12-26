@@ -31,10 +31,6 @@ app.use(
 
 app.use(passport.initialize());
 
-app.use("/v1/api/auth", authRouter);
-app.use("/v1/api/superadmin", superAdminRouter);
-app.use("/v1/api/inventory", inventoryRouter);
-app.use("/v1/api/discounts", discountRoutes);
 
 // Logging middleware
 app.use((req, res, next) => {
@@ -48,6 +44,7 @@ app.use((req, res, next) => {
 app.use('/v1/api/auth', authRouter);
 app.use("/v1/api/superadmin", superAdminRouter);
 app.use("/v1/api/user", userRouter);
+app.use("/v1/api/inventory", inventoryRouter);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);
