@@ -26,6 +26,7 @@ const LoginPage: NextPage = () => {
   });
 
   const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false); // State untuk loading
   
   const router = useRouter(); // gunakan useRouter untuk navigasi
 
@@ -36,6 +37,7 @@ const LoginPage: NextPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true); // Mulai loading
     try {
       const data = await loginUser(form);
       // data: { accessToken, refreshToken, user }
@@ -44,6 +46,7 @@ const LoginPage: NextPage = () => {
       // Cek apakah user sudah verifikasi emailnya
       if (!user.isVerified) {
         setError('Email belum dikonfirmasi. Silakan cek email Anda untuk melakukan konfirmasi.');
+        setIsLoading(false); // Selesai loading
         return;
       }
 
@@ -56,14 +59,16 @@ const LoginPage: NextPage = () => {
       // Setelah login berhasil, arahkan ke halaman Home
       router.push('/');
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Login failed.');
+      setError(err?.response?.data?.error || 'Login gagal.');
+    } finally {
+      setIsLoading(false); // Selesai loading
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <form 
-        className="bg-white p-6 rounded shadow-md w-full max-w-md"
+        className="bg-white p-6 text-black rounded shadow-md w-full max-w-md"
         onSubmit={handleSubmit}
       >
         <h2 className="text-2xl font-bold mb-4">Login</h2>
@@ -79,6 +84,7 @@ const LoginPage: NextPage = () => {
             value={form.email}
             onChange={handleChange}
             required 
+            disabled={isLoading} // Disable saat loading
           />
         </div>
 
@@ -91,18 +97,23 @@ const LoginPage: NextPage = () => {
             value={form.password}
             onChange={handleChange}
             required 
+            disabled={isLoading} // Disable saat loading
           />
         </div>
 
         <button 
-          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 w-full"
+          className={`bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 w-full flex items-center justify-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           type="submit"
+          disabled={isLoading} // Disable saat loading
         >
-          Login
+          {isLoading ? (
+            <svg className="animate-spin h-5 w-5 mr-3 border-t-2 border-b-2 border-white rounded-full" viewBox="0 0 24 24"></svg>
+          ) : null}
+          {isLoading ? 'Loading...' : 'Login'}
         </button>
 
         <p className="mt-4 text-sm">
-          Don't have an account? <a className="text-blue-600" href="/register">Register</a>
+          Belum punya akun? <a className="text-green-600" href="/auth/register">Register</a>
         </p>
       </form>
     </div>

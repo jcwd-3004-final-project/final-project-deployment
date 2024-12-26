@@ -20,6 +20,7 @@ const RegisterPage: NextPage = () => {
     phoneNumber: ''
   });
   const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false); // State untuk loading
 
   const router = useRouter();
 
@@ -30,19 +31,22 @@ const RegisterPage: NextPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true); // Mulai loading
     try {
       await registerUser(form);
       // Jika berhasil, arahkan ke halaman register-success
       router.push('/auth/register-success');
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Registration failed.');
+      setError(err?.response?.data?.error || 'Registrasi gagal.');
+    } finally {
+      setIsLoading(false); // Selesai loading
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <form 
-        className="bg-white p-6 rounded shadow-md w-full max-w-md"
+        className="bg-white p-6 text-black rounded shadow-md w-full max-w-md"
         onSubmit={handleSubmit}
       >
         <h2 className="text-2xl font-bold mb-4">Register</h2>
@@ -58,6 +62,7 @@ const RegisterPage: NextPage = () => {
             value={form.firstName}
             onChange={handleChange}
             required 
+            disabled={isLoading} // Disable saat loading
           />
         </div>
 
@@ -70,6 +75,7 @@ const RegisterPage: NextPage = () => {
             value={form.lastName}
             onChange={handleChange}
             required 
+            disabled={isLoading} // Disable saat loading
           />
         </div>
 
@@ -82,6 +88,7 @@ const RegisterPage: NextPage = () => {
             value={form.phoneNumber}
             onChange={handleChange}
             required 
+            disabled={isLoading} // Disable saat loading
           />
         </div>
 
@@ -94,6 +101,7 @@ const RegisterPage: NextPage = () => {
             value={form.email}
             onChange={handleChange}
             required 
+            disabled={isLoading} // Disable saat loading
           />
         </div>
 
@@ -106,18 +114,23 @@ const RegisterPage: NextPage = () => {
             value={form.password}
             onChange={handleChange}
             required 
+            disabled={isLoading} // Disable saat loading
           />
         </div>
 
         <button 
-          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 w-full"
+          className={`bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 w-full flex items-center justify-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           type="submit"
+          disabled={isLoading} // Disable saat loading
         >
-          Register
+          {isLoading ? (
+            <svg className="animate-spin h-5 w-5 mr-3 border-t-2 border-b-2 border-white rounded-full" viewBox="0 0 24 24"></svg>
+          ) : null}
+          {isLoading ? 'Loading...' : 'Register'}
         </button>
 
         <p className="mt-4 text-sm">
-          Already have an account? <a className="text-blue-600" href="/auth/login">Login</a>
+          Sudah punya akun? <a className="text-green-600" href="/auth/login">Login</a>
         </p>
       </form>
     </div>

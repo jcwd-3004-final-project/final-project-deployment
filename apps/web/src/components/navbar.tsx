@@ -74,7 +74,9 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
       <div className="flex items-center justify-between px-4 py-2 border-b">
-        <div className="text-lg font-bold text-green-600 cursor-pointer" onClick={() => router.push('/')}>PESANAJA</div>
+        <div className="text-lg font-bold flex items-center justify-center cursor-pointer" onClick={() => router.push('/')}>
+        <img src="/logo.png" alt="Logo" className="w-auto h-8" />
+        </div>
 
         {/* Search Bar (Hidden on Small Devices) */}
         <div className="hidden md:flex flex-1 mx-4 max-w-lg">
@@ -91,7 +93,7 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
               <div className="text-gray-700 cursor-pointer">🛒 My Cart</div>
-              <div className="text-gray-700 cursor-pointer">👤 Profile</div>
+              <a className="text-gray-700 cursor-pointer" href="/profile">👤 Profile</a>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -159,12 +161,11 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
           )}
 
           {/* Nav Links */}
-          <a
-            href="#"
-            className="text-gray-700 font-medium hover:text-green-600"
+          <div
+            className="text-gray-700 font-medium hover:text-green-600" onClick={() => router.push('/')}
           >
             Home
-          </a>
+          </div>
           <a
             href="#"
             className="text-gray-700 font-medium hover:text-green-600"
