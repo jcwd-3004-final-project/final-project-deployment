@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import Navbar from "@/components/navbar";
 import PersonalInfoForm from "@/components/personalInfoForm";
 import ChangePasswordForm from "@/components/changePasswordForm";
-import { useRouter } from "next/router";
 import { isValidEmail, isValidPassword } from "@/utils";
-import Navbar from "@/components/navbar";
+import Swal from "sweetalert2";
 
 interface Profile {
   name: string;
   email: string;
   password: string;
   newPassword: string;
-  profilePic: string;
-  isVerified: boolean;
 }
 
 interface Errors {
@@ -28,8 +27,6 @@ const EditProfilePage = () => {
     email: "johndoe@example.com",
     password: "",
     newPassword: "",
-    profilePic: "/images/default-profile.png",
-    isVerified: false,
   };
 
   const [profile, setProfile] = useState<Profile>(initialProfile);
@@ -63,17 +60,18 @@ const EditProfilePage = () => {
     };
 
     if (!isValidEmail(profile.email)) {
-      newErrors.email = "Invalid email format.";
+      newErrors.email = "Format email tidak valid.";
     }
 
     if (profile.newPassword && !isValidPassword(profile.newPassword)) {
-      newErrors.newPassword = "Password must be at least 8 characters.";
+      newErrors.newPassword = "Password harus minimal 8 karakter.";
     }
 
     return newErrors;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const newErrors = validateProfile(profile);
     setErrors(newErrors);
 
@@ -81,12 +79,22 @@ const EditProfilePage = () => {
       setLoading(true);
       try {
         // Simulate an API call to update the profile
-        setTimeout(() => {
-          alert("Profile updated successfully!");
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil",
+          text: "Profil Anda telah diperbarui.",
+        }).then(() => {
           router.push("/profile"); // Navigate to profile page after update
-        }, 2000);
+        });
       } catch (error) {
         console.error("Error updating profile:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Terjadi kesalahan saat memperbarui profil.",
+        });
       } finally {
         setLoading(false);
       }
@@ -94,38 +102,52 @@ const EditProfilePage = () => {
   };
 
   return (
-    <div className=" max-w-4xl mx-auto p-8 bg-gradient-to-br from-white to-gray-100 shadow-lg rounded-lg">
-      <h1 className="text-2xl font-semibold mb-6 text-black">Edit Profile</h1>
+    <div className="min-h-screen bg-gray-100">
+      {/* Navbar */}
+      <Navbar />
 
-      {/* Personal Info Form */}
-      <PersonalInfoForm
-        profile={profile}
-        errors={errors}
-        onChange={handleInputChange}
-      />
-      {/* Password Change Form */}
-      <ChangePasswordForm
-        profile={profile}
-        errors={errors}
-        onChange={handleInputChange}
-      />
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
+          <h1 className="text-2xl font-semibold mb-6 text-gray-800 text-center">
+            Edit Profil
+          </h1>
+          <form onSubmit={handleSubmit}>
+            {/* Personal Info Form */}
+            <PersonalInfoForm
+              profile={profile}
+              errors={errors}
+              onChange={handleInputChange}
+            />
+            {/* Password Change Form */}
+            <ChangePasswordForm
+              profile={profile}
+              errors={errors}
+              onChange={handleInputChange}
+            />
 
-      <div className="text-center mt-6 space-x-4">
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !isChanged} // Disabled if not changed
-          className={`px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-300 shadow-md ${
-            loading || !isChanged ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          {loading ? "Saving..." : "Save Changes"}
-        </button>
-        <button
-          onClick={() => router.push("/profile")}
-          className="px-8 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400 focus:ring-2 focus:ring-gray-200 focus:outline-none transition duration-300 shadow-md"
-        >
-          Cancel
-        </button>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
+              <button
+                type="submit"
+                disabled={loading || !isChanged}
+                className={`w-full sm:w-auto px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-300 ${
+                  loading || !isChanged
+                    ? "opacity-50 cursor-not-allowed"
+                    : "transform hover:scale-105"
+                }`}
+              >
+                {loading ? "Menyimpan..." : "Simpan Perubahan"}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/profile")}
+                className="w-full sm:w-auto px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-400 focus:ring-2 focus:ring-gray-200 focus:outline-none transition duration-300"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
