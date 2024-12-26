@@ -46,6 +46,7 @@ app.use("/v1/api/superadmin", superAdminRouter);
 app.use("/v1/api/user", userRouter);
 app.use("/v1/api/inventory", inventoryRouter);
 
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);
 });
