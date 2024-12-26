@@ -7,11 +7,11 @@ import passport from "passport";
 import "../passport-config";
 import superAdminRouter from "./routers/superAdmin.router";
 import inventoryRouter from "./routers/inventory.router";
-import userRouter from "./routers/user.routes"
-import discountRoutes from "./routers/discount.router"
+import userRouter from "./routers/user.routes";
+import productRouter from "./routers/product.router";
+import categoryRouter from "./routers/category.router";
 
-require('dotenv').config();
-
+require("dotenv").config();
 
 const app = express();
 const PORT = parseInt(process.env.SERVER_PORT_DEV as string);
@@ -24,13 +24,11 @@ app.use(
       "http://localhost:3000",
       "https://event-idham-gilang.vercel.app/",
       "http://localhost:3000",
-
     ],
   })
 );
 
 app.use(passport.initialize());
-
 
 // Logging middleware
 app.use((req, res, next) => {
@@ -41,11 +39,12 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/v1/api/auth', authRouter);
+app.use("/v1/api/auth", authRouter);
 app.use("/v1/api/superadmin", superAdminRouter);
 app.use("/v1/api/user", userRouter);
 app.use("/v1/api/inventory", inventoryRouter);
-
+app.use("/v1/api/product", productRouter);
+app.use("/v1/api/categories", categoryRouter);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);
 });

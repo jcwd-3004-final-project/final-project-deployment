@@ -1,5 +1,5 @@
 // auth.model.ts
-import { PrismaClient, User, Role } from '@prisma/client';
+import { PrismaClient, User, Role } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -31,6 +31,23 @@ export interface AuthenticatedUser {
 export interface TokenPayload {
   userId: number;
   role: Role;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  products: Product[];
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  categoryId: number;
+  stockQuantity: number;
+  images: string[];
+  category?: Category;
 }
 
 export default prisma;
