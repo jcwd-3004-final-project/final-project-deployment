@@ -4,7 +4,7 @@ import HeroSection from "@/components/heroSection";
 import ProductList from "@/components/productList";
 import Footer from "@/components/footer";
 import { Product } from "@/components/productList";
-import axios from 'axios';
+import axios from "axios";
 
 const Home = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,15 +15,20 @@ const Home = () => {
     // Fetch data dari API
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('https://6763b8e117ec5852cae9b756.mockapi.io/v1/product');
-        const fetchedProducts: Product[] = response.data.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),  // Jika price string, konversi ke number
-          stock: parseInt(item.stock, 10), // Jika stock string, konversi ke number
-          category: item.category,
-          image: item.image
-        }));
+        const response = await axios.get(
+          `http://localhost:8000/v1/api/product`
+        );
+        console.log(response.data);
+        const fetchedProducts: Product[] = response.data.data.map(
+          (item: any) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price), // Jika price string, konversi ke number
+            stockQuantity: parseInt(item.stockQuantity, 10), // Jika stock string, konversi ke number
+            category: item.category,
+            images: item.images,
+          })
+        );
         setProducts(fetchedProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -32,10 +37,15 @@ const Home = () => {
 
     fetchProducts();
   }, []);
+  console.log("Ini product >>>", products);
 
   const filteredProducts = products.filter((product) => {
-    const matchCategory = selectedCategory ? product.category === selectedCategory : true;
-    const matchName = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCategory = selectedCategory
+      ? product.category.toString() === selectedCategory
+      : true;
+    const matchName = product.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     return matchCategory && matchName;
   });
 

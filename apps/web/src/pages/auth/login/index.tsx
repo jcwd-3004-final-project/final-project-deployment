@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import type { NextPage } from 'next';
-import { useRouter } from 'next/router';
-import { loginUser } from '@/lib/authApi';
+import React, { useState } from "react";
+import type { NextPage } from "next";
+import { useRouter } from "next/router";
+import { loginUser } from "@/lib/authApi";
 
 interface FormState {
   email: string;
@@ -21,21 +21,21 @@ interface User {
 
 const LoginPage: NextPage = () => {
   const [form, setForm] = useState<FormState>({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
 
-  const [error, setError] = useState<string>('');
-  
+  const [error, setError] = useState<string>("");
+
   const router = useRouter(); // gunakan useRouter untuk navigasi
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     try {
       const data = await loginUser(form);
       // data: { accessToken, refreshToken, user }
@@ -43,26 +43,28 @@ const LoginPage: NextPage = () => {
 
       // Cek apakah user sudah verifikasi emailnya
       if (!user.isVerified) {
-        setError('Email belum dikonfirmasi. Silakan cek email Anda untuk melakukan konfirmasi.');
+        setError(
+          "Email belum dikonfirmasi. Silakan cek email Anda untuk melakukan konfirmasi."
+        );
         return;
       }
 
       // Simpan token ke localStorage atau cookie (sesuai kebutuhan)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
       }
 
       // Setelah login berhasil, arahkan ke halaman Home
-      router.push('/');
+      router.push("/");
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Login failed.');
+      setError(err?.response?.data?.error || "Login failed.");
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <form 
+      <form
         className="bg-white p-6 rounded shadow-md w-full max-w-md"
         onSubmit={handleSubmit}
       >
@@ -71,30 +73,34 @@ const LoginPage: NextPage = () => {
         {error && <p className="text-red-600 mb-2">{error}</p>}
 
         <div className="mb-4">
-          <label className="block mb-2" htmlFor="email">Email</label>
-          <input 
+          <label className="block mb-2" htmlFor="email">
+            Email
+          </label>
+          <input
             className="w-full border p-2 rounded"
             type="email"
             name="email"
             value={form.email}
             onChange={handleChange}
-            required 
+            required
           />
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2" htmlFor="password">Password</label>
-          <input 
+          <label className="block mb-2" htmlFor="password">
+            Password
+          </label>
+          <input
             className="w-full border p-2 rounded"
             type="password"
             name="password"
             value={form.password}
             onChange={handleChange}
-            required 
+            required
           />
         </div>
 
-        <button 
+        <button
           className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 w-full"
           type="submit"
         >
@@ -102,7 +108,10 @@ const LoginPage: NextPage = () => {
         </button>
 
         <p className="mt-4 text-sm">
-          Don't have an account? <a className="text-blue-600" href="/register">Register</a>
+          Don't have an account?{" "}
+          <a className="text-blue-600" href="/auth/register">
+            Register
+          </a>
         </p>
       </form>
     </div>
