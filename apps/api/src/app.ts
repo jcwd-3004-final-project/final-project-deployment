@@ -8,6 +8,7 @@ import "../passport-config";
 import superAdminRouter from "./routers/superAdmin.router";
 import inventoryRouter from "./routers/inventory.router";
 import userRouter from "./routers/user.routes"
+import discountRoutes from "./routers/discount.router"
 
 require('dotenv').config();
 
@@ -29,7 +30,6 @@ app.use(
 );
 
 app.use(passport.initialize());
-
 
 
 // Logging middleware

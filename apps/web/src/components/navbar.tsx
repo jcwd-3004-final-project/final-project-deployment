@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link"; // Import Link
 import { SelectScrollable } from "./category";
 import { PlaceholdersAndVanishInput } from "./ui/placeholders-and-vanish-input";
+import { useCart } from "@/context/cartContext"; // Pastikan useCart diimpor
 
 interface NavbarProps {
   onSearchChange?: (query: string) => void;
@@ -10,15 +12,23 @@ interface NavbarProps {
   onSearchSubmit?: () => void;
 }
 
-function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProps) {
+function Navbar({
+  onSearchChange,
+  onCategoryChange,
+  onSearchSubmit,
+}: NavbarProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [location, setLocation] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+
   const router = useRouter();
+  const { totalItems } = useCart(); // Menggunakan useCart untuk mendapatkan totalItems
 
   useEffect(() => {
-    const accessToken = typeof window !== 'undefined' ? localStorage.getItem("accessToken") : null;
+    const accessToken =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
     setIsLoggedIn(!!accessToken);
   }, []);
 
@@ -60,7 +70,7 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
     "Search for items...",
     "Try searching 'apples'",
     "Try searching 'bread'",
-    "Find organic products..."
+    "Find organic products...",
   ];
 
   const handleLoginClick = () => {
@@ -74,7 +84,9 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
       <div className="flex items-center justify-between px-4 py-2 border-b">
-        <div className="text-lg font-bold text-green-600 cursor-pointer" onClick={() => router.push('/')}>PESANAJA</div>
+        <div className="text-lg font-bold flex items-center justify-center cursor-pointer" onClick={() => router.push('/')}>
+        <img src="/logo.png" alt="Logo" className="w-auto h-8" />
+        </div>
 
         {/* Search Bar (Hidden on Small Devices) */}
         <div className="hidden md:flex flex-1 mx-4 max-w-lg">
@@ -90,8 +102,21 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
           {location && <div className="text-gray-600">{location}</div>}
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
-              <div className="text-gray-700 cursor-pointer">🛒 My Cart</div>
-              <div className="text-gray-700 cursor-pointer">👤 Profile</div>
+
+              {/* Menggunakan Link untuk My Cart */}
+              <Link
+                href="/cart"
+                className="text-gray-700 cursor-pointer flex items-center hover:text-green-600"
+              >
+                🛒 My Cart ({totalItems})
+              </Link>
+              {/* Menggunakan Link untuk Profile */}
+              <Link
+                href="/profile"
+                className="text-gray-700 cursor-pointer hover:text-green-600"
+              >
+                👤 Profile
+              </Link>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -101,7 +126,7 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
               >
                 Login
               </button>
-              <button 
+              <button
                 onClick={handleSignUpClick}
                 className="px-4 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700"
               >
@@ -138,8 +163,20 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
           {/* Auth / Profile Section */}
           {isLoggedIn ? (
             <>
-              <div className="text-gray-700 cursor-pointer">🛒 My Cart</div>
-              <div className="text-gray-700 cursor-pointer">👤 Profile</div>
+              {/* Menggunakan Link untuk My Cart */}
+              <Link
+                href="/cart"
+                className="text-gray-700 cursor-pointer flex items-center hover:text-green-600"
+              >
+                🛒 My Cart ({totalItems})
+              </Link>
+              {/* Menggunakan Link untuk Profile */}
+              <Link
+                href="/profile"
+                className="text-gray-700 cursor-pointer hover:text-green-600"
+              >
+                👤 Profile
+              </Link>
             </>
           ) : (
             <>
@@ -149,7 +186,7 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
               >
                 Login
               </button>
-              <button 
+              <button
                 onClick={handleSignUpClick}
                 className="px-4 py-2 text-sm text-white bg-green-600 rounded-md hover:bg-green-700"
               >
@@ -159,18 +196,19 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
           )}
 
           {/* Nav Links */}
-          <a
-            href="#"
+
+          <Link
+            href="/"
             className="text-gray-700 font-medium hover:text-green-600"
           >
             Home
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="/promotions"
             className="text-gray-700 font-medium hover:text-green-600"
           >
             Promotions
-          </a>
+          </Link>
 
           {/* Categories Button */}
           <div className="flex items-center justify-center gap-2 bg-green-600 text-white rounded-md hover:bg-green-700">
@@ -194,18 +232,18 @@ function Navbar({ onSearchChange, onCategoryChange, onSearchSubmit }: NavbarProp
           <SelectScrollable onCategorySelect={handleCategorySelect} />
         </div>
         <div className="flex gap-6">
-          <a
-            href="#"
+          <Link
+            href="/"
             className="text-gray-700 font-medium hover:text-green-600"
           >
             Home
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="/promotions"
             className="text-gray-700 font-medium hover:text-green-600"
           >
             Promotions
-          </a>
+          </Link>
         </div>
         <a
           href="tel:6287855294573"
