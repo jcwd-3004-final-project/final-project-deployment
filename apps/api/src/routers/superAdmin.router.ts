@@ -15,8 +15,8 @@ router.post(
 
 router.get(
   "/stores",
-  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.getAllStores.bind(superAdminController)
 );
 router.get(
