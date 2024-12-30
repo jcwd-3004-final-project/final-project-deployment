@@ -8,6 +8,16 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    // Add these two options:
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"          // Make sure this matches the folder where your midtrans-client.d.ts is stored
+    ]
+  },
+  // Optionally specify which files/folders to include so TS knows where to look:
+  "include": [
+    "src",
+    "types"
+  ]
 }
