@@ -150,6 +150,8 @@ model StoreProduct {
   updatedAt DateTime @updatedAt
 
   stockAdjustments StockAdjustment[]
+
+   @@unique([storeId, productId])
 }
 
 model StockAdjustment {
