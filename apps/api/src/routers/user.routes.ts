@@ -4,7 +4,6 @@ import { UserController } from "../controllers/user.controllers";
 import { OrderController } from "../controllers/order.controller";
 import { AuthenticateJwtMiddleware } from "../middlewares/user.middleware";
 
-console.log("JWT_SECRET:", process.env.JWT_ACCESS_TOKEN_SECRET);
 
 const router = Router();
 const authenticateJwt = new AuthenticateJwtMiddleware();
