@@ -93,4 +93,11 @@ router.post(
   asyncWrap(OrderController.uploadPaymentProof)
 );
 
+router.get(
+  "/order/:id",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(OrderController.getOrder)
+);
+
 export default router;

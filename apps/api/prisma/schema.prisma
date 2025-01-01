@@ -14,38 +14,37 @@ datasource db {
 }
 
 model User {
-  id            Int           @id @default(autoincrement())
-  email         String        @unique
-  password      String?
-  first_name    String
-  last_name     String
-  phone_number  String?
-  role          Role          @default(USER)
-  isVerified    Boolean       @default(false)
-  googleId      String?
-  facebookId    String?
-  avatar        String?
+  id           Int     @id @default(autoincrement())
+  email        String  @unique
+  password     String?
+  first_name   String
+  last_name    String
+  phone_number String?
+  role         Role    @default(USER)
+  isVerified   Boolean @default(false)
+  googleId     String?
+  facebookId   String?
+  avatar       String?
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  last_activity DateTime      @default(now()) // Added default value
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  last_activity DateTime @default(now()) // Added default value
 
   addresses     Address[]
   orders        Order[]
   cart          Cart?
   userVouchers  UserVoucher[]
   tokens        Token[]
-  referralsMade Referral[]     @relation("Referrer")
-  referrals     Referral[]     @relation("Referred")
+  referralsMade Referral[]    @relation("Referrer")
+  referrals     Referral[]    @relation("Referred")
 
   // For store admins
-  store         Store?        @relation(fields: [storeId], references: [store_id])
-  storeId       Int?
+  store   Store? @relation(fields: [storeId], references: [store_id])
+  storeId Int?
 }
 
-
 model Address {
-  address_id          Int      @id @default(autoincrement())
+  address_id  Int      @id @default(autoincrement())
   user        User     @relation(fields: [userId], references: [id])
   userId      Int
   addressLine String?
@@ -59,129 +58,129 @@ model Address {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  orders      Order[]
+  orders Order[]
 }
 
 model Store {
-  store_id                  Int          @id @default(autoincrement())
-  name                 String
-  address              String
-  city        String?
-  state       String?
-  postalCode  String?
-  country     String?
-  latitude             Float
-  longitude            Float
-  maxDeliveryDistance  Float
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
+  store_id            Int      @id @default(autoincrement())
+  name                String
+  address             String
+  city                String?
+  state               String?
+  postalCode          String?
+  country             String?
+  latitude            Float
+  longitude           Float
+  maxDeliveryDistance Float?
+  store_admin         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  storeAdmins          User[]
-  storeProducts        StoreProduct[]
-  orders               Order[]
+  storeAdmins   User[]
+  storeProducts StoreProduct[]
+  orders        Order[]
 }
 
 model Product {
-  id                Int             @id @default(autoincrement())
-  name              String          @unique
-  description       String
-  price             Float
-  category          Category        @relation(fields: [categoryId], references: [id])
-  categoryId        Int
-  images            Image[]
-  stockQuantity     Int             @default(0) // Tambahkan atribut ini
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  description   String
+  price         Float
+  category      Category       @relation(fields: [categoryId], references: [id])
+  categoryId    Int
+  images        Image[]
+  stockQuantity Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  storeProducts     StoreProduct[]
-  cartItems         CartItem[]
-  orderItems        OrderItem[]
-  discounts         Discount[]      @relation("ProductDiscounts")
-  vouchers          Voucher[]       @relation("ProductVouchers")
-  stockLogs         StockLog[]      // Relasi dengan StockLog
+  storeProducts StoreProduct[] 
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  discounts     Discount[]     @relation("ProductDiscounts")
+  vouchers      Voucher[]      @relation("ProductVouchers")
+  stockLogs     StockLog[]
 }
-
 model StockLog {
-  id                Int             @id @default(autoincrement())
-  productId         Int
-  changeQuantity    Int
-  reason            String
-  createdAt         DateTime        @default(now())
+  id             Int      @id @default(autoincrement())
+  productId      Int
+  changeQuantity Int
+  reason         String
+  createdAt      DateTime @default(now())
 
-  product           Product         @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
-
 
 model Image {
-  id         Int      @id @default(autoincrement())
-  product    Product  @relation(fields: [productId], references: [id])
-  productId  Int
-  url        String
+  id        Int     @id @default(autoincrement())
+ product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
+  url       String
 }
 
 model Category {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique
-  products  Product[]
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
 }
 
 model Discount {
-  id            Int              @id @default(autoincrement())
-  type          DiscountType
-  value         Float            // percentage or nominal amount
-  valueType     DiscountValueType
-  startDate     DateTime
-  endDate       DateTime
-  maxDiscount   Float?
-  minPurchase   Float?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id          Int               @id @default(autoincrement())
+  type        DiscountType
+  value       Float // percentage or nominal amount
+  valueType   DiscountValueType
+  startDate   DateTime
+  endDate     DateTime
+  maxDiscount Float?
+  minPurchase Float?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
-  products      Product[]        @relation("ProductDiscounts")
+  products Product[] @relation("ProductDiscounts")
 }
 
 model StoreProduct {
-  id              Int             @id @default(autoincrement())
-  store           Store           @relation(fields: [storeId], references: [store_id])
-  storeId         Int
-  product         Product         @relation(fields: [productId], references: [id])
-  productId       Int
-  stock           Int
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id        Int      @id @default(autoincrement())
+  store     Store    @relation(fields: [storeId], references: [store_id])
+  storeId   Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
+  stock     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   stockAdjustments StockAdjustment[]
+   @@unique([storeId, productId])
 }
 
 model StockAdjustment {
-  id              Int                   @id @default(autoincrement())
-  storeProduct    StoreProduct          @relation(fields: [storeProductId], references: [id])
-  storeProductId  Int
-  adjustmentType  AdjustmentType
-  quantity        Int
-  reason          StockAdjustmentReason
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id             Int                   @id @default(autoincrement())
+  storeProduct   StoreProduct          @relation(fields: [storeProductId], references: [id])
+  storeProductId Int
+  adjustmentType AdjustmentType
+  quantity       Int
+  reason         StockAdjustmentReason
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 }
 
 model Cart {
-  id        Int          @id @default(autoincrement())
-  user      User         @relation(fields: [userId], references: [id])
-  userId    Int          @unique
+  id        Int        @id @default(autoincrement())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    Int        @unique
   items     CartItem[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model CartItem {
-  id        Int         @id @default(autoincrement())
-  cart      Cart        @relation(fields: [cartId], references: [id])
+  id        Int      @id @default(autoincrement())
+  cart      Cart     @relation(fields: [cartId], references: [id])
   cartId    Int
-  product   Product     @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
   productId Int
   quantity  Int
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Order {
@@ -218,46 +217,45 @@ model OrderItem {
 }
 
 model Voucher {
-  id                Int              @id @default(autoincrement())
-  code              String           @unique
+  id                Int               @id @default(autoincrement())
+  code              String            @unique
   discountType      DiscountType
-  value             Float            // percentage or nominal
+  value             Float // percentage or nominal
   valueType         DiscountValueType
   maxDiscount       Float?
-  applicableProduct Product?         @relation("ProductVouchers", fields: [productId], references: [id])
+  applicableProduct Product?          @relation("ProductVouchers", fields: [productId], references: [id])
   productId         Int?
   minPurchaseAmount Float?
   expiryDate        DateTime
   usageType         VoucherUsageType
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
-  userVouchers      UserVoucher[]
+  userVouchers UserVoucher[]
 }
 
-
 model UserVoucher {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id])
   userId    Int
-  voucher   Voucher  @relation(fields: [voucherId], references: [id])
+  voucher   Voucher   @relation(fields: [voucherId], references: [id])
   voucherId Int
-  isUsed    Boolean  @default(false)
+  isUsed    Boolean   @default(false)
   usedAt    DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  orders    Order[]
+  orders Order[]
 }
 
 model Referral {
-  id            Int       @id @default(autoincrement())
-  referrer      User      @relation("Referrer", fields: [referrerId], references: [id])
-  referrerId    Int
-  referred      User      @relation("Referred", fields: [referredId], references: [id])
-  referredId    Int
-  referralCode  String
-  createdAt     DateTime  @default(now())
+  id           Int      @id @default(autoincrement())
+  referrer     User     @relation("Referrer", fields: [referrerId], references: [id])
+  referrerId   Int
+  referred     User     @relation("Referred", fields: [referredId], references: [id])
+  referredId   Int
+  referralCode String
+  createdAt    DateTime @default(now())
 }
 
 model Token {
