@@ -12,6 +12,9 @@ router.get("/:id", storeController.getStoreById);
 router.post("/", storeController.createStore);
 router.put("/:id", storeController.updateStore);
 router.delete("/:id", storeController.deleteStore);
-router.post("/:id/assign-admin", storeController.assignStoreAdmin); // Menggunakan POST sesuai controller
+router.post("/:id/assign-admin", storeController.assignStoreAdmin);
+
+// Tambahkan ini -> Endpoint untuk ambil store beserta products
+router.get("/:id/products", storeController.getStoreWithProducts);
 
 export default router;
