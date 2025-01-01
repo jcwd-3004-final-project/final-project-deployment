@@ -82,25 +82,24 @@ model Store {
 }
 
 model Product {
-  id            Int      @id @default(autoincrement())
-  name          String   @unique
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
   description   String
   price         Float
-  category      Category @relation(fields: [categoryId], references: [id])
+  category      Category       @relation(fields: [categoryId], references: [id])
   categoryId    Int
   images        Image[]
-  stockQuantity Int      @default(0) // Tambahkan atribut ini
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  stockQuantity Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  storeProducts StoreProduct[]
+  storeProducts StoreProduct[] 
   cartItems     CartItem[]
   orderItems    OrderItem[]
   discounts     Discount[]     @relation("ProductDiscounts")
   vouchers      Voucher[]      @relation("ProductVouchers")
-  stockLogs     StockLog[] // Relasi dengan StockLog
+  stockLogs     StockLog[]
 }
-
 model StockLog {
   id             Int      @id @default(autoincrement())
   productId      Int
@@ -113,7 +112,7 @@ model StockLog {
 
 model Image {
   id        Int     @id @default(autoincrement())
-  product   Product @relation(fields: [productId], references: [id])
+ product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId Int
   url       String
 }
@@ -143,13 +142,14 @@ model StoreProduct {
   id        Int      @id @default(autoincrement())
   store     Store    @relation(fields: [storeId], references: [store_id])
   storeId   Int
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId Int
   stock     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   stockAdjustments StockAdjustment[]
+   @@unique([storeId, productId])
 }
 
 model StockAdjustment {

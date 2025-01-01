@@ -1,4 +1,4 @@
-import { PrismaClient, Store } from "@prisma/client";
+import { PrismaClient, Store, Prisma } from "@prisma/client";
 
 interface CreateStoreData {
   name: string;
@@ -7,10 +7,10 @@ interface CreateStoreData {
   state?: string;
   postalCode?: string;
   country?: string;
-  latitude: number; // Wajib
-  longitude: number; // Wajib
-  maxDeliveryDistance?: number | null; // Opsional
-  store_admin?: string; // Opsional
+  latitude: number;
+  longitude: number;
+  maxDeliveryDistance?: number | null;
+  store_admin?: string;
 }
 
 interface UpdateStoreData {
@@ -22,9 +22,20 @@ interface UpdateStoreData {
   country?: string;
   latitude?: number;
   longitude?: number;
-  maxDeliveryDistance?: number | null; // Sama tipenya
+  maxDeliveryDistance?: number | null;
   store_admin?: string;
 }
+
+// Tambahkan type untuk hasil "Store dengan products"
+type StoreWithProducts = Prisma.StoreGetPayload<{
+  include: {
+    storeProducts: {
+      include: {
+        product: true;
+      };
+    };
+  };
+}>;
 
 class StoreService {
   private prisma: PrismaClient;
@@ -37,11 +48,6 @@ class StoreService {
     return this.prisma.store.findMany();
   }
 
-  /**
-   * Ambil store berdasarkan ID
-   * @param storeId - ID dari store yang ingin diambil
-   * @returns Promise<Store | null>
-   */
   public async getStoreById(storeId: number): Promise<Store | null> {
     return this.prisma.store.findUnique({
       where: { store_id: storeId },
@@ -72,15 +78,16 @@ class StoreService {
         country,
         latitude,
         longitude,
-        // Jika nilainya undefined, jadikan null
         maxDeliveryDistance: maxDeliveryDistance ?? null,
         store_admin,
       },
     });
   }
 
-
-  public async updateStore(storeId: number, data: UpdateStoreData): Promise<Store> {
+  public async updateStore(
+    storeId: number,
+    data: UpdateStoreData
+  ): Promise<Store> {
     const {
       name,
       address,
@@ -117,12 +124,37 @@ class StoreService {
     });
   }
 
-
-  public async assignStoreAdmin(storeId: number, adminUserId: string): Promise<Store> {
+  public async assignStoreAdmin(
+    storeId: number,
+    adminUserId: string
+  ): Promise<Store> {
     return this.prisma.store.update({
       where: { store_id: storeId },
       data: {
         store_admin: adminUserId,
+      },
+    });
+  }
+
+  /**
+   * **Method baru**: Ambil store beserta produk (via StoreProduct)
+   */
+  public async getStoreWithProducts(
+    storeId: number
+  ): Promise<StoreWithProducts | null> {
+    return this.prisma.store.findUnique({
+      where: { store_id: storeId },
+      include: {
+        storeProducts: {
+          include: {
+            product: {
+              include: {
+                category: true, // Menyertakan data kategori
+                images: true, // Menyertakan data gambar
+              },
+            },
+          },
+        },
       },
     });
   }

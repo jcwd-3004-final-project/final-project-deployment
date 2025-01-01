@@ -133,20 +133,50 @@ export class ProductService {
 
   // Delete a product
   async deleteProduct(id: number) {
-    const product = await prisma.product.findUnique({
-      where: { id },
-    });
+    try {
+      // Mulai transaksi
+      const deletedProduct = await prisma.$transaction(async (tx) => {
+        // Hapus entri terkait di StoreProduct
+        await tx.storeProduct.deleteMany({
+          where: { productId: id },
+        });
 
-    if (!product) {
-      throw new Error("Product not found");
+        // Hapus entri terkait di Image
+        await tx.image.deleteMany({
+          where: { productId: id },
+        });
+
+        // Hapus entri terkait di CartItem
+        await tx.cartItem.deleteMany({
+          where: { productId: id },
+        });
+
+        // Hapus entri terkait di OrderItem
+        await tx.orderItem.deleteMany({
+          where: { productId: id },
+        });
+
+        // Hapus entri terkait di Voucher
+        await tx.voucher.deleteMany({
+          where: { productId: id },
+        });
+
+        // Hapus entri terkait di StockLog
+        await tx.stockLog.deleteMany({
+          where: { productId: id },
+        });
+
+        // Hapus produk
+        const deleted = await tx.product.delete({
+          where: { id: id },
+        });
+
+        return deleted;
+      });
+
+      return deletedProduct;
+    } catch (error) {
+      throw error;
     }
-    await prisma.image.deleteMany({ where: { productId: id } });
-
-    // Hapus produk (data terkait akan dihapus otomatis karena Cascade Delete)
-    await prisma.product.delete({
-      where: { id },
-    });
-
-    return { message: "Product deleted successfully" };
   }
 }
