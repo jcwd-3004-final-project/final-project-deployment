@@ -102,12 +102,14 @@ export class ProductController {
   // Delete product
   async deleteProduct(req: Request, res: Response) {
     const { id } = req.params;
-
     try {
-      const result = await this.productService.deleteProduct(Number(id));
-      res.status(200).json(result);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      const deleted = await this.productService.deleteProduct(Number(id));
+      res
+        .status(200)
+        .json({ data: deleted, message: "Product deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(400).json({ error: "Failed to delete product" });
     }
   }
 }

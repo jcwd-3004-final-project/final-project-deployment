@@ -105,4 +105,19 @@ export class OrderController {
       return res.status(400).json({ success: false, error: error.message });
     }
   }
+
+    // -------------------------------------------
+    static async getOrder(req: Request, res: Response): Promise<Response> {
+      try {
+        const orderId = Number(req.params.id);
+  
+        const userId = OrderController.getUserIdFromToken(req);
+  
+        const invoice = await orderService.getOrderWithInvoice(orderId, userId);
+  
+        return res.json({ success: true, data: invoice });
+      } catch (error: any) {
+        return res.status(400).json({ success: false, error: error.message });
+      }
+    }
 }

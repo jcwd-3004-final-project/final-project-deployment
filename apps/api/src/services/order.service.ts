@@ -145,4 +145,41 @@ export class OrderService {
 
     return updatedOrder;
   }
+
+  async getOrderWithInvoice(orderId: number, userId: number) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        user: true,
+        items: {
+          include: { product: true },
+        },
+      },
+    });
+
+    if (!order || order.userId !== userId) {
+      throw new Error("Order not found or unauthorized");
+    }
+
+    const invoice = {
+      invoiceNumber: `INV-${order.id}-${Date.now()}`,
+      date: new Date(order.createdAt).toISOString(),
+      customer: {
+        name: `${order.user.first_name} ${order.user.last_name}`,
+        email: order.user.email,
+        phone: order.user.phone_number,
+      },
+      items: order.items.map((item) => ({
+        product: item.product.name,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.quantity * item.price,
+      })),
+      shippingCost: order.shippingCost,
+      grossAmount: order.totalAmount + order.shippingCost,
+      status: order.status,
+    };
+
+    return invoice;
+  }
 }

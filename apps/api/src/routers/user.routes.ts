@@ -4,7 +4,6 @@ import { UserController } from "../controllers/user.controllers";
 import { OrderController } from "../controllers/order.controller";
 import { AuthenticateJwtMiddleware } from "../middlewares/user.middleware";
 
-console.log("JWT_SECRET:", process.env.JWT_ACCESS_TOKEN_SECRET);
 
 const router = Router();
 const authenticateJwt = new AuthenticateJwtMiddleware();
@@ -92,6 +91,13 @@ router.post(
   authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
   upload.single("paymentProof"), // match the form-data key
   asyncWrap(OrderController.uploadPaymentProof)
+);
+
+router.get(
+  "/order/:id",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(OrderController.getOrder)
 );
 
 export default router;
