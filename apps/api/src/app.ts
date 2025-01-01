@@ -11,6 +11,8 @@ import userRouter from "./routers/user.routes";
 import productRouter from "./routers/product.router";
 import categoryRouter from "./routers/category.router";
 import storeRouter from "./routers/store.router";
+import orderRouter from "./routers/admin.order.router";
+
 
 require("dotenv").config();
 
@@ -47,6 +49,8 @@ app.use("/v1/api/inventory", inventoryRouter);
 app.use("/v1/api/products", productRouter);
 app.use("/v1/api/categories", categoryRouter);
 app.use("/v1/api/stores", storeRouter);
+app.use("/v1/api/orders", orderRouter);
+
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);
