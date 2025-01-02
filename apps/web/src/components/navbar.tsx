@@ -84,8 +84,11 @@ function Navbar({
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
       <div className="flex items-center justify-between px-4 py-2 border-b">
-        <div className="text-lg font-bold flex items-center justify-center cursor-pointer" onClick={() => router.push('/')}>
-        <img src="/logo.png" alt="Logo" className="w-auto h-8" />
+        <div
+          className="text-lg font-bold flex items-center justify-center cursor-pointer"
+          onClick={() => router.push("/")}
+        >
+          <img src="/logo.png" alt="Logo" className="w-auto h-8" />
         </div>
 
         {/* Search Bar (Hidden on Small Devices) */}
@@ -102,7 +105,6 @@ function Navbar({
           {location && <div className="text-gray-600">{location}</div>}
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
-
               {/* Menggunakan Link untuk My Cart */}
               <Link
                 href="/cart"
@@ -207,7 +209,7 @@ function Navbar({
             href="/promotions"
             className="text-gray-700 font-medium hover:text-green-600"
           >
-            Promotions
+            Product
           </Link>
 
           {/* Categories Button */}

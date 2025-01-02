@@ -1,8 +1,9 @@
-// pages/index.tsx
+// pages/admin/index.tsx
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import StoreModal from "../../components/storeModal";
+import AddStoreProductModal from "../../components/addStoreProductModal"; // Import komponen baru
 import { useRouter } from "next/router";
 
 interface Store {
@@ -24,7 +25,7 @@ export default function Home() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStore, setCurrentStore] = useState<Partial<Store>>({});
 
-  const BASE_URL = "http://localhost:8000/v1/api";
+  const BASE_URL = "http://localhost:8000/v1/api/superadmin";
 
   const [assignData, setAssignData] = useState({
     storeName: "",
@@ -32,10 +33,14 @@ export default function Home() {
   });
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
+  // State untuk modal AddStoreProduct
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
+
   const fetchStores = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/stores`);
-      setStores(res.data);
+      setStores(res.data.data);
     } catch (error) {
       console.error("Error fetching stores:", error);
     }
@@ -70,7 +75,10 @@ export default function Home() {
     try {
       if (isEditMode && currentStore.store_id) {
         // Update store
-        await axios.put(`${BASE_URL}/stores/${currentStore.store_id}`, currentStore);
+        await axios.put(
+          `${BASE_URL}/stores/${currentStore.store_id}`,
+          currentStore
+        );
       } else {
         // Create store
         await axios.post(`${BASE_URL}/stores`, currentStore);
@@ -104,9 +112,12 @@ export default function Home() {
       }
 
       // Memanggil endpoint patch, gunakan store_id yang ditemukan
-      await axios.patch(`${BASE_URL}/stores/${selectedStore.store_id}/assign-admin`, {
-        adminUserId: assignData.adminUserId,
-      });
+      await axios.patch(
+        `${BASE_URL}/stores/${selectedStore.store_id}/assign-admin`,
+        {
+          adminUserId: assignData.adminUserId,
+        }
+      );
 
       setIsAssignModalOpen(false);
       fetchStores();
@@ -114,6 +125,25 @@ export default function Home() {
       console.error("Error assigning admin:", error);
       alert("Failed to assign admin. Please try again.");
     }
+  };
+
+  // Fungsi untuk membuka modal AddStoreProduct
+  const handleOpenAddProductModal = (storeId: number) => {
+    setSelectedStoreId(storeId);
+    setIsAddProductModalOpen(true);
+  };
+
+  // Fungsi untuk menutup modal AddStoreProduct
+  const handleCloseAddProductModal = () => {
+    setIsAddProductModalOpen(false);
+    setSelectedStoreId(null);
+  };
+
+  // Fungsi callback setelah produk berhasil ditambahkan
+  const handleProductAdded = () => {
+    // Anda mungkin ingin mem-refresh daftar produk di halaman CRUD atau melakukan aksi lain
+    // Karena halaman CRUD terpisah, Anda bisa menambahkan navigasi atau tidak
+    alert("Product successfully added to the store.");
   };
 
   return (
@@ -141,12 +171,22 @@ export default function Home() {
           Assign Admin
         </button>
 
-        {/* Tambahan: Tombol menuju /superadmin/CRUD */}
+        {/* Tombol "Add Product to Store" */}
         <button
-          onClick={() => router.push("/superadmin/CRUD")}
+          onClick={() => {
+            // Anda bisa memilih store terlebih dahulu atau menggunakan store yang sudah dipilih
+            if (stores.length === 0) {
+              alert("No stores available.");
+              return;
+            }
+
+            // Misalnya, pilih store pertama sebagai contoh
+            const firstStore = stores[0];
+            handleOpenAddProductModal(firstStore.store_id);
+          }}
           className="bg-blue-600 text-white py-2 px-4 rounded mb-4 ml-4"
         >
-          Add Product
+          Add Product to First Store
         </button>
 
         {/* Tabel daftar store */}
@@ -163,7 +203,14 @@ export default function Home() {
             <tbody>
               {stores.map((store) => (
                 <tr key={store.store_id} className="border-b">
-                  <td className="py-2 px-4">{store.name}</td>
+                  <td
+                    className="py-2 px-4 text-blue-600 underline cursor-pointer"
+                    onClick={() =>
+                      router.push(`/superadmin/CRUD?storeId=${store.store_id}`)
+                    }
+                  >
+                    {store.name}
+                  </td>
                   <td className="py-2 px-4">{store.address}</td>
                   <td className="py-2 px-4">
                     {store.store_admin ? store.store_admin : "Unassigned"}
@@ -181,6 +228,12 @@ export default function Home() {
                     >
                       Delete
                     </button>
+                    <button
+                      onClick={() => handleOpenAddProductModal(store.store_id)}
+                      className="text-green-500 ml-2"
+                    >
+                      Add Product
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -188,7 +241,7 @@ export default function Home() {
           </table>
         </div>
 
-        {/* Modal Create/Edit */}
+        {/* Modal Create/Edit Store */}
         {isModalOpen && (
           <StoreModal
             title={isEditMode ? "Edit Store" : "Create New Store"}
@@ -201,7 +254,7 @@ export default function Home() {
           />
         )}
 
-        {/* Modal Assign Admin (by store name) */}
+        {/* Modal Assign Admin */}
         {isAssignModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50 p-4">
             <div className="bg-white p-6 rounded-md w-full max-w-md">
@@ -215,7 +268,10 @@ export default function Home() {
                     className="border w-full p-2"
                     value={assignData.storeName}
                     onChange={(e) =>
-                      setAssignData({ ...assignData, storeName: e.target.value })
+                      setAssignData({
+                        ...assignData,
+                        storeName: e.target.value,
+                      })
                     }
                     required
                   >
@@ -228,13 +284,18 @@ export default function Home() {
                   </select>
                 </div>
                 <div className="mb-3">
-                  <label className="block mb-1 font-semibold">Admin User ID</label>
+                  <label className="block mb-1 font-semibold">
+                    Admin User ID
+                  </label>
                   <input
                     type="text"
                     className="border w-full p-2"
                     value={assignData.adminUserId}
                     onChange={(e) =>
-                      setAssignData({ ...assignData, adminUserId: e.target.value })
+                      setAssignData({
+                        ...assignData,
+                        adminUserId: e.target.value,
+                      })
                     }
                     required
                   />
@@ -257,6 +318,16 @@ export default function Home() {
               </form>
             </div>
           </div>
+        )}
+
+        {/* Modal AddStoreProduct */}
+        {isAddProductModalOpen && selectedStoreId && (
+          <AddStoreProductModal
+            isOpen={isAddProductModalOpen}
+            onClose={handleCloseAddProductModal}
+            storeId={selectedStoreId}
+            onProductAdded={handleProductAdded}
+          />
         )}
       </div>
     </div>

@@ -17,8 +17,18 @@ export interface Product {
   price: number;
   categoryId: number;
   stockQuantity: number;
-  images: string[];
+  images: string[]; // Ubah menjadi array string
   category?: Category;
+}
+
+// Definisikan tipe data untuk Formik
+interface ProductFormValues {
+  name: string;
+  description: string;
+  price: number;
+  categoryId: number;
+  stockQuantity: number;
+  images: string; // Gunakan string untuk Formik
 }
 
 interface ProductFormProps {
@@ -32,14 +42,16 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const formik = useFormik({
+  const formik = useFormik<ProductFormValues>({
     initialValues: {
       name: initialValues.name || "",
       description: initialValues.description || "",
       price: initialValues.price || 0,
       categoryId: initialValues.categoryId || 0,
       stockQuantity: initialValues.stockQuantity || 0,
-      images: initialValues.images ? initialValues.images.join(", ") : "",
+      images: initialValues.images
+        ? initialValues.images.join(", ") // Convert array of strings to comma-separated
+        : "",
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Wajib diisi"),
@@ -51,14 +63,33 @@ const ProductForm: React.FC<ProductFormProps> = ({
       stockQuantity: Yup.number()
         .required("Wajib diisi")
         .min(0, "Tidak boleh negatif"),
-      images: Yup.string().required("Wajib diisi"),
+      images: Yup.string()
+        .required("Wajib diisi")
+        .test(
+          "valid-urls",
+          "Harus berupa URL yang valid, dipisahkan dengan koma",
+          (value) => {
+            if (!value) return false;
+            const urls = value.split(",").map((url) => url.trim());
+            const urlPattern = new RegExp(
+              "^(https?:\\/\\/)" + // protocol
+                "((([a-zA-Z0-9\\-\\.]+)\\.([a-zA-Z]{2,}))|" + // domain name
+                "localhost)" + // OR localhost
+                "(\\:[0-9]{1,5})?" + // port
+                "(\\/.*)?$" // path
+            );
+            return urls.every((url) => urlPattern.test(url));
+          }
+        ),
     }),
     onSubmit: (values) => {
-      const imagesArray = values.images
+      // Konversi string images menjadi array string
+      const imagesArray: string[] = values.images
         .split(",")
         .map((url) => url.trim())
         .filter((url) => url !== "");
-      onSubmit({ ...values, images: imagesArray });
+
+      onSubmit({ ...initialValues, ...values, images: imagesArray });
     },
   });
 

@@ -1,7 +1,7 @@
-// components/ProductList.tsx
+// components/ProductList.tsx (tidak berubah)
 import React from "react";
 import Image from "next/image";
-import Link from "next/link"; // Pastikan Link diimpor
+import Link from "next/link";
 import { useCart } from "@/context/cartContext";
 import { formatRupiah } from "@/utils/formatRupiah";
 
@@ -35,10 +35,8 @@ const ProductList: React.FC<ProductListProps> = ({ products }) => {
           key={product.id}
           className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col"
         >
-          {/* Link ke halaman detail produk */}
           <Link href={`/user/product/productDetail/${product.id}`} passHref>
             <p className="flex-1">
-              {/* Kontainer Gambar dengan Aspect Ratio Lebih Rendah */}
               <div className="relative w-full aspect-[4/3]">
                 <Image
                   src={product.images[0]}
@@ -49,8 +47,6 @@ const ProductList: React.FC<ProductListProps> = ({ products }) => {
                   className="rounded-t-lg bg-gray-100"
                 />
               </div>
-
-              {/* Informasi Produk */}
               <div className="p-2 sm:p-3">
                 <h3 className="text-sm sm:text-base font-semibold text-gray-800 truncate">
                   {product.name}
@@ -70,8 +66,6 @@ const ProductList: React.FC<ProductListProps> = ({ products }) => {
               </div>
             </p>
           </Link>
-
-          {/* Tombol Tambah ke Keranjang */}
           <button
             onClick={() => addToCart(product)}
             className={`w-full py-1 sm:py-1.5 bg-green-500 text-white font-semibold rounded-b-lg ${

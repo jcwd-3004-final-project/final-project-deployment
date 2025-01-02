@@ -12,20 +12,22 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
 
   useEffect(() => {
-    // Fetch data dari API
     const fetchProducts = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/v1/api/product`
+          "http://localhost:8000/v1/api/products"
         );
-        console.log(response.data);
+        console.log("Response from API:", response.data);
+
+        // Asumsikan response.data.data = array of items,
+        // item.category = { id: number, name: string }
         const fetchedProducts: Product[] = response.data.data.map(
           (item: any) => ({
             id: item.id,
             name: item.name,
-            price: parseFloat(item.price), // Jika price string, konversi ke number
-            stockQuantity: parseInt(item.stockQuantity, 10), // Jika stock string, konversi ke number
-            category: item.category,
+            price: parseFloat(item.price),
+            stockQuantity: parseInt(item.stockQuantity, 10),
+            category: item.category, // { id: number, name: string }
             images: item.images,
           })
         );
@@ -34,31 +36,36 @@ const Home = () => {
         console.error("Error fetching products:", error);
       }
     };
-
     fetchProducts();
   }, []);
-  console.log("Ini product >>>", products);
 
+  // Filter
   const filteredProducts = products.filter((product) => {
+    // Filter by category
     const matchCategory = selectedCategory
-      ? product.category.toString() === selectedCategory
+      ? product.category?.name === selectedCategory
       : true;
+
+    // Filter by name
     const matchName = product.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
+
     return matchCategory && matchName;
   });
 
+  // Handler
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
   };
 
   const handleCategoryChange = (category: string) => {
+    // "category" di sini misalnya "Fruits" atau ""
+    console.log("handleCategoryChange:", category);
     setSelectedCategory(category);
   };
 
   const handleSearchSubmit = () => {
-    // Setelah produk difilter, scroll ke product section
     const productSection = document.querySelector("#product-section");
     if (productSection) {
       productSection.scrollIntoView({ behavior: "smooth" });
@@ -67,7 +74,6 @@ const Home = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Navbar */}
       <header>
         <Navbar
           onSearchChange={handleSearchChange}
@@ -75,19 +81,12 @@ const Home = () => {
           onSearchSubmit={handleSearchSubmit}
         />
       </header>
-
-      {/* Main Content */}
       <main className="flex-grow">
-        {/* Hero Section */}
         <HeroSection />
-
-        {/* Product List */}
         <section id="product-section" className="my-12">
           <ProductList products={filteredProducts} />
         </section>
       </main>
-
-      {/* Footer */}
       <footer>
         <Footer />
       </footer>
