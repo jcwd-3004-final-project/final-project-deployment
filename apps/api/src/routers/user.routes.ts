@@ -100,4 +100,26 @@ router.get(
   asyncWrap(OrderController.getOrder)
 );
 
+// ---------------------------
+// PROFILE ENDPOINTS
+// ---------------------------
+router.get(
+  "/profile",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  asyncWrap(UserController.getProfile)
+);
+
+router.put(
+  "/profile",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  asyncWrap(UserController.updateProfile)
+);
+
+router.delete(
+  "/profile",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  asyncWrap(UserController.deleteProfile)
+);
+
+
 export default router;

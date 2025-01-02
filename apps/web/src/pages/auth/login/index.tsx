@@ -1,38 +1,19 @@
+// pages/auth/login.tsx
 import React, { useState } from "react";
-import type { NextPage } from "next";
 import { useRouter } from "next/router";
+import Cookies from "js-cookie"; // if needed
 import { loginUser } from "@/lib/authApi";
+import { useUser } from "@/context/userContext";
 
-interface FormState {
-  email: string;
-  password: string;
-}
-
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  role: string;
-  isVerified: boolean;
-  avatar?: string;
-}
-
-const LoginPage: NextPage = () => {
-  const [form, setForm] = useState<FormState>({
-    email: "",
-    password: "",
-  });
-
-  const [error, setError] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
+const LoginPage = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  
+  // Access UserContext
+  const { setUserAndLogin } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,25 +21,24 @@ const LoginPage: NextPage = () => {
     setIsLoading(true);
 
     try {
-      const data = await loginUser(form);
+      const data = await loginUser({ email, password });
       const { user, accessToken, refreshToken } = data;
 
-      // Cek apakah user sudah verifikasi emailnya
       if (!user.isVerified) {
-        setError(
-          "Email belum dikonfirmasi. Silakan cek email Anda untuk melakukan konfirmasi."
-        );
+        setError("Email belum dikonfirmasi. Silakan cek email Anda.");
         setIsLoading(false);
         return;
       }
 
-      // Simpan token ke localStorage atau cookie (sesuai kebutuhan)
-      if (typeof window !== "undefined") {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
-      }
+      // Store tokens in localStorage (or Cookies)
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("user", JSON.stringify(user));
 
-      // Cek role user dan redirect sesuai role
+      // <-- Update global user context
+      setUserAndLogin(user);
+
+      // Redirect based on role
       if (user.role === "USER") {
         router.push("/");
       } else if (user.role === "STORE_ADMIN") {
@@ -81,62 +61,39 @@ const LoginPage: NextPage = () => {
         className="bg-white p-6 text-black rounded shadow-md w-full max-w-md"
         onSubmit={handleSubmit}
       >
-        <h2 className="text-2xl font-bold mb-4">Login</h2>
-
+        {/* ...Your login form fields... */}
         {error && <p className="text-red-600 mb-2">{error}</p>}
 
         <div className="mb-4">
-          <label className="block mb-2" htmlFor="email">
-            Email
-          </label>
+          <label>Email</label>
           <input
-            className="w-full border p-2 rounded"
             type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
             required
             disabled={isLoading}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border p-2 rounded"
           />
         </div>
-
         <div className="mb-4">
-          <label className="block mb-2" htmlFor="password">
-            Password
-          </label>
+          <label>Password</label>
           <input
-            className="w-full border p-2 rounded"
             type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
             required
             disabled={isLoading}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border p-2 rounded"
           />
         </div>
 
         <button
-          className={`bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 w-full flex items-center justify-center ${
-            isLoading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
           type="submit"
           disabled={isLoading}
+          className="bg-green-600 text-white py-2 px-4 rounded w-full hover:bg-green-700"
         >
-          {isLoading ? (
-            <svg
-              className="animate-spin h-5 w-5 mr-3 border-t-2 border-b-2 border-white rounded-full"
-              viewBox="0 0 24 24"
-            ></svg>
-          ) : null}
           {isLoading ? "Loading..." : "Login"}
         </button>
-
-        <p className="mt-4 text-sm">
-          Belum punya akun?{" "}
-          <a className="text-green-600" href="/auth/register">
-            Register
-          </a>
-        </p>
       </form>
     </div>
   );
