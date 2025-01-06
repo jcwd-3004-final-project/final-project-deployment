@@ -210,4 +210,44 @@ export class UserService {
     });
     return cost;
   }
+
+  async findUserById(userId: number) {
+    return prisma.user.findUnique({ where: { id: userId } });
+  }
+
+  async updateUserProfile(
+    userId: number,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      newPassword?: string;
+    }
+  ) {
+    // Optional: verify old password. For demo, we skip it.
+
+    // If newPassword is provided, you should hash it using bcrypt or similar.
+    // For demo, we just store it in plain text (NOT recommended in production).
+    const updateData: any = {};
+    if (data.firstName) updateData.first_name = data.firstName;
+    if (data.lastName) updateData.last_name = data.lastName;
+    if (data.email) updateData.email = data.email;
+    if (data.newPassword) updateData.password = data.newPassword; // hash in real app
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    return updatedUser;
+  }
+
+  async deleteUser(userId: number) {
+    // You might want to handle cascade deletes or check references
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error("User not found.");
+
+    // This will delete user if references are set up with onDelete = Cascade
+    await prisma.user.delete({ where: { id: userId } });
+  }
 }

@@ -2,6 +2,13 @@
 import { Request, Response } from 'express';
 import OrderService from '../services/admin.order.service';
 
+// 1. Define a local interface describing the user shape
+interface CustomUser {
+  id: number;
+  role: 'SUPER_ADMIN' | 'STORE_ADMIN' | 'USER';
+  storeId?: number; // Only if needed for STORE_ADMIN
+}
+
 class OrderController {
   private orderService: OrderService;
 
@@ -14,8 +21,9 @@ class OrderController {
     try {
       const storeId = req.query.storeId ? Number(req.query.storeId) : undefined;
 
-      // Cek peran pengguna
-      const user = req.user;
+      // 2. Assert that req.user is CustomUser
+      const user = req.user as CustomUser | undefined;
+
       if (!user) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -27,7 +35,7 @@ class OrderController {
         return;
       }
 
-      // SUPER_ADMIN dapat melihat semua pesanan atau filter berdasarkan storeId
+      // SUPER_ADMIN or other roles can view all orders (optionally filtered by storeId)
       const orders = await this.orderService.getAllOrders(storeId);
       res.json(orders);
     } catch (error) {
@@ -88,7 +96,8 @@ class OrderController {
         return;
       }
 
-      const user = req.user;
+      // 2. Assert that req.user is CustomUser
+      const user = req.user as CustomUser | undefined;
       if (!user) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
