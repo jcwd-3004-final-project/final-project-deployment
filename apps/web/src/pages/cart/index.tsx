@@ -2,7 +2,7 @@
 import React from "react";
 import { useCart } from "@/context/cartContext";
 import CartItem from "@/components/cartItem";
-import Navbar from "@/components/navbar";
+import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
 import Image from "next/image"; // Untuk optimasi gambar jika diperlukan
 import Link from "next/link"; // Untuk navigasi jika ingin menambahkan tombol lanjut belanja

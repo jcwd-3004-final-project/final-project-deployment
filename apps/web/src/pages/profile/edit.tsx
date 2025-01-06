@@ -1,139 +1,211 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import Navbar from "@/components/navbar";
-import PersonalInfoForm from "@/components/personalInfoForm";
-import ChangePasswordForm from "@/components/changePasswordForm";
-import { isValidEmail, isValidPassword } from "@/utils";
+import Navbar from "@/components/navbar/navbar";
 import Swal from "sweetalert2";
 
-interface Profile {
-  name: string;
+interface ProfileFormData {
+  firstName: string;
+  lastName: string;
   email: string;
-  password: string;
-  newPassword: string;
+  newPassword: string; // For updating password
 }
 
-interface Errors {
-  email: string;
-  newPassword: string;
-}
-
-const EditProfilePage = () => {
+export default function EditProfilePage() {
   const router = useRouter();
-
-  // Initial profile data (simulating fetched data from API)
-  const initialProfile: Profile = {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    password: "",
-    newPassword: "",
-  };
-
-  const [profile, setProfile] = useState<Profile>(initialProfile);
-  const [errors, setErrors] = useState<Errors>({
+  const [formData, setFormData] = useState<ProfileFormData>({
+    firstName: "",
+    lastName: "",
     email: "",
     newPassword: "",
   });
   const [loading, setLoading] = useState(false);
-  const [isChanged, setIsChanged] = useState(false);
 
-  // Check if the profile state has changed compared to the initial profile
+  // Fetch profile on mount
   useEffect(() => {
-    const hasChanges =
-      profile.name !== initialProfile.name ||
-      profile.email !== initialProfile.email ||
-      profile.password !== "" ||
-      profile.newPassword !== "";
-    setIsChanged(hasChanges);
-  }, [profile]);
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      router.push("/auth/login");
+      return;
+    }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
-  };
-
-  const validateProfile = (profile: Profile): Errors => {
-    const newErrors: Errors = {
-      email: "",
-      newPassword: "",
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/v1/api/user/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        const data = await res.json();
+        const { firstName, lastName, email } = data.data;
+        setFormData((prev) => ({ ...prev, firstName, lastName, email }));
+      } catch (error) {
+        console.error(error);
+      }
     };
+    fetchProfile();
+  }, [router]);
 
-    if (!isValidEmail(profile.email)) {
-      newErrors.email = "Format email tidak valid.";
-    }
-
-    if (profile.newPassword && !isValidPassword(profile.newPassword)) {
-      newErrors.newPassword = "Password harus minimal 8 karakter.";
-    }
-
-    return newErrors;
+  // Handle form changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Submit updated profile
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors = validateProfile(profile);
-    setErrors(newErrors);
+    setLoading(true);
 
-    if (Object.values(newErrors).every((error) => !error)) {
-      setLoading(true);
-      try {
-        // Simulate an API call to update the profile
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) throw new Error("No token found");
 
-        Swal.fire({
-          icon: "success",
-          title: "Berhasil",
-          text: "Profil Anda telah diperbarui.",
-        }).then(() => {
-          router.push("/profile"); // Navigate to profile page after update
-        });
-      } catch (error) {
-        console.error("Error updating profile:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Gagal",
-          text: "Terjadi kesalahan saat memperbarui profil.",
-        });
-      } finally {
-        setLoading(false);
+      const response = await fetch("http://localhost:8000/v1/api/user/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to update profile");
       }
+
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Profil Anda telah diperbarui.",
+      }).then(() => {
+        router.push("/profile");
+      });
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: error.message || "Terjadi kesalahan saat memperbarui profil.",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Delete Account
+  const handleDeleteAccount = () => {
+    Swal.fire({
+      title: "Hapus Akun?",
+      text: "Akun Anda akan dihapus secara permanen.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem("accessToken");
+          if (!token) throw new Error("No token found");
+
+          const response = await fetch("http://localhost:8000/v1/api/user/profile", {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || "Failed to delete account");
+          }
+
+          Swal.fire("Terhapus!", "Akun Anda telah dihapus.", "success").then(() => {
+            localStorage.removeItem("accessToken");
+            router.push("/");
+          });
+        } catch (error: any) {
+          Swal.fire({
+            icon: "error",
+            title: "Gagal",
+            text: error.message || "Terjadi kesalahan saat menghapus akun.",
+          });
+        }
+      }
+    });
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Navbar */}
       <Navbar />
-
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
           <h1 className="text-2xl font-semibold mb-6 text-gray-800 text-center">
             Edit Profil
           </h1>
           <form onSubmit={handleSubmit}>
-            {/* Personal Info Form */}
-            <PersonalInfoForm
-              profile={profile}
-              errors={errors}
-              onChange={handleInputChange}
-            />
-            {/* Password Change Form */}
-            <ChangePasswordForm
-              profile={profile}
-              errors={errors}
-              onChange={handleInputChange}
-            />
+            {/* Name */}
+            <div className="mb-4">
+              <label className="block mb-1 font-medium text-gray-700">
+                First Name
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                className="w-full border p-2 rounded"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-1 font-medium text-gray-700">
+                Last Name
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                className="w-full border p-2 rounded"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
+            {/* Email */}
+            <div className="mb-4">
+              <label className="block mb-1 font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                className="w-full border p-2 rounded"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* New Password */}
+            <div className="mb-4">
+              <label className="block mb-1 font-medium text-gray-700">
+                New Password (optional)
+              </label>
+              <input
+                type="password"
+                name="newPassword"
+                className="w-full border p-2 rounded"
+                placeholder="Leave blank if not changing"
+                value={formData.newPassword}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Buttons */}
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
               <button
                 type="submit"
-                disabled={loading || !isChanged}
-                className={`w-full sm:w-auto px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-300 ${
-                  loading || !isChanged
-                    ? "opacity-50 cursor-not-allowed"
-                    : "transform hover:scale-105"
+                disabled={loading}
+                className={`w-full sm:w-auto px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 {loading ? "Menyimpan..." : "Simpan Perubahan"}
@@ -141,16 +213,25 @@ const EditProfilePage = () => {
               <button
                 type="button"
                 onClick={() => router.push("/profile")}
-                className="w-full sm:w-auto px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-400 focus:ring-2 focus:ring-gray-200 focus:outline-none transition duration-300"
+                className="w-full sm:w-auto px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition"
               >
                 Batal
               </button>
             </div>
           </form>
+
+          <hr className="my-8" />
+          {/* Delete Account */}
+          <div className="text-right">
+            <button
+              onClick={handleDeleteAccount}
+              className="text-red-600 hover:text-red-800 transition underline"
+            >
+              Delete Account
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default EditProfilePage;
+}
