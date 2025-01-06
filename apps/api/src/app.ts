@@ -11,6 +11,14 @@ import userRouter from "./routers/user.routes";
 import productRouter from "./routers/product.router";
 import categoryRouter from "./routers/category.router";
 
+import storeRouter from "./routers/store.router";
+import orderRouter from "./routers/admin.order.router";
+
+
+import paymentRouter from "./routers/payment.router"
+
+
+
 require("dotenv").config();
 
 const app = express();
@@ -43,8 +51,13 @@ app.use("/v1/api/auth", authRouter);
 app.use("/v1/api/superadmin", superAdminRouter);
 app.use("/v1/api/user", userRouter);
 app.use("/v1/api/inventory", inventoryRouter);
-app.use("/v1/api/product", productRouter);
+app.use("/v1/api/products", productRouter);
 app.use("/v1/api/categories", categoryRouter);
+app.use("/v1/api/stores", storeRouter);
+app.use("/v1/api/orders", orderRouter);
+app.use("/v1/api/payment", paymentRouter)
+
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);
 });

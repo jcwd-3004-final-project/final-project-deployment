@@ -8,9 +8,14 @@ const authenticateJwt = new AuthenticateJwtMiddleware();
 
 router.post(
   "/store",
-  authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.createStore.bind(superAdminController)
+);
+
+router.post(
+  "/:storeId/products",
+  superAdminController.addStoreProduct.bind(superAdminController)
 );
 
 router.get(
@@ -21,8 +26,8 @@ router.get(
 );
 router.get(
   "/store/:storeId",
-  authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.getStoreById.bind(superAdminController)
 );
 router.put(
@@ -43,6 +48,7 @@ router.put(
   "/store/:storeId/admin",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
   authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
-  superAdminController.assignStoreAdmin.bind(superAdminController))
+  superAdminController.assignStoreAdmin.bind(superAdminController)
+);
 
 export default router;
