@@ -1,9 +1,17 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+// context/cartContext.tsx
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 export type Category = {
   id: number;
   name: string;
 };
+
 export type Product = {
   id: number;
   images: string[];
@@ -14,6 +22,7 @@ export type Product = {
   stockQuantity: number;
   category: Category;
 };
+
 export type CartProductItem = Product & { quantity: number };
 
 type CartContextType = {
@@ -31,6 +40,27 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [cart, setCart] = useState<CartProductItem[]>([]);
+
+  // Mengambil data keranjang dari localStorage saat komponen pertama kali dimount
+  useEffect(() => {
+    try {
+      const storedCart = localStorage.getItem("cart");
+      if (storedCart) {
+        setCart(JSON.parse(storedCart));
+      }
+    } catch (error) {
+      console.error("Gagal mengambil keranjang dari localStorage:", error);
+    }
+  }, []);
+
+  // Menyimpan data keranjang ke localStorage setiap kali keranjang berubah
+  useEffect(() => {
+    try {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    } catch (error) {
+      console.error("Gagal menyimpan keranjang ke localStorage:", error);
+    }
+  }, [cart]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -84,7 +114,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
+    throw new Error("useCart harus digunakan di dalam CartProvider");
   }
   return context;
 };

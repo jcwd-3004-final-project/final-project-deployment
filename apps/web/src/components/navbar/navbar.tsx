@@ -53,9 +53,9 @@ export default function Navbar({
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
       <div className="flex items-center justify-between px-4 py-2 border-b">
-        {/* Logo */}
         <div
-          className="text-lg font-bold flex items-center cursor-pointer"
+          className="text-lg font-bold flex items-center justify-center cursor-pointer"
+
           onClick={() => router.push("/")}
         >
           <img src="/logo.png" alt="Logo" className="w-auto h-8" />
@@ -76,6 +76,8 @@ export default function Navbar({
 
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
+              {/* Menggunakan Link untuk My Cart */}
+
               <Link
                 href="/cart"
                 className="text-gray-700 hover:text-green-600 flex items-center"
@@ -175,7 +177,7 @@ export default function Navbar({
             className="text-gray-700 font-medium hover:text-green-600"
             onClick={() => setIsMenuOpen(false)}
           >
-            Promotions
+            Product
           </Link>
           <div className="flex items-center gap-2 bg-green-600 text-white rounded hover:bg-green-700">
             <SelectScrollable onCategorySelect={handleCategorySelect} />

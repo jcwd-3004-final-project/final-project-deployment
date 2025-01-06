@@ -28,14 +28,16 @@ const Home = () => {
           category: item.category,
           images: item.images,
         }));
+
         setProducts(fetchedProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
-
     fetchProducts();
   }, []);
+
+
 
   // ------------------------------
   // 2) Get User Location & Store in Local Storage
@@ -75,22 +77,31 @@ const Home = () => {
   // ------------------------------
   // 3) Filter Products
   // ------------------------------
+
   const filteredProducts = products.filter((product) => {
+    // Filter by category
     const matchCategory = selectedCategory
-      ? product.category.toString() === selectedCategory
+      ? product.category?.name === selectedCategory
       : true;
-    const matchName = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+
+    // Filter by name
+    const matchName = product.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
     return matchCategory && matchName;
   });
 
-  // ------------------------------
-  // 4) Handlers
-  // ------------------------------
+  // Handler
+
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
   };
 
   const handleCategoryChange = (category: string) => {
+    // "category" di sini misalnya "Fruits" atau ""
+    console.log("handleCategoryChange:", category);
     setSelectedCategory(category);
   };
 
@@ -127,7 +138,6 @@ const Home = () => {
           <p>Longitude: {longitude || "N/A"}</p>
         </section>
       </main>
-
       <footer>
         <Footer />
       </footer>
