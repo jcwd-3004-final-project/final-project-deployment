@@ -114,7 +114,7 @@ export class OrderService {
       await this.inventoryService.updateStock(
         item.productId,
         -item.quantity,
-        `Order #${newOrder.id} created - deduct stock`
+        `Order #${newOrder.id} created - deduct stock`,
       );
     }
 
