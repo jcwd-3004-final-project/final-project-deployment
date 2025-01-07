@@ -1,6 +1,15 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
+import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 
+// Tipe data untuk Product
+interface Product {
+  productId: number;
+  name: string;
+  stock: number; // atau field lain sesuai backend
+}
+
+// Tipe data untuk Stock Log
 interface StockLog {
   id: number;
   productId: number;
@@ -10,157 +19,301 @@ interface StockLog {
 }
 
 export default function AdminDashboardPage() {
-  const [productId, setProductId] = useState<number>(0);
+  // Contoh: storeId didapat setelah login, di sini kita pakai localStorage atau hard-coded
+  // Misal, kita asumsikan localStorage key: "assignedStoreId"
+  const [storeId, setStoreId] = useState<number | null>(null);
+
+  // Data produk
+  const [products, setProducts] = useState<Product[]>([]);
+
+  // Untuk update stok
+  const [selectedProductId, setSelectedProductId] = useState<number>(0);
   const [changeQuantity, setChangeQuantity] = useState<number>(0);
   const [reason, setReason] = useState<string>("");
-  const [logs, setLogs] = useState<StockLog[]>([]);
-  const [message, setMessage] = useState<string>(""); // untuk info sukses/gagal
 
-  // Sesuaikan dengan alamat port/host backend Express Anda
+  // Untuk menampilkan logs
+  const [logs, setLogs] = useState<StockLog[]>([]);
+
+  // UI state
+  const [message, setMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  // Contoh base URL sesuai rute backend
   const BASE_URL = "http://localhost:8000/v1/api/inventory";
 
-  // Handle Update Stock
-  const handleUpdateStock = async (e: FormEvent) => {
-    e.preventDefault();
-    setMessage("");
+  // 1. Ambil storeId dari localStorage (atau user context, dsb.)
+  useEffect(() => {
+    const localStoreId = localStorage.getItem("assignedStoreId");
+    if (localStoreId) {
+      setStoreId(Number(localStoreId));
+    } else {
+      // Jika tidak ada, mungkin redirect ke halaman login atau tampilkan pesan
+      setMessage("Store ID not found. Please login or contact super admin.");
+    }
+  }, []);
 
+  // 2. Fetch products untuk storeId tertentu
+  const fetchProducts = async (storeId: number) => {
     try {
-      // Memanggil PUT /update-stock
-      // Body yang dikirim: { productId, changeQuantity, reason }
-      const res = await fetch(`${BASE_URL}/update-stock`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId, // <-- pastikan key-nya "productId"
-          changeQuantity,
-          reason,
-        }),
-      });
+      setLoading(true);
+      setMessage("");
 
-      const result = await res.json();
+      // GET /stores/:storeId/products
+      const res = await fetch(`${BASE_URL}/stores/${storeId}/products`);
+      const data = await res.json();
       if (!res.ok) {
-        throw new Error(result?.error || "Failed to update stock");
+        throw new Error(data?.message || "Failed to fetch products");
       }
 
-      setMessage("Stock updated successfully!");
-      // Reset form
-      setChangeQuantity(0);
-      setReason("");
+      setProducts(data.data || []);
+      setMessage("Products fetched successfully!");
     } catch (error: any) {
       setMessage(error.message);
-      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle Fetch Logs
-  const handleFetchLogs = async () => {
-    setMessage("");
-
-    if (!productId) {
-      setMessage("Mohon isi Product ID terlebih dahulu");
+  // 3. Update stock untuk productId tertentu
+  const handleUpdateStock = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!storeId || !selectedProductId) {
+      setMessage("Please select a product first.");
       return;
     }
+    setLoading(true);
+    setMessage("");
 
     try {
-      // Memanggil GET /stock-logs/:productId
-      const res = await fetch(`${BASE_URL}/stock-logs/${productId}`, {
-        method: "GET",
-      });
+      // POST /stores/:storeId/products/:productId/stock
+      const res = await fetch(
+        `${BASE_URL}/stores/${storeId}/products/${selectedProductId}/stock`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            changeQuantity,
+            reason,
+          }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result?.message || "Failed to update stock");
+      }
+
+      setMessage("Stock updated successfully!");
+      setChangeQuantity(0);
+      setReason("");
+      // Refresh products list to see new stock
+      fetchProducts(storeId);
+      // Juga bisa langsung fetch logs
+      handleFetchLogs(selectedProductId);
+    } catch (error: any) {
+      setMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 4. Fetch logs untuk productId tertentu
+  const handleFetchLogs = async (productId: number) => {
+    if (!storeId || !productId) return;
+    setLoading(true);
+    setMessage("");
+
+    try {
+      // GET /stores/:storeId/products/:productId/logs
+      const res = await fetch(
+        `${BASE_URL}/stores/${storeId}/products/${productId}/logs`
+      );
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to fetch logs");
+        throw new Error(data?.message || "Failed to fetch logs");
       }
 
       setLogs(data.data || []);
       setMessage("Logs fetched successfully!");
     } catch (error: any) {
       setMessage(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-2xl font-bold mb-4">Store Admin Dashboard</h1>
+  // Saat storeId tersedia, fetch daftar product
+  useEffect(() => {
+    if (storeId) {
+      fetchProducts(storeId);
+    }
+  }, [storeId]);
 
-      {/* Pesan sukses/gagal */}
-      {message && <div className="mb-4 text-sm text-blue-600">{message}</div>}
+  // Jika user memilih product, otomatis fetch logs
+  useEffect(() => {
+    if (selectedProductId > 0) {
+      handleFetchLogs(selectedProductId);
+    } else {
+      setLogs([]);
+    }
+  }, [selectedProductId]);
+
+  return (
+    <div className="min-h-screen bg-green-50 p-8">
+      <h1 className="text-4xl font-bold text-green-800 mb-6">
+        Store Admin Dashboard
+      </h1>
+
+      {/* Notification */}
+      {message && (
+        <div
+          className={`mb-4 p-4 rounded border-l-4 ${
+            message.includes("success")
+              ? "bg-green-100 text-green-700 border-green-600"
+              : "bg-red-100 text-red-700 border-red-600"
+          }`}
+        >
+          {message.includes("success") ? (
+            <FaCheckCircle className="inline mr-2" />
+          ) : (
+            <FaExclamationCircle className="inline mr-2" />
+          )}
+          {message}
+        </div>
+      )}
+
+      {/* Daftar Product */}
+      <div className="bg-white p-6 rounded shadow-md border border-green-200 mb-6">
+        <h2 className="text-xl font-semibold text-green-700 mb-4">
+          Products in Your Store
+        </h2>
+        {products.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No products found for this store.
+          </p>
+        ) : (
+          <table className="w-full border-collapse border text-sm">
+            <thead>
+              <tr className="bg-green-100 border-b">
+                <th className="py-2 px-4 text-left text-green-800">Product ID</th>
+                <th className="py-2 px-4 text-left text-green-800">Name</th>
+                <th className="py-2 px-4 text-left text-green-800">Stock</th>
+                <th className="py-2 px-4 text-left text-green-800">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((prod) => (
+                <tr key={prod.productId} className="border-b hover:bg-green-50">
+                  <td className="py-2 px-4">{prod.productId}</td>
+                  <td className="py-2 px-4">{prod.name}</td>
+                  <td className="py-2 px-4">{prod.stock}</td>
+                  <td className="py-2 px-4">
+                    <button
+                      onClick={() => setSelectedProductId(prod.productId)}
+                      className="text-blue-600 underline"
+                    >
+                      View Logs
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {/* Form Update Stock */}
-      <form onSubmit={handleUpdateStock} className="mb-6 space-y-4">
+      <form
+        onSubmit={handleUpdateStock}
+        className="bg-white p-6 rounded shadow-md border border-green-200 space-y-4 mb-6"
+      >
+        <h2 className="text-xl font-semibold text-green-700 mb-4">
+          Update Stock
+        </h2>
+
+        {/* Pilih product ID dari dropdown agar tidak manual ketik */}
         <div>
-          <label className="block mb-1 text-sm font-medium">Product ID</label>
-          <input
-            type="number"
-            value={productId || ""}
-            onChange={(e) => setProductId(Number(e.target.value))}
-            className="border rounded px-3 py-1 w-48"
-            required
-          />
+          <label className="block text-sm font-medium text-green-800 mb-1">
+            Select Product
+          </label>
+          <select
+            value={selectedProductId}
+            onChange={(e) => setSelectedProductId(Number(e.target.value))}
+            className="border rounded px-4 py-2 w-full focus:ring focus:ring-green-200 focus:border-green-400"
+          >
+            <option value={0}>-- Choose a Product --</option>
+            {products.map((prod) => (
+              <option key={prod.productId} value={prod.productId}>
+                {prod.name} (ID: {prod.productId})
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-medium">
+          <label className="block text-sm font-medium text-green-800 mb-1">
             Change Quantity
           </label>
           <input
             type="number"
             value={changeQuantity || ""}
             onChange={(e) => setChangeQuantity(Number(e.target.value))}
-            className="border rounded px-3 py-1 w-48"
+            className="border rounded px-4 py-2 w-full focus:ring focus:ring-green-200 focus:border-green-400"
             required
           />
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-medium">Reason</label>
+          <label className="block text-sm font-medium text-green-800 mb-1">
+            Reason
+          </label>
           <input
             type="text"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="border rounded px-3 py-1 w-96"
+            className="border rounded px-4 py-2 w-full focus:ring focus:ring-green-200 focus:border-green-400"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          disabled={loading || selectedProductId === 0}
+          className={`w-full py-2 rounded bg-green-600 text-white font-medium ${
+            loading || selectedProductId === 0
+              ? "opacity-70 cursor-not-allowed"
+              : "hover:bg-green-700"
+          }`}
         >
-          Update Stock
+          {loading ? "Processing..." : "Update Stock"}
         </button>
       </form>
 
-      {/* Tombol Fetch Logs */}
-      <div className="mb-6">
-        <button
-          onClick={handleFetchLogs}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        >
-          Fetch Logs
-        </button>
-      </div>
-
-      {/* Tabel Logs */}
-      <div className="bg-white p-4 rounded shadow">
-        <h2 className="text-xl font-semibold mb-2">Stock Logs</h2>
+      {/* Logs Table */}
+      <div className="bg-white p-6 rounded shadow-md border border-green-200">
+        <h2 className="text-xl font-semibold text-green-700 mb-4">
+          Stock Logs
+        </h2>
         {logs.length === 0 ? (
-          <p className="text-sm text-gray-500">No logs found.</p>
+          <p className="text-sm text-gray-500">No logs for selected product.</p>
         ) : (
-          <table className="min-w-full border text-sm">
+          <table className="w-full border-collapse border text-sm">
             <thead>
-              <tr className="border-b bg-gray-100">
-                <th className="py-2 px-4 text-left">Log ID</th>
-                <th className="py-2 px-4 text-left">Product ID</th>
-                <th className="py-2 px-4 text-left">Change Quantity</th>
-                <th className="py-2 px-4 text-left">Reason</th>
-                <th className="py-2 px-4 text-left">Date</th>
+              <tr className="bg-green-100 border-b">
+                <th className="py-2 px-4 text-left text-green-800">Log ID</th>
+                <th className="py-2 px-4 text-left text-green-800">
+                  Product ID
+                </th>
+                <th className="py-2 px-4 text-left text-green-800">
+                  Change Quantity
+                </th>
+                <th className="py-2 px-4 text-left text-green-800">Reason</th>
+                <th className="py-2 px-4 text-left text-green-800">Date</th>
               </tr>
             </thead>
             <tbody>
               {logs.map((log) => (
-                <tr key={log.id} className="border-b hover:bg-gray-50">
+                <tr key={log.id} className="border-b hover:bg-green-50">
                   <td className="py-2 px-4">{log.id}</td>
                   <td className="py-2 px-4">{log.productId}</td>
                   <td className="py-2 px-4">{log.changeQuantity}</td>

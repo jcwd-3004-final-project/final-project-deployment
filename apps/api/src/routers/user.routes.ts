@@ -3,6 +3,7 @@ import multer from "multer";
 import { UserController } from "../controllers/user.controllers";
 import { OrderController } from "../controllers/order.controller";
 import { AuthenticateJwtMiddleware } from "../middlewares/user.middleware";
+import { CartController } from "../controllers/cart.controller";
 
 
 const router = Router();
@@ -120,6 +121,41 @@ router.delete(
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
   asyncWrap(UserController.deleteProfile)
 );
+
+//CART
+
+// OPTIONAL: Logging middleware
+router.use((req: Request, res: Response, next: NextFunction) => {
+  // console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
+// ---------------------------
+// CART ENDPOINTS
+// ---------------------------
+router.get(
+  "/",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(CartController.getCart)
+);
+
+router.post(
+  "/items",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(CartController.addItem)
+);
+
+router.put(
+  "/items/remove",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(CartController.removeItem)
+);
+
+
+
 
 
 export default router;

@@ -1,63 +1,118 @@
 import prisma from "../models/models";
 
 export class InventoryService {
-  // Update stock quantity
-  async updateStock(id: number, changeQuantity: number, reason: string) {
-    console.log(`Attempting to update stock for Product ID: ${id}`);
+  /**
+   * Update stock quantity di StoreProduct
+   * @param storeId  ID Toko
+   * @param productId ID Produk
+   * @param changeQuantity (+) jika menambah stok, (-) jika mengurangi stok
+   * @param reason Alasan perubahan stok
+   */
+  async updateStock(
+    storeId: number,
+    productId: number,
+    changeQuantity: number,
+    reason: string
+  ) {
+    console.log(
+      `Attempting to update stock for Store ID: ${storeId}, Product ID: ${productId}`
+    );
 
-    // Fetch the product
-    const product = await prisma.product.findUnique({
-      where: { id },
+    // 1. Pastikan StoreProduct ada
+    const storeProduct = await prisma.storeProduct.findFirst({
+      where: {
+        storeId: storeId,
+        productId: productId,
+      },
     });
 
-    if (!product) {
-      console.error(`Product with ID ${id} not found.`);
-      throw new Error("Product not found");
+    if (!storeProduct) {
+      console.error(
+        `StoreProduct with storeId=${storeId} and productId=${productId} not found.`
+      );
+      throw new Error("StoreProduct not found");
     }
 
-    console.log(`Current stock for Product ID ${id}: ${product.stockQuantity}`);
+    console.log(
+      `Current stock for Store ID ${storeId}, Product ID ${productId}: ${storeProduct.stock}`
+    );
 
-    // Calculate new stock
-    const newStock = product.stockQuantity + changeQuantity;
+    // 2. Hitung stok baru
+    const newStock = storeProduct.stock + changeQuantity;
     console.log(`New stock after change: ${newStock}`);
 
     if (newStock < 0) {
       console.error(
-        `Insufficient stock for Product ID ${id}. Requested change: ${changeQuantity}`
+        `Insufficient stock for StoreProduct storeId=${storeId}, productId=${productId}.`
       );
       throw new Error("Insufficient stock");
     }
 
-    // Update the product stock
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: { stockQuantity: newStock },
-    });
-
-    console.log(
-      `Stock updated for Product ID ${id}: ${updatedProduct.stockQuantity}`
-    );
-
-    // Create a stock log entry
-    await prisma.stockLog.create({
+    // 3. Update storeProduct.stock
+    const updatedStoreProduct = await prisma.storeProduct.update({
+      where: {
+        id: storeProduct.id, // atau unique compound (storeId, productId) jika sudah di-set
+      },
       data: {
-        productId: id, // Pastikan ini sesuai dengan skema Prisma Anda
-        changeQuantity,
-        reason,
+        stock: newStock,
       },
     });
 
-    console.log(`Stock log created for Product ID ${id}`);
+    console.log(
+      `Stock updated for StoreProduct. New stock: ${updatedStoreProduct.stock}`
+    );
 
-    return updatedProduct;
+    // 4. Buat log / penyesuaian stok
+    //    Jika Anda menggunakan StockAdjustment:
+    await prisma.stockAdjustment.create({
+      data: {
+        storeProductId: storeProduct.id,
+        adjustmentType: changeQuantity >= 0 ? "INCREASE" : "DECREASE",
+        quantity: Math.abs(changeQuantity),
+        reason: reason as any,
+      },
+    });
+
+    console.log(
+      `Stock log (StockAdjustment) created for storeProductId=${storeProduct.id}`
+    );
+
+    return updatedStoreProduct;
   }
 
-  // Get stock logs
-  async getStockLogs(id: number) {
-    console.log(`Fetching stock logs for Product ID: ${id}`);
-    const logs = await prisma.stockLog.findMany({
-      where: { productId: id }, // Pastikan ini sesuai dengan skema Prisma Anda
-      orderBy: { createdAt: "desc" },
+  /**
+   * Get stock logs dari StockAdjustment (atau StockLog) untuk StoreProduct tertentu
+   * @param storeId  ID Toko
+   * @param productId ID Produk
+   */
+  async getStockLogs(storeId: number, productId: number) {
+    console.log(
+      `Fetching stock logs for Store ID: ${storeId}, Product ID: ${productId}`
+    );
+
+    // Pastikan storeProduct ada
+    const storeProduct = await prisma.storeProduct.findFirst({
+      where: {
+        storeId: storeId,
+        productId: productId,
+      },
+    });
+
+    if (!storeProduct) {
+      console.error(
+        `StoreProduct with storeId=${storeId} and productId=${productId} not found.`
+      );
+      throw new Error("StoreProduct not found");
+    }
+
+    // Ambil semua penyesuaian stok
+    const logs = await prisma.stockAdjustment.findMany({
+      where: {
+        storeProductId: storeProduct.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
     return logs;

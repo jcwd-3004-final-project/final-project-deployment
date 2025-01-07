@@ -49,6 +49,15 @@ const CartPage = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Checkout Button */}
+              <div className="flex justify-end mt-4">
+                <Link href="/checkout">
+                  <button className="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                    Proceed to Checkout
+                  </button>
+                </Link>
+              </div>
             </div>
 
             {/* Ringkasan Pembelian atau Promo (Opsional) */}
