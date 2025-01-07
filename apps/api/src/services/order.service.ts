@@ -112,6 +112,7 @@ export class OrderService {
     // 6) Deduct stock
     for (const item of items) {
       await this.inventoryService.updateStock(
+        storeId,
         item.productId,
         -item.quantity,
         `Order #${newOrder.id} created - deduct stock`
