@@ -10,6 +10,7 @@ import inventoryRouter from "./routers/inventory.router";
 import userRouter from "./routers/user.routes";
 import productRouter from "./routers/product.router";
 import categoryRouter from "./routers/category.router";
+import cartRouter from "./routers/cart.router";
 
 import storeRouter from "./routers/store.router";
 import orderRouter from "./routers/admin.order.router";
@@ -56,6 +57,7 @@ app.use("/v1/api/categories", categoryRouter);
 app.use("/v1/api/stores", storeRouter);
 app.use("/v1/api/orders", orderRouter);
 app.use("/v1/api/payment", paymentRouter)
+
 
 
 app.listen(PORT, "0.0.0.0", () => {
