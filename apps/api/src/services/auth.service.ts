@@ -169,7 +169,7 @@ export class AuthService {
   // Generate Access Token
   private _generateAccessToken(user: User): string {
     const payload: TokenPayload = { userId: user.id, role: user.role };
-    return jwt.sign(payload, JWT_ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+    return jwt.sign(payload, JWT_ACCESS_TOKEN_SECRET, { expiresIn: '60m' });
   }
 
   // Generate Refresh Token

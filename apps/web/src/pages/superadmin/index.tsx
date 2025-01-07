@@ -17,7 +17,7 @@ interface Store {
 
 export default function SuperAdminHome() {
   const router = useRouter();
-
+  
   const [stores, setStores] = useState<Store[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);

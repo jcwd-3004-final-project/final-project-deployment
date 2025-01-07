@@ -11,20 +11,25 @@ export class InventoryController {
   // Update stock quantity
   async updateStock(req: Request, res: Response) {
     console.log("updateStock called");
-    const { productId, changeQuantity, reason } = req.body;
+
+    // storeId & productId dari URL
+    const { storeId, productId } = req.params;
+    // body
+    const { changeQuantity, reason } = req.body;
 
     try {
-      const updatedProduct = await this.inventoryService.updateStock(
-        productId,
-        changeQuantity,
+      const updatedStoreProduct = await this.inventoryService.updateStock(
+        Number(storeId),
+        Number(productId),
+        Number(changeQuantity),
         reason
       );
       res.status(200).json({
         message: "Stock updated successfully",
-        data: updatedProduct,
+        data: updatedStoreProduct,
       });
     } catch (error: any) {
-      console.error("Error in updateStock:", error); // Log the error
+      console.error("Error in updateStock:", error);
       res.status(400).json({
         message: error.message || "Failed to update stock",
       });
@@ -33,15 +38,22 @@ export class InventoryController {
 
   // Get stock logs
   async getStockLogs(req: Request, res: Response) {
-    const { productId } = req.params;
+    console.log("getStockLogs called");
+
+    // storeId & productId dari URL
+    const { storeId, productId } = req.params;
 
     try {
-      const logs = await this.inventoryService.getStockLogs(Number(productId));
+      const logs = await this.inventoryService.getStockLogs(
+        Number(storeId),
+        Number(productId)
+      );
       res.status(200).json({
         message: "Stock logs retrieved successfully",
         data: logs,
       });
     } catch (error: any) {
+      console.error("Error in getStockLogs:", error);
       res.status(400).json({
         message: error.message || "Failed to retrieve stock logs",
       });
