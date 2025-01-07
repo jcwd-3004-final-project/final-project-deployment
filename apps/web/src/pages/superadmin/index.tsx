@@ -1,5 +1,4 @@
-// pages/admin/index.tsx
-
+// pages/superadmin/index.tsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import StoreModal from "../../components/storeModal";
@@ -16,10 +15,9 @@ interface Store {
   store_admin?: string | null;
 }
 
-export default function Home() {
-  // Menggunakan Next.js Router
+export default function SuperAdminHome() {
   const router = useRouter();
-
+  
   const [stores, setStores] = useState<Store[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -37,12 +35,34 @@ export default function Home() {
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
 
+  // 1. Fetch token from localStorage (handle case if missing)
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+
+  // Helper: Returns an axios config object with the auth header
+  const axiosConfig = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  // 2. Fetch stores with Authorization header
   const fetchStores = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/stores`);
+      // Check if no token - redirect to login or handle
+      if (!token) {
+        alert("No token found. Please log in first.");
+        router.push("/auth/login");
+        return;
+      }
+      const res = await axios.get(`${BASE_URL}/stores`, axiosConfig);
       setStores(res.data.data);
     } catch (error) {
       console.error("Error fetching stores:", error);
+      if ((error as any)?.response?.status === 401) {
+        alert("Unauthorized. Redirecting to login...");
+        router.push("/auth/login");
+      }
     }
   };
 
@@ -62,27 +82,34 @@ export default function Home() {
     });
   };
 
-  // Buka modal Edit
   const handleOpenEditModal = (store: Store) => {
     setIsEditMode(true);
     setIsModalOpen(true);
     setCurrentStore(store);
   };
 
-  // Submit modal (Create/Edit)
+  // 3. Submit modal (Create/Edit) with token
   const handleSubmitStore = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!token) {
+        alert("No token found. Please log in first.");
+        router.push("/auth/login");
+        return;
+      }
+
       if (isEditMode && currentStore.store_id) {
         // Update store
         await axios.put(
           `${BASE_URL}/stores/${currentStore.store_id}`,
-          currentStore
+          currentStore,
+          axiosConfig
         );
       } else {
         // Create store
-        await axios.post(`${BASE_URL}/stores`, currentStore);
+        await axios.post(`${BASE_URL}/stores`, currentStore, axiosConfig);
       }
+
       setIsModalOpen(false);
       fetchStores();
     } catch (error) {
@@ -90,20 +117,31 @@ export default function Home() {
     }
   };
 
-  // Delete store
+  // 4. Delete store with token
   const handleDeleteStore = async (storeId: number) => {
     try {
-      await axios.delete(`${BASE_URL}/stores/${storeId}`);
+      if (!token) {
+        alert("No token found. Please log in first.");
+        router.push("/auth/login");
+        return;
+      }
+      await axios.delete(`${BASE_URL}/stores/${storeId}`, axiosConfig);
       fetchStores();
     } catch (error) {
       console.error("Error deleting store:", error);
     }
   };
 
-  // Submit assign admin - sekarang berdasarkan nama toko
+  // 5. Assign admin with token
   const handleAssignAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!token) {
+        alert("No token found. Please log in first.");
+        router.push("/auth/login");
+        return;
+      }
+
       // Cari store berdasarkan nama
       const selectedStore = stores.find((s) => s.name === assignData.storeName);
       if (!selectedStore) {
@@ -116,7 +154,8 @@ export default function Home() {
         `${BASE_URL}/stores/${selectedStore.store_id}/assign-admin`,
         {
           adminUserId: assignData.adminUserId,
-        }
+        },
+        axiosConfig
       );
 
       setIsAssignModalOpen(false);
@@ -141,9 +180,8 @@ export default function Home() {
 
   // Fungsi callback setelah produk berhasil ditambahkan
   const handleProductAdded = () => {
-    // Anda mungkin ingin mem-refresh daftar produk di halaman CRUD atau melakukan aksi lain
-    // Karena halaman CRUD terpisah, Anda bisa menambahkan navigasi atau tidak
     alert("Product successfully added to the store.");
+    // Optionally, fetchStores() again to refresh store data if needed
   };
 
   return (
@@ -162,7 +200,6 @@ export default function Home() {
         {/* Tombol Assign Admin */}
         <button
           onClick={() => {
-            // Reset state assignData setiap kali buka modal
             setAssignData({ storeName: "", adminUserId: "" });
             setIsAssignModalOpen(true);
           }}
@@ -171,16 +208,13 @@ export default function Home() {
           Assign Admin
         </button>
 
-        {/* Tombol "Add Product to Store" */}
+        {/* Tombol "Add Product to First Store" */}
         <button
           onClick={() => {
-            // Anda bisa memilih store terlebih dahulu atau menggunakan store yang sudah dipilih
             if (stores.length === 0) {
               alert("No stores available.");
               return;
             }
-
-            // Misalnya, pilih store pertama sebagai contoh
             const firstStore = stores[0];
             handleOpenAddProductModal(firstStore.store_id);
           }}
