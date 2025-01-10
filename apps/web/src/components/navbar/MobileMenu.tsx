@@ -95,11 +95,11 @@ export default function MobileMenu({
         Home
       </Link>
       <Link
-        href="/promotions"
+        href="/product"
         className="text-gray-700 font-medium hover:text-green-600"
         onClick={() => setIsMenuOpen(false)}
       >
-        Promotions
+        Product
       </Link>
 
       {/* Categories */}

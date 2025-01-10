@@ -24,32 +24,13 @@ export default function CheckoutPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>("TRANSFER");
   const [storeId] = useState<number>(1); // Example store ID
 
-  const [token, setToken] = useState<string | null>(null);
-
-  // Retrieve token from localStorage on component mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedToken = localStorage.getItem("accessToken");
-      setToken(storedToken);
-      if (!storedToken) {
-        alert("No access token found. Please log in.");
-        router.push("/auth/login");
-      }
-    }
-  }, [router]);
-
-  // Fetch user addresses with Authorization header
+  // Fetch user addresses
   useEffect(() => {
     const fetchAddresses = async () => {
-      if (!token) return;
-
       try {
+        // Adjust to your actual server & token usage
         const response = await fetch("http://localhost:8000/v1/api/user/addresses", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include", // or pass bearer token
         });
         const result = await response.json();
         if (result.success) {
@@ -59,17 +40,13 @@ export default function CheckoutPage() {
           }
         } else {
           console.error(result.error);
-          if (result.error === "Unauthorized") {
-            alert("Session expired. Please log in again.");
-            router.push("/auth/login");
-          }
         }
       } catch (error) {
         console.error("Error fetching addresses:", error);
       }
     };
     fetchAddresses();
-  }, [token, router]);
+  }, []);
 
   // Format currency
   const formatRupiah = (num: number) => {
@@ -89,12 +66,6 @@ export default function CheckoutPage() {
 
     if (cart.length === 0) {
       alert("Your cart is empty");
-      return;
-    }
-
-    if (!token) {
-      alert("No access token found. Please log in.");
-      router.push("/auth/login");
       return;
     }
 
@@ -118,8 +89,8 @@ export default function CheckoutPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include", // or pass Bearer token
         body: JSON.stringify(orderBody),
       });
       const data = await res.json();
@@ -128,21 +99,21 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Failed to create order");
       }
 
-      const newOrder = data.data;
+      const newOrder = data.data; 
       const orderId = newOrder.id;
 
       // 2) If Payment Method = TRANSFER => go to "/payment" to upload proof
       if (selectedPayment === "TRANSFER") {
         router.push(`/payment?orderId=${orderId}`);
-      }
+      } 
       // 3) If Payment Method = PAYMENT_GATEWAY => call payment create, then redirect
       else {
         const paymentRes = await fetch("http://localhost:8000/v1/api/payment/create", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
+          credentials: "include", // or token
           body: JSON.stringify({ orderId }),
         });
         const paymentData = await paymentRes.json();
@@ -152,15 +123,11 @@ export default function CheckoutPage() {
         }
         // e.g. "redirectUrl" from the response
         const redirectUrl = paymentData.data.redirectUrl;
-        window.location.href = redirectUrl; // redirect to payment gateway
+        window.location.href = redirectUrl; // redirect to Midtrans (or whichever gateway)
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Checkout error:", error);
       alert("Could not complete your order. Please try again later.");
-      // Optionally, handle specific error cases (e.g., token expired)
-      if (error.message === "Unauthorized") {
-        router.push("/auth/login");
-      }
     }
   };
 

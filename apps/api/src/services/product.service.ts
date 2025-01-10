@@ -158,7 +158,13 @@ export class ProductService {
 
         // Hapus entri terkait di Voucher
         await tx.voucher.deleteMany({
-          where: { productId: id },
+          where: {
+            products: {
+              some: {
+                id: id,
+              },
+            },
+          },
         });
 
         // Hapus entri terkait di StockLog

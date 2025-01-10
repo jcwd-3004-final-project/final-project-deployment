@@ -1,24 +1,50 @@
-// pages/superadmin/index.tsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import StoreModal from "../../components/storeModal";
 import AddStoreProductModal from "../../components/addStoreProductModal"; // Import komponen baru
 import { useRouter } from "next/router";
+import { toast } from "react-toastify";
+
+interface Admin {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  role: string;
+  isVerified: boolean;
+  googleId: string | null;
+  facebookId: string | null;
+  avatar: string | null;
+  createdAt: string;
+  updatedAt: string;
+  last_activity: string;
+  storeId: number;
+}
 
 interface Store {
   store_id: number;
   name: string;
   address: string;
   city?: string;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
   latitude: number;
   longitude: number;
-  store_admin?: string | null;
+  maxDeliveryDistance?: number | null;
+  store_admin?: string | number | null;
+  storeAdmins: Admin[];
+  storeProducts: any[]; // Sesuaikan dengan struktur produk jika perlu
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function SuperAdminHome() {
   const router = useRouter();
-  
+
   const [stores, setStores] = useState<Store[]>([]);
+  const [allAdmins, setAllAdmins] = useState<Admin[]>([]); // State untuk semua admin
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStore, setCurrentStore] = useState<Partial<Store>>({});
@@ -47,10 +73,20 @@ export default function SuperAdminHome() {
     },
   };
 
+  // Fungsi untuk mengambil data admin berdasarkan ID
+  const getAdminById = async (adminId: number): Promise<Admin | null> => {
+    try {
+      const res = await axios.get(`${BASE_URL}/admins/${adminId}`, axiosConfig);
+      return res.data.data;
+    } catch (error) {
+      console.error(`Error fetching admin with ID ${adminId}:`, error);
+      return null;
+    }
+  };
+
   // 2. Fetch stores with Authorization header
   const fetchStores = async () => {
     try {
-      // Check if no token - redirect to login or handle
       if (!token) {
         alert("No token found. Please log in first.");
         router.push("/auth/login");
@@ -58,6 +94,22 @@ export default function SuperAdminHome() {
       }
       const res = await axios.get(`${BASE_URL}/stores`, axiosConfig);
       setStores(res.data.data);
+      console.log("Fetched Stores:", res.data.data); // Untuk verifikasi data
+
+      // Ekstrak semua admin dari storeAdmins
+      const fetchedAdmins: Admin[] = res.data.data.flatMap(
+        (store: Store) => store.storeAdmins
+      );
+
+      // Buat map unik untuk menghindari duplikasi admin
+      const uniqueAdminsMap: { [key: number]: Admin } = {};
+      fetchedAdmins.forEach((admin) => {
+        uniqueAdminsMap[admin.id] = admin;
+      });
+
+      const uniqueAdmins = Object.values(uniqueAdminsMap);
+      setAllAdmins(uniqueAdmins);
+      console.log("Unique Admins:", uniqueAdmins); // Untuk verifikasi admin
     } catch (error) {
       console.error("Error fetching stores:", error);
       if ((error as any)?.response?.status === 401) {
@@ -138,7 +190,7 @@ export default function SuperAdminHome() {
     e.preventDefault();
     try {
       if (!token) {
-        alert("No token found. Please log in first.");
+        toast.error("No token found. Please log in first.");
         router.push("/auth/login");
         return;
       }
@@ -146,24 +198,28 @@ export default function SuperAdminHome() {
       // Cari store berdasarkan nama
       const selectedStore = stores.find((s) => s.name === assignData.storeName);
       if (!selectedStore) {
-        alert("Store not found. Please check the store name again.");
+        toast.error("Store not found. Please check the store name again.");
         return;
       }
 
-      // Memanggil endpoint patch, gunakan store_id yang ditemukan
-      await axios.post(
-        `${BASE_URL_ASSIGN}/stores/${selectedStore.store_id}/assign-admin`,
+      // Memanggil endpoint put, gunakan store_id yang ditemukan
+      const response = await axios.put(
+        `${BASE_URL}/store/${selectedStore.store_id}/admin`,
         {
-          adminUserId: assignData.adminUserId,
+          userId: Number(assignData.adminUserId),
         },
         axiosConfig
       );
 
       setIsAssignModalOpen(false);
       fetchStores();
+      toast.success("Admin berhasil diassign ke toko.");
+      console.log(
+        `Assigned admin ID ${assignData.adminUserId} to store ID ${selectedStore.store_id}`
+      );
     } catch (error) {
       console.error("Error assigning admin:", error);
-      alert("Failed to assign admin. Please try again.");
+      toast.error("Failed to assign admin. Please try again.");
     }
   };
 
@@ -181,102 +237,122 @@ export default function SuperAdminHome() {
 
   // Fungsi callback setelah produk berhasil ditambahkan
   const handleProductAdded = () => {
-    alert("Product successfully added to the store.");
+    toast.success("Product successfully added to the store.");
     // Optionally, fetchStores() again to refresh store data if needed
   };
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Store Management</h1>
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-4xl font-extrabold text-gray-800 mb-6">
+          Store Management 🏬
+        </h1>
 
-        {/* Tombol Create */}
-        <button
-          onClick={handleOpenCreateModal}
-          className="bg-green-500 text-white py-2 px-4 rounded mb-4"
-        >
-          Create New Store
-        </button>
+        {/* Tombol Aksi */}
+        <div className="flex gap-4 mb-6">
+          <button
+            onClick={handleOpenCreateModal}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded shadow"
+          >
+            + Create New Store
+          </button>
 
-        {/* Tombol Assign Admin */}
-        <button
-          onClick={() => {
-            setAssignData({ storeName: "", adminUserId: "" });
-            setIsAssignModalOpen(true);
-          }}
-          className="bg-yellow-500 text-white py-2 px-4 rounded mb-4 ml-4"
-        >
-          Assign Admin
-        </button>
+          <button
+            onClick={() => {
+              setAssignData({ storeName: "", adminUserId: "" });
+              setIsAssignModalOpen(true);
+            }}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded shadow"
+          >
+            Assign Admin
+          </button>
 
-        {/* Tombol "Add Product to First Store" */}
-        <button
-          onClick={() => {
-            if (stores.length === 0) {
-              alert("No stores available.");
-              return;
-            }
-            const firstStore = stores[0];
-            handleOpenAddProductModal(firstStore.store_id);
-          }}
-          className="bg-blue-600 text-white py-2 px-4 rounded mb-4 ml-4"
-        >
-          Add Product to First Store
-        </button>
+          <button
+            onClick={() => {
+              if (stores.length === 0) {
+                toast.error("No stores available.");
+                return;
+              }
+              const firstStore = stores[0];
+              handleOpenAddProductModal(firstStore.store_id);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded shadow"
+          >
+            Add Product to First Store
+          </button>
+        </div>
 
-        {/* Tabel daftar store */}
-        <div className="bg-white shadow-md rounded-lg p-4">
-          <table className="min-w-full">
+        {/* Tabel Daftar Store */}
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <table className="min-w-full table-auto">
             <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 px-4">Store Name</th>
-                <th className="text-left py-2 px-4">Address</th>
-                <th className="text-left py-2 px-4">Admin</th>
-                <th className="text-left py-2 px-4">Actions</th>
+              <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                <th className="py-3 px-6 text-left">Store Name</th>
+                <th className="py-3 px-6 text-left">Address</th>
+                <th className="py-3 px-6 text-left">Admins</th>
+                <th className="py-3 px-6 text-left">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {stores.map((store) => (
-                <tr key={store.store_id} className="border-b">
-                  <td
-                    className="py-2 px-4 text-blue-600 underline cursor-pointer"
-                    onClick={() =>
-                      router.push(`/superadmin/CRUD?storeId=${store.store_id}`)
-                    }
+            <tbody className="text-gray-700 text-sm font-medium">
+              {stores.map((store) => {
+                const adminNames =
+                  store.storeAdmins.length > 0
+                    ? store.storeAdmins
+                        .map(
+                          (admin) => `${admin.first_name} ${admin.last_name}`
+                        )
+                        .join(", ")
+                    : "Unassigned";
+
+                return (
+                  <tr
+                    key={store.store_id}
+                    className="border-b hover:bg-gray-50 transition"
                   >
-                    {store.name}
-                  </td>
-                  <td className="py-2 px-4">{store.address}</td>
-                  <td className="py-2 px-4">
-                    {store.store_admin ? store.store_admin : "Unassigned"}
-                  </td>
-                  <td className="py-2 px-4">
-                    <button
-                      onClick={() => handleOpenEditModal(store)}
-                      className="text-blue-500 mr-2"
+                    <td
+                      className="py-3 px-6 text-blue-600 underline cursor-pointer"
+                      onClick={() =>
+                        router.push(
+                          `/superadmin/CRUD?storeId=${store.store_id}`
+                        )
+                      }
                     >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteStore(store.store_id)}
-                      className="text-red-500"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => handleOpenAddProductModal(store.store_id)}
-                      className="text-green-500 ml-2"
-                    >
-                      Add Product
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      {store.name}
+                    </td>
+                    <td className="py-3 px-6">{store.address}</td>
+                    <td className="py-3 px-6">{adminNames}</td>
+                    <td className="py-3 px-6">
+                      <div className="flex space-x-4">
+                        <button
+                          onClick={() => handleOpenEditModal(store)}
+                          className="text-blue-500 hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteStore(store.store_id)}
+                          className="text-red-500 hover:underline"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleOpenAddProductModal(store.store_id)
+                          }
+                          className="text-green-500 hover:underline"
+                        >
+                          Add Product
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Modal Create/Edit Store */}
+        {/* Modal Components */}
         {isModalOpen && (
           <StoreModal
             title={isEditMode ? "Edit Store" : "Create New Store"}
@@ -289,18 +365,17 @@ export default function SuperAdminHome() {
           />
         )}
 
-        {/* Modal Assign Admin */}
         {isAssignModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50 p-4">
-            <div className="bg-white p-6 rounded-md w-full max-w-md">
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+            <div className="bg-white p-8 rounded-md shadow-lg w-96">
               <h2 className="text-xl font-bold mb-4">Assign Admin</h2>
               <form onSubmit={handleAssignAdmin}>
-                <div className="mb-3">
-                  <label className="block mb-1 font-semibold">
-                    Select Store (by Name)
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Select Store
                   </label>
                   <select
-                    className="border w-full p-2"
+                    className="border w-full px-3 py-2 mt-2 rounded-md"
                     value={assignData.storeName}
                     onChange={(e) =>
                       setAssignData({
@@ -318,13 +393,13 @@ export default function SuperAdminHome() {
                     ))}
                   </select>
                 </div>
-                <div className="mb-3">
-                  <label className="block mb-1 font-semibold">
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Admin User ID
                   </label>
                   <input
                     type="text"
-                    className="border w-full p-2"
+                    className="border w-full px-3 py-2 mt-2 rounded-md"
                     value={assignData.adminUserId}
                     onChange={(e) =>
                       setAssignData({
@@ -335,10 +410,10 @@ export default function SuperAdminHome() {
                     required
                   />
                 </div>
-                <div className="flex justify-end mt-4">
+                <div className="flex justify-end gap-3">
                   <button
                     type="button"
-                    className="mr-3 bg-gray-300 py-2 px-4 rounded"
+                    className="bg-gray-400 text-white py-2 px-4 rounded"
                     onClick={() => setIsAssignModalOpen(false)}
                   >
                     Cancel
@@ -355,7 +430,6 @@ export default function SuperAdminHome() {
           </div>
         )}
 
-        {/* Modal AddStoreProduct */}
         {isAddProductModalOpen && selectedStoreId && (
           <AddStoreProductModal
             isOpen={isAddProductModalOpen}
