@@ -4,6 +4,7 @@ import { UserController } from "../controllers/user.controllers";
 import { OrderController } from "../controllers/order.controller";
 import { AuthenticateJwtMiddleware } from "../middlewares/user.middleware";
 import { CartController } from "../controllers/cart.controller";
+import { PurchaseController } from "../controllers/purchase.controller";
 
 
 const router = Router();
@@ -134,7 +135,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 // CART ENDPOINTS
 // ---------------------------
 router.get(
-  "/",
+  "/items",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
   authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
   asyncWrap(CartController.getCart)
@@ -153,6 +154,18 @@ router.put(
   authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
   asyncWrap(CartController.removeItem)
 );
+
+
+// ---------------------------
+// purchase ENDPOINTS
+// ---------------------------
+router.get(
+  "/purchases",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(PurchaseController.getPurchases)
+);
+
 
 
 

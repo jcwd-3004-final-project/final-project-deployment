@@ -86,6 +86,7 @@ const CartPage = () => {
             </div>
           </div>
         ) : (
+          // Empty Cart Display
           <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
             <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg shadow-md p-6 max-w-sm w-full">
               <Image
