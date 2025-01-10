@@ -7,7 +7,8 @@ import Head from "next/head";
 import { formatRupiah } from "@/utils/formatRupiah";
 import { Product } from "@/components/productList";
 import { useCart } from "@/context/cartContext";
-
+import Navbar from "@/components/navbar/navbar";
+import Footer from "@/components/footer";
 type ProductDetailProps = {
   product: Product;
 };
@@ -23,12 +24,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   return (
     <>
       <Head>
-        <title>{`${product.name} | Toko Anda`}</title>
+        <title>{`${product.name} | Anter Aja`}</title>
         <meta name="description" content={`Detail produk ${product.name}`} />
       </Head>
 
       <div className="container mx-auto p-4">
-        <Link href="/">
+        <Link href="/user/product">
           <p className="text-blue-500 hover:underline">← Kembali ke Produk</p>
         </Link>
         <div className="flex flex-col md:flex-row mt-4">

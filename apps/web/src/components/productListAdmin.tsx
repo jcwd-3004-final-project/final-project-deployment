@@ -1,5 +1,3 @@
-// ProductList.tsx
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ProductForm from "./productForm";
@@ -55,10 +53,7 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
           },
         });
 
-        console.log("Store Response:", res);
-        const storeData = res.data;
-        console.log("Store Data:", storeData); // Debugging
-        const storeProducts = storeData?.storeProducts || [];
+        const storeProducts = res.data?.storeProducts || [];
         const extractedProducts = storeProducts.map((sp: any) => ({
           ...sp.product,
           images: Array.isArray(sp.product.images)
@@ -68,33 +63,25 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
             : [],
         }));
 
-        console.log("Extracted Products with storeId:", extractedProducts); // Debugging
-
         setProducts(extractedProducts);
       } else {
-        console.log("Fetching all products from:", PRODUCT_URL);
         const res = await axios.get(PRODUCT_URL, {
           headers: {
             "Content-Type": "application/json",
           },
         });
-        console.log("Fetched Products without storeId:", res.data.data); // Debugging
 
         const normalizedProducts: Product[] = res.data.data.map(
-          (product: any) => {
-            console.log(`Processing product ID: ${product.id}`, product.images); // Tambahkan log ini
-            return {
-              ...product,
-              images: Array.isArray(product.images)
-                ? product.images.map((img: any) =>
-                    typeof img.url === "string" ? img.url.trim() : ""
-                  )
-                : [],
-            };
-          }
+          (product: any) => ({
+            ...product,
+            images: Array.isArray(product.images)
+              ? product.images.map((img: any) =>
+                  typeof img.url === "string" ? img.url.trim() : ""
+                )
+              : [],
+          })
         );
 
-        console.log("Normalized Products:", normalizedProducts); // Debugging
         setProducts(normalizedProducts);
       }
     } catch (error) {
@@ -107,14 +94,12 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
 
   const handleDelete = async (id: number) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
-      console.log(`Attempting to delete product with ID: ${id}`); // Debugging
       try {
         await axios.delete(`${PRODUCT_URL}/${id}`, {
           headers: {
             "Content-Type": "application/json",
           },
         });
-        console.log(`Deleted product with ID: ${id}`); // Debugging
         setProducts(products.filter((product) => product.id !== id));
         alert("Produk berhasil dihapus");
       } catch (error) {
@@ -127,10 +112,8 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
   const openModal = (product?: Product) => {
     if (product) {
       setCurrentProduct(product);
-      console.log("Opening modal to edit product:", product); // Debugging
     } else {
       setCurrentProduct({});
-      console.log("Opening modal to add new product"); // Debugging
     }
     setIsModalOpen(true);
   };
@@ -138,14 +121,10 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
   const closeModal = () => {
     setIsModalOpen(false);
     setCurrentProduct({});
-    console.log("Modal closed"); // Debugging
   };
 
   const handleFormSubmit = async (values: Partial<Product>) => {
-    console.log("Form submitted with values:", values); // Debugging
-
     if (currentProduct.id) {
-      // Update
       try {
         const response = await axios.put(
           `${PRODUCT_URL}/${currentProduct.id}`,
@@ -156,9 +135,7 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
             },
           }
         );
-        console.log("Updated Product:", response.data.data); // Debugging
 
-        // Pastikan images adalah array string
         const updatedProduct: Product = {
           ...response.data.data,
           images: Array.isArray(response.data.data.images)
@@ -179,14 +156,12 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
         alert("Gagal memperbarui produk");
       }
     } else {
-      // Create
       try {
         const response = await axios.post(PRODUCT_URL, values, {
           headers: {
             "Content-Type": "application/json",
           },
         });
-        console.log("Created Product:", response.data.data); // Debugging
 
         const createdProduct: Product = {
           ...response.data.data,
@@ -216,17 +191,15 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <h2 className="text-3xl font-semibold text-black">
+        <h2 className="text-3xl font-semibold text-gray-800">
           Daftar Produk {storeId ? `(Store #${storeId})` : ""}
         </h2>
         {storeId ? (
-          // Tombol "Kembali" jika storeId ada
           <Link href="/superadmin/CRUD">
-            <p className="mt-4 md:mt-0 bg-gray-600 text-white px-6 py-2 rounded-lg shadow hover:bg-gray-700 transition duration-300 flex items-center">
-              {/* Icon Kembali */}
+            <a className="mt-4 md:mt-0 bg-gray-600 text-white px-6 py-2 rounded-lg shadow hover:bg-gray-700 transition duration-300">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 mr-2"
@@ -242,15 +215,13 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
                 />
               </svg>
               Kembali
-            </p>
+            </a>
           </Link>
         ) : (
-          // Tombol "Tambah Produk" jika storeId tidak ada
           <button
             onClick={() => openModal()}
             className="mt-4 md:mt-0 bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-300 flex items-center"
           >
-            {/* Icon Tambah Produk */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-2"
@@ -270,14 +241,14 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
         )}
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
+      {/* Tabel Produk */}
+      <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
         {products.length === 0 ? (
-          <p className="text-gray-600 text-center">
-            No products available for this store.
+          <p className="text-gray-600 text-center py-6">
+            No products available
           </p>
         ) : (
-          <table className="min-w-full bg-white rounded-lg overflow-hidden shadow">
+          <table className="min-w-full">
             <thead className="bg-gray-800 text-white">
               <tr>
                 <th className="py-3 px-6 text-left">Nama</th>
@@ -289,91 +260,50 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
                 <th className="py-3 px-6 text-center">Aksi</th>
               </tr>
             </thead>
-            <tbody className="text-gray-700">
+            <tbody>
               {products.map((product) => (
-                <tr
-                  key={product.id}
-                  className="hover:bg-gray-100 transition duration-200"
-                >
-                  <td className="py-3 px-6 text-left whitespace-nowrap">
-                    {product.name}
+                <tr key={product.id} className="hover:bg-gray-100">
+                  <td className="py-3 px-6">{product.name}</td>
+                  <td className="py-3 px-6 text-ellipsis w-48">
+                    {product.description.length > 100 ? (
+                      <>{product.description.substring(0, 50)}...</>
+                    ) : (
+                      product.description
+                    )}
                   </td>
-                  <td className="py-3 px-6 text-left">
-                    <div className="w-48 truncate" title={product.description}>
-                      {product.description}
-                    </div>
-                  </td>
-                  <td className="py-3 px-6 text-left">
-                    {formatRupiah(product.price)}
-                  </td>
-                  <td className="py-3 px-6 text-left">
+
+                  <td className="py-3 px-6">{formatRupiah(product.price)}</td>
+                  <td className="py-3 px-6">
                     {product.category?.name || "N/A"}
                   </td>
-                  <td className="py-3 px-6 text-left">
-                    {product.stockQuantity}
-                  </td>
-                  <td className="py-3 px-6 text-left flex flex-wrap">
-                    {product.images && product.images.length > 0 ? (
-                      product.images.map((imgUrl: string, index: number) => (
+                  <td className="py-3 px-6">{product.stockQuantity}</td>
+                  <td className="py-3 px-6">
+                    {product.images.length > 0 ? (
+                      product.images.map((imgUrl, index) => (
                         <img
-                          key={`${product.id}-image-${index}`}
-                          src={imgUrl} // Menggunakan URL gambar langsung
+                          key={`${product.id}-${index}`}
+                          src={imgUrl}
                           alt={product.name}
                           className="w-16 h-16 object-cover mr-2 mb-2 rounded-md shadow"
                         />
                       ))
                     ) : (
-                      <span>No Images Available</span>
+                      <span>No Images</span>
                     )}
                   </td>
                   <td className="py-3 px-6 text-center">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={() => openModal(product)}
-                        className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition duration-300 mr-2 flex items-center"
-                      >
-                        {/* Icon Edit */}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-1"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414
-                            a2 2 0 113.828 3.828L11 20l-4 1 1-4 9.414-9.414z"
-                          />
-                        </svg>
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 transition duration-300 flex items-center"
-                      >
-                        {/* Icon Hapus */}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-1"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
-                            a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4
-                            a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                        Hapus
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => openModal(product)}
+                      className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition duration-300 mr-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 transition duration-300"
+                    >
+                      Hapus
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -382,15 +312,13 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
         )}
       </div>
 
-      {/* Modal Form Produk */}
+      {/* Modal Form */}
       <Modal
         isOpen={isModalOpen}
         onRequestClose={closeModal}
         contentLabel="Form Produk"
-        className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 md:mx-auto
-        mt-10 md:mt-20 p-6 relative transition-transform transform scale-100"
-        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex
-        justify-center items-start z-50"
+        className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 md:mx-auto mt-10 md:mt-20 p-6 relative transition-transform transform scale-100"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-50"
       >
         <button
           onClick={closeModal}

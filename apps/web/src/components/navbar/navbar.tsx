@@ -45,7 +45,8 @@ export default function Navbar({
   const handleValueChange = (value: string) => {
     if (value === "") onSearchChange?.("");
   };
-  const handleCategorySelect = (category: string) => onCategoryChange?.(category);
+  const handleCategorySelect = (category: string) =>
+    onCategoryChange?.(category);
 
   const handleLoginClick = () => router.push("/auth/login");
   const handleSignUpClick = () => router.push("/auth/register");
@@ -55,7 +56,6 @@ export default function Navbar({
       <div className="flex items-center justify-between px-4 py-2 border-b">
         <div
           className="text-lg font-bold flex items-center justify-center cursor-pointer"
-
           onClick={() => router.push("/")}
         >
           <img src="/logo.png" alt="Logo" className="w-auto h-8" />
@@ -84,7 +84,10 @@ export default function Navbar({
               >
                 🛒 My Cart ({totalItems})
               </Link>
-              <Link href="/profile" className="text-gray-700 hover:text-green-600">
+              <Link
+                href="/profile"
+                className="text-gray-700 hover:text-green-600"
+              >
                 Hi {user?.lastName}
               </Link>
             </div>
@@ -173,7 +176,7 @@ export default function Navbar({
             Home
           </Link>
           <Link
-            href="/promotions"
+            href="/user/product"
             className="text-gray-700 font-medium hover:text-green-600"
             onClick={() => setIsMenuOpen(false)}
           >
@@ -197,7 +200,10 @@ export default function Navbar({
           <SelectScrollable onCategorySelect={handleCategorySelect} />
         </div>
         <div className="flex gap-6">
-          <Link href="/" className="text-gray-700 font-medium hover:text-green-600">
+          <Link
+            href="/"
+            className="text-gray-700 font-medium hover:text-green-600"
+          >
             Home
           </Link>
           <Link
@@ -207,7 +213,10 @@ export default function Navbar({
             Promotions
           </Link>
         </div>
-        <a href="tel:6287855294573" className="text-green-600 font-medium hover:underline">
+        <a
+          href="tel:6287855294573"
+          className="text-green-600 font-medium hover:underline"
+        >
           📞 62-878-5529-4573
         </a>
       </div>
