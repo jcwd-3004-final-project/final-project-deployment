@@ -1,17 +1,14 @@
-// utils/api.ts
+// src/utils/api.ts
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/v1/api/discounts', // Sesuaikan dengan URL backend Anda
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: 'http://localhost:3000/v1/api/discounts',
 });
 
-// Jika Anda menggunakan token autentikasi, tambahkan interceptor
+// Tambahkan interceptor untuk menyertakan token jika ada
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token'); // Atau metode penyimpanan token Anda
-  if (token) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

@@ -1,9 +1,18 @@
-// auth.model.ts
-import { PrismaClient, User, Role } from "@prisma/client";
+// src/models/models.ts
+import {
+  PrismaClient,
+  User,
+  Role,
+  Voucher,
+  UserVoucher,
+  DiscountType,
+  DiscountValueType,
+  VoucherUsageType,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Define types for authentication
+// Define custom interfaces for authentication and other purposes
 export interface SignUpInput {
   email: string;
   password: string;
@@ -22,7 +31,7 @@ export interface AuthenticatedUser {
   email: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string | null; // Now it accepts string or null
+  phoneNumber: string | null;
   role: Role;
   isVerified: boolean;
   avatar: string | null;
@@ -50,4 +59,14 @@ export interface Product {
   category?: Category;
 }
 
+// Export Prisma types as needed
+export {
+  Voucher,
+  UserVoucher,
+  DiscountType,
+  DiscountValueType,
+  VoucherUsageType,
+};
+
+// Export default Prisma Client
 export default prisma;

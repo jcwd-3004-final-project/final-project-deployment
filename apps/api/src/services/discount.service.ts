@@ -1,91 +1,451 @@
-// src/services/discountService.ts
-import prisma from '../models/models';
-import { Discount, DiscountType, DiscountValueType } from '@prisma/client';
+import { 
+  PrismaClient, 
+  DiscountType, 
+  VoucherUsageType, 
+  DiscountValueType,
+} from '@prisma/client';
 
-interface CreateDiscountInput {
-  type: DiscountType;
-  value: number;
-  valueType: DiscountValueType;
-  startDate: Date;
-  endDate: Date;
-  maxDiscount?: number;
-  minPurchase?: number;
-  productIds: number[]; // ID produk yang terkait
-}
+const prisma = new PrismaClient();
 
-interface UpdateDiscountInput {
-  id: number;
-  type?: DiscountType;
-  value?: number;
-  valueType?: DiscountValueType;
-  startDate?: Date;
-  endDate?: Date;
-  maxDiscount?: number;
-  minPurchase?: number;
-  productIds?: number[];
-}
+export class DiscountService {
+  // ------------------ Discount CRUD Operations ------------------
 
-export const createDiscount = async (data: CreateDiscountInput): Promise<Discount> => {
-  return await prisma.discount.create({
-    data: {
-      type: data.type,
-      value: data.value,
-      valueType: data.valueType,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      maxDiscount: data.maxDiscount,
-      minPurchase: data.minPurchase,
-      products: {
-        connect: data.productIds.map((id) => ({ id })),
+  /**
+   * Membuat diskon baru.
+   * @param data - Data diskon (type, value, valueType, startDate, endDate, dsb.)
+   */
+  async createDiscount(data: any) {
+    data.startDate = new Date(data.startDate);
+    data.endDate = new Date(data.endDate);
+  
+    if (data.endDate < data.startDate) {
+      throw new Error('End date cannot be earlier than start date');
+    }
+  
+    return prisma.discount.create({
+      data,
+    });
+  }
+  
+
+  /**
+   * Mengupdate diskon berdasarkan ID.
+   * @param id - ID diskon
+   * @param data - Data yang akan diupdate
+   */
+  async updateDiscount(id: number, data: any) {
+    // Validasi tanggal
+    if (data.startDate && data.endDate) {
+      if (new Date(data.endDate) < new Date(data.startDate)) {
+        throw new Error('End date cannot be earlier than start date');
+      }
+    }
+
+    return prisma.discount.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
+   * Menghapus diskon berdasarkan ID.
+   * @param id - ID diskon
+   */
+  async deleteDiscount(id: number) {
+    return prisma.discount.delete({
+      where: { id },
+    });
+  }
+
+  /**
+   * Mendapatkan semua diskon beserta produk-produknya.
+   */
+  async getDiscounts() {
+    return prisma.discount.findMany({
+      include: { products: true },
+    });
+  }
+
+  // ------------------ Assign/Remove Discounts to/from Products ------------------
+
+  /**
+   * Mengaitkan diskon ke produk tertentu.
+   * @param discountId - ID diskon
+   * @param productId - ID produk
+   */
+  async assignDiscountToProduct(discountId: number, productId: number) {
+    return prisma.discount.update({
+      where: { id: discountId },
+      data: {
+        products: {
+          connect: { id: productId },
+        },
       },
-    },
-    include: {
-      products: true,
-    },
-  });
-};
+    });
+  }
 
-export const getAllDiscounts = async (): Promise<Discount[]> => {
-  return await prisma.discount.findMany({
-    include: {
-      products: true,
-    },
-  });
-};
+  /**
+   * Melepas diskon dari produk tertentu.
+   * @param discountId - ID diskon
+   * @param productId - ID produk
+   */
+  async removeDiscountFromProduct(discountId: number, productId: number) {
+    return prisma.discount.update({
+      where: { id: discountId },
+      data: {
+        products: {
+          disconnect: { id: productId },
+        },
+      },
+    });
+  }
 
-export const getDiscountById = async (id: number): Promise<Discount | null> => {
-  return await prisma.discount.findUnique({
-    where: { id },
-    include: {
-      products: true,
-    },
-  });
-};
+  // ------------------ Voucher Operations ------------------
 
-export const updateDiscount = async (data: UpdateDiscountInput): Promise<Discount> => {
-  const { id, productIds, ...updateData } = data;
+  /**
+   * Membuat voucher baru.
+   * @param data - Data voucher (code, discountType, value, valueType, startDate, endDate, usageType, dsb.)
+   */
+  async createVoucher(data: any) {
+    const existingVoucher = await prisma.voucher.findUnique({
+      where: { code: data.code },
+    });
+    if (existingVoucher) {
+      throw new Error('Voucher code already exists');
+    }
 
-  return await prisma.discount.update({
-    where: { id },
-    data: {
-      ...updateData,
-      products: productIds
-        ? {
-            set: productIds.map((id) => ({ id })),
+    // Validasi tanggal
+    if (new Date(data.endDate) < new Date(data.startDate)) {
+      throw new Error('End date cannot be earlier than start date');
+    }
+
+    // expiryDate bisa disamakan dengan endDate jika Anda tidak memisahkannya
+    // misalnya: if (!data.expiryDate) { data.expiryDate = data.endDate; }
+
+    // Buat voucher
+    return prisma.voucher.create({
+      data,
+    });
+  }
+
+  /**
+   * Mengupdate voucher berdasarkan ID.
+   * @param id - ID voucher
+   * @param data - Data yang akan diupdate
+   */
+  async updateVoucher(id: number, data: any) {
+    // Validasi tanggal
+    if (data.startDate && data.endDate) {
+      if (new Date(data.endDate) < new Date(data.startDate)) {
+        throw new Error('End date cannot be earlier than start date');
+      }
+    }
+
+    return prisma.voucher.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
+   * Menghapus voucher berdasarkan ID.
+   * @param id - ID voucher
+   */
+  async deleteVoucher(id: number) {
+    return prisma.voucher.delete({
+      where: { id },
+    });
+  }
+
+  /**
+   * Mendapatkan semua voucher beserta produk-produknya.
+   */
+  async getVouchers() {
+    return prisma.voucher.findMany({
+      include: { products: true },
+    });
+  }
+
+  // ------------------ Referral Code Operations ------------------
+
+  /**
+   * Membuat referral code untuk user (referrer).
+   * @param referrerId - ID user yang mereferensikan
+   */
+  async createReferralCode(referrerId: number) {
+    const referralCode = this.generateReferralCode();
+
+    // Contoh: secara default, setiap referral code menghasilkan voucher diskon minimal purchase
+    const voucher = await this.createVoucher({
+      code: `REF-${referralCode}`,
+      discountType: DiscountType.MIN_PURCHASE_DISCOUNT,
+      value: 10,
+      valueType: DiscountValueType.PERCENTAGE,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 hari ke depan
+      usageType: VoucherUsageType.TOTAL_PURCHASE,
+      minPurchaseAmount: 50,
+      maxDiscount: 20,
+      expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+
+    // Buat referral record
+    return prisma.referral.create({
+      data: {
+        referralCode,
+        referrer: { connect: { id: referrerId } },
+        // Anda dapat menyimpan voucherId di relasi lain jika diperlukan
+      },
+    });
+  }
+
+  /**
+   * Menggunakan referral code oleh user yang direferensikan.
+   * @param code - Kode referral
+   * @param referredUserId - ID user yang menggunakan kode referral
+   */
+  async redeemReferralCode(code: string, referredUserId: number) {
+    const referral = await prisma.referral.findFirst({
+      where: { referralCode: code },
+      include: { referrer: true },
+    });
+
+    if (!referral) {
+      throw new Error('Referral code tidak valid');
+    }
+
+    // Buat voucher baru atau gunakan logika lain untuk memberikan voucher kepada user yang direfer
+    const voucher = await this.createVoucher({
+      code: `REF-REDEEM-${this.generateReferralCode()}`,
+      discountType: DiscountType.MIN_PURCHASE_DISCOUNT,
+      value: 10,
+      valueType: DiscountValueType.PERCENTAGE,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      usageType: VoucherUsageType.TOTAL_PURCHASE,
+      minPurchaseAmount: 50,
+      maxDiscount: 20,
+      expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+
+    // Berikan voucher kepada user yang direfer
+    await prisma.userVoucher.create({
+      data: {
+        userId: referredUserId,
+        voucherId: voucher.id,
+      },
+    });
+
+    // Jika Anda ingin menandai referral ini sudah digunakan, silakan update:
+    // await prisma.referral.update({
+    //   where: { id: referral.id },
+    //   data: {
+    //     referredId: referredUserId
+    //   }
+    // });
+
+    return { message: 'Referral code berhasil diredeem dan voucher diberikan' };
+  }
+
+  // ------------------ Calculate Discount ------------------
+
+  /**
+   * Menghitung total diskon dan totalAmount setelah diskon & voucher.
+   * @param cartItems Array of items (productId, quantity) dalam keranjang
+   * @param userId ID user pemilik keranjang
+   * @param shippingCost Ongkos kirim
+   */
+  async calculateDiscount(cartItems: any[], userId: number, shippingCost: number): Promise<any> {
+    // Ambil voucher user yang masih berlaku
+    const userVouchers = await prisma.userVoucher.findMany({
+      where: { 
+        userId, 
+        isUsed: false, 
+        voucher: { endDate: { gte: new Date() } } 
+      },
+      include: { voucher: true },
+    });
+
+    let totalDiscount = 0;
+    let totalAmount = 0;
+
+    // 1. Hitung diskon berdasarkan produk
+    for (const item of cartItems) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId },
+        include: { discounts: true }, // Diskon yang terhubung langsung dengan product
+      });
+
+      if (!product) {
+        throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan`);
+      }
+
+      const price = product.price;
+      const quantity = item.quantity;
+      let productPrice = price * quantity;
+      let productDiscount = 0;
+
+      // Diskon produk
+      for (const discount of product.discounts) {
+        // PRODUCT_DISCOUNT
+        if (discount.type === DiscountType.PRODUCT_DISCOUNT) {
+          if (discount.valueType === DiscountValueType.PERCENTAGE) {
+            productDiscount += (price * discount.value / 100) * quantity;
+          } else if (discount.valueType === DiscountValueType.NOMINAL) {
+            productDiscount += discount.value * quantity;
           }
-        : undefined,
-    },
-    include: {
-      products: true,
-    },
-  });
-};
+        }
+        // BUY_ONE_GET_ONE
+        else if (discount.type === DiscountType.BUY_ONE_GET_ONE && quantity >= 2) {
+          // Beli satu gratis satu: untuk setiap 2 barang, satu gratis
+          const freeCount = Math.floor(quantity / 2);
+          productDiscount += price * freeCount;
+        }
+        // MIN_PURCHASE_DISCOUNT
+        else if (discount.type === DiscountType.MIN_PURCHASE_DISCOUNT) {
+          // Diskon jenis ini biasanya menuntut minimal total pembelian,
+          // tapi di schema Anda `minPurchase` ada di discount, Anda bisa menyesuaikannya.
+          if (discount.minPurchase && productPrice >= discount.minPurchase) {
+            if (discount.valueType === DiscountValueType.PERCENTAGE) {
+              productDiscount += productPrice * discount.value / 100;
+            } else if (discount.valueType === DiscountValueType.NOMINAL) {
+              productDiscount += discount.value;
+            }
+            // Terapkan maxDiscount jika ada
+            if (discount.maxDiscount) {
+              productDiscount = Math.min(productDiscount, discount.maxDiscount);
+            }
+          }
+        }
+      }
 
-export const deleteDiscount = async (id: number): Promise<Discount> => {
-  return await prisma.discount.delete({
-    where: { id },
-    include: {
-      products: true,
-    },
-  });
-};
+      totalDiscount += productDiscount;
+      totalAmount += (productPrice - productDiscount);
+    }
+
+    // 2. Hitung pemakaian voucher
+    for (const userVoucher of userVouchers) {
+      const voucher = userVoucher.voucher;
+
+      // Pastikan voucher belum expired
+      // (Sudah difilter, tapi jika mau double-check, boleh)
+      if (new Date(voucher.endDate) < new Date()) {
+        continue; // Voucher sudah kadaluarsa
+      }
+
+      // Voucher usageType
+      if (voucher.usageType === VoucherUsageType.TOTAL_PURCHASE && totalAmount >= (voucher.minPurchaseAmount || 0)) {
+        let voucherDiscount = 0;
+        if (voucher.valueType === DiscountValueType.PERCENTAGE) {
+          voucherDiscount = (totalAmount * voucher.value) / 100;
+        } else if (voucher.valueType === DiscountValueType.NOMINAL) {
+          voucherDiscount = voucher.value;
+        }
+
+        // Terapkan maxDiscount jika ada
+        if (voucher.maxDiscount) {
+          voucherDiscount = Math.min(voucherDiscount, voucher.maxDiscount);
+        }
+
+        totalDiscount += voucherDiscount;
+        totalAmount -= voucherDiscount;
+
+        // Tandai voucher sudah terpakai
+        await prisma.userVoucher.update({
+          where: { id: userVoucher.id },
+          data: { isUsed: true, usedAt: new Date() },
+        });
+      }
+      else if (voucher.usageType === VoucherUsageType.PRODUCT) {
+        // Voucher khusus produk tertentu
+        const voucherProducts = await prisma.voucher.findUnique({
+          where: { id: voucher.id },
+          include: { products: true },
+        });
+
+        if (voucherProducts?.products) {
+          for (const item of cartItems) {
+            if (voucherProducts.products.some(p => p.id === item.productId)) {
+              // Kalkulasi potongan
+              const productDetail = await prisma.product.findUnique({
+                where: { id: item.productId },
+              });
+              if (!productDetail) continue;
+
+              let voucherDiscount = 0;
+              const subTotal = productDetail.price * item.quantity;
+
+              if (voucher.valueType === DiscountValueType.PERCENTAGE) {
+                voucherDiscount += (subTotal * voucher.value) / 100;
+              } else if (voucher.valueType === DiscountValueType.NOMINAL) {
+                voucherDiscount += voucher.value * item.quantity;
+              }
+
+              // Terapkan maxDiscount
+              if (voucher.maxDiscount) {
+                voucherDiscount = Math.min(voucherDiscount, voucher.maxDiscount);
+              }
+
+              totalDiscount += voucherDiscount;
+              totalAmount -= voucherDiscount;
+
+              // Tandai voucher sudah terpakai
+              await prisma.userVoucher.update({
+                where: { id: userVoucher.id },
+                data: { isUsed: true, usedAt: new Date() },
+              });
+            }
+          }
+        }
+      }
+      else if (voucher.usageType === VoucherUsageType.SHIPPING) {
+        // Voucher untuk ongkos kirim
+        if (shippingCost > 0) {
+          let shippingDiscount = 0;
+
+          if (voucher.valueType === DiscountValueType.PERCENTAGE) {
+            shippingDiscount = (shippingCost * voucher.value) / 100;
+          } else if (voucher.valueType === DiscountValueType.NOMINAL) {
+            shippingDiscount = voucher.value;
+          }
+
+          if (voucher.maxDiscount) {
+            shippingDiscount = Math.min(shippingDiscount, voucher.maxDiscount);
+          }
+
+          totalDiscount += shippingDiscount;
+          totalAmount -= shippingDiscount; // Asumsikan totalAmount mencakup shippingCost
+
+          // Tandai voucher sudah terpakai
+          await prisma.userVoucher.update({
+            where: { id: userVoucher.id },
+            data: { isUsed: true, usedAt: new Date() },
+          });
+        }
+      }
+    }
+
+    // 3. Gratis ongkos kirim jika user sudah punya beberapa transaksi sebelumnya
+    const userTransactionCount = await prisma.order.count({
+      where: { userId, status: 'ORDER_CONFIRMED' },
+    });
+
+    if (userTransactionCount >= 5) { // Contoh syarat minimal 5 transaksi
+      if (shippingCost > 0) {
+        totalAmount -= shippingCost;
+        totalDiscount += shippingCost;
+      }
+    }
+
+    return { totalAmount, totalDiscount };
+  }
+
+  // ------------------ Helper Functions ------------------
+
+  /**
+   * Menghasilkan kode referral unik.
+   */
+  generateReferralCode(): string {
+    return 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+}
