@@ -79,7 +79,8 @@ export default function Navbar({
   const handleValueChange = (value: string) => {
     if (value === "") onSearchChange?.("");
   };
-  const handleCategorySelect = (category: string) => onCategoryChange?.(category);
+  const handleCategorySelect = (category: string) =>
+    onCategoryChange?.(category);
 
   // ---------------------------------------------------
   // 3) Auth links
@@ -300,7 +301,7 @@ export default function Navbar({
             Home
           </Link>
           <Link
-            href="/promotions"
+            href="/user/product"
             className="text-gray-700 font-medium hover:text-green-600"
             onClick={() => setIsMenuOpen(false)}
           >
@@ -324,7 +325,10 @@ export default function Navbar({
           <SelectScrollable onCategorySelect={handleCategorySelect} />
         </div>
         <div className="flex gap-6">
-          <Link href="/" className="text-gray-700 font-medium hover:text-green-600">
+          <Link
+            href="/"
+            className="text-gray-700 font-medium hover:text-green-600"
+          >
             Home
           </Link>
           <Link
@@ -334,7 +338,10 @@ export default function Navbar({
             Promotions
           </Link>
         </div>
-        <a href="tel:6287855294573" className="text-green-600 font-medium hover:underline">
+        <a
+          href="tel:6287855294573"
+          className="text-green-600 font-medium hover:underline"
+        >
           📞 62-878-5529-4573
         </a>
       </div>
