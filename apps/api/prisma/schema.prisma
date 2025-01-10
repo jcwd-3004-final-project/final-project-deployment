@@ -217,22 +217,24 @@ model OrderItem {
 }
 
 model Voucher {
-  id                Int               @id @default(autoincrement())
-  code              String            @unique
-  discountType      DiscountType
-  value             Float // percentage or nominal
-  valueType         DiscountValueType
-  maxDiscount       Float?
-  applicableProduct Product?          @relation("ProductVouchers", fields: [productId], references: [id])
-  productId         Int?
-  minPurchaseAmount Float?
-  expiryDate        DateTime
-  usageType         VoucherUsageType
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id                   Int               @id @default(autoincrement())
+  code                 String            @unique
+  discountType         DiscountType
+  value                Float // percentage or nominal
+  valueType            DiscountValueType
+  startDate            DateTime
+  endDate              DateTime
+  maxDiscount          Float?
+  minPurchaseAmount    Float?
+  usageType            VoucherUsageType
+  expiryDate           DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
-  userVouchers UserVoucher[]
+  userVouchers         UserVoucher[]
+  products             Product[]         @relation("ProductVouchers")
 }
+
 
 model UserVoucher {
   id        Int       @id @default(autoincrement())
@@ -252,11 +254,12 @@ model Referral {
   id           Int      @id @default(autoincrement())
   referrer     User     @relation("Referrer", fields: [referrerId], references: [id])
   referrerId   Int
-  referred     User     @relation("Referred", fields: [referredId], references: [id])
-  referredId   Int
-  referralCode String
+  referred     User?    @relation("Referred", fields: [referredId], references: [id])
+  referredId   Int?
+  referralCode String   @unique
   createdAt    DateTime @default(now())
 }
+
 
 model Token {
   id        Int       @id @default(autoincrement())

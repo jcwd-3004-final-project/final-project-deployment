@@ -39,36 +39,45 @@ export class CartService {
    * Add item to the user's cart.
    * If the item already exists, we increment quantity.
    */
-  async addItemToCart(userId: number, productId: number, quantity: number) {
-    const cart = await this.getCart(userId);
+  // cart.service.ts
+async addItemToCart(userId: number, productId: number, quantity: number) {
+  // 1) Check if product exists
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+  });
+  if (!product) {
+    throw new Error(`Product with id=${productId} does not exist`);
+  }
 
-    // Check if item already in cart
-    const existingItem = await prisma.cartItem.findFirst({
-      where: {
-        cartId: cart.id,
-        productId,
+  // 2) Get or create cart
+  const cart = await this.getCart(userId);
+
+  // 3) Check if item already in cart
+  const existingItem = await prisma.cartItem.findFirst({
+    where: {
+      cartId: cart.id,
+      productId,
+    },
+  });
+
+  // 4) If item exists, update. Otherwise, create new item
+  if (existingItem) {
+    return prisma.cartItem.update({
+      where: { id: existingItem.id },
+      data: {
+        quantity: existingItem.quantity + quantity,
       },
     });
-
-    if (existingItem) {
-      // Update quantity
-      return prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: existingItem.quantity + quantity,
-        },
-      });
-    } else {
-      // Create new cart item
-      return prisma.cartItem.create({
-        data: {
-          cartId: cart.id,
-          productId,
-          quantity,
-        },
-      });
-    }
+  } else {
+    return prisma.cartItem.create({
+      data: {
+        cartId: cart.id,
+        productId,
+        quantity,
+      },
+    });
   }
+}
 
   /**
    * Remove or decrement quantity of an item in the cart.

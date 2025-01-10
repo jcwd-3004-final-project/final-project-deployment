@@ -1,23 +1,32 @@
 // src/routes/discountRoutes.ts
-import express from 'express';
-import {
-  createDiscountHandler,
-  getAllDiscountsHandler,
-  getDiscountByIdHandler,
-  updateDiscountHandler,
-  deleteDiscountHandler,
-} from '../controllers/discount.controllers';
-import asyncHandler from '../utils/asyncHandler';
+import { Router } from 'express';
+import { DiscountController } from '../controllers/discountController';
 
-const router = express.Router();
+const router = Router();
+const discountController = new DiscountController();
 
+// ------------------ Discount CRUD ------------------
+// .bind(discountController) agar 'this' di dalam method tetap instance controller
+router.post('/discounts', discountController.createDiscount.bind(discountController));
+router.get('/discounts', discountController.getDiscounts.bind(discountController));
+router.put('/discounts/:id', discountController.updateDiscount.bind(discountController));
+router.delete('/discounts/:id', discountController.deleteDiscount.bind(discountController));
 
+// ------------------ Assign/Remove Discounts to/from Products ------------------
+router.post('/discounts/:discountId/assign', discountController.assignDiscountToProduct.bind(discountController));
+router.post('/discounts/:discountId/remove', discountController.removeDiscountFromProduct.bind(discountController));
 
-// Definisikan rute-rute diskon dengan menggunakan asyncHandler
-router.post('/discount', asyncHandler(createDiscountHandler));
-router.get('/discount', asyncHandler(getAllDiscountsHandler));
-router.get('/discount/:id', asyncHandler(getDiscountByIdHandler));
-router.put('/discount/:id', asyncHandler(updateDiscountHandler));
-router.delete('discount/:id', asyncHandler(deleteDiscountHandler));
+// ------------------ Voucher Operations ------------------
+router.post('/vouchers', discountController.createVoucher.bind(discountController));
+router.get('/vouchers', discountController.getVouchers.bind(discountController));
+router.put('/vouchers/:id', discountController.updateVoucher.bind(discountController));
+router.delete('/vouchers/:id', discountController.deleteVoucher.bind(discountController));
+
+// ------------------ Referral Code Operations ------------------
+router.post('/referrals/create', discountController.createReferralCode.bind(discountController));
+router.post('/referrals/redeem', discountController.redeemReferralCode.bind(discountController));
+
+// ------------------ Calculate Discount ------------------
+router.post('/calculate', discountController.calculateDiscount.bind(discountController));
 
 export default router;

@@ -10,7 +10,7 @@ export type Category = {
   name: string;
 };
 
-export type Product = {
+export type Product = { 
   id: number;
   images: string[];
   name: string;
