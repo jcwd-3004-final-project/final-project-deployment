@@ -12,6 +12,7 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [latitude, setLatitude] = useState<string | null>(null);
   const [longitude, setLongitude] = useState<string | null>(null);
+  const [cart, setCart] = useState<any[]>([]); // To track cart items
 
   // ------------------------------
   // 1) Fetch Products
@@ -36,8 +37,6 @@ const Home = () => {
     };
     fetchProducts();
   }, []);
-
-
 
   // ------------------------------
   // 2) Get User Location & Store in Local Storage
@@ -93,14 +92,41 @@ const Home = () => {
     return matchCategory && matchName;
   });
 
-  // Handler
+  // ------------------------------
+  // 4) Add Item to Cart
+  // ------------------------------
+  const addToCart = async (productId: number) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/v1/api/user/items",
+        { productId, quantity: 1 },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`, // Adjust as needed for your JWT logic
+          },
+        }
+      );
+      console.log("Item added to cart:", response.data);
+      setCart((prevCart) => [...prevCart, response.data.data]); // Update cart state
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Axios-specific error handling
+        console.error("Error adding item to cart:", error.response?.data || error.message);
+      } else {
+        // Generic error handling
+        console.error("An unexpected error occurred:", error);
+      }
+    }
+  };
 
+  // ------------------------------
+  // Handlers
+  // ------------------------------
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
   };
 
   const handleCategoryChange = (category: string) => {
-    // "category" di sini misalnya "Fruits" atau ""
     console.log("handleCategoryChange:", category);
     setSelectedCategory(category);
   };
@@ -137,7 +163,19 @@ const Home = () => {
           <p>Latitude: {latitude || "N/A"}</p>
           <p>Longitude: {longitude || "N/A"}</p>
         </section>
+
+        <section className="cart-display my-12">
+          <h2>Your Cart</h2>
+          <ul>
+            {cart.map((item, index) => (
+              <li key={index}>
+                {item.product.name} - Quantity: {item.quantity}
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
+
       <footer>
         <Footer />
       </footer>
