@@ -116,6 +116,7 @@ export default function CheckoutPage() {
         body: JSON.stringify(orderBody),
       });
 
+
       const data = await res.json();
       console.log(data, "ini data");
       if (!data.success) {
@@ -124,12 +125,12 @@ export default function CheckoutPage() {
 
       const newOrder = data.data;
       const orderId = newOrder.id;
-      console.log(orderId, "ini order id");
 
       // 2) Next steps depending on payment method
       if (selectedPayment === "TRANSFER") {
         // If Payment Method = TRANSFER => go to "/payment" to upload proof
         router.push(`/payment?orderId=${orderId}`);
+
       } else {
         console.log("payment");
         // If Payment Method = PAYMENT_GATEWAY => call payment create, then redirect
@@ -147,8 +148,10 @@ export default function CheckoutPage() {
         console.log(paymentRes);
         console.log(JSON.stringify({ orderId }));
 
+
         const paymentData = await paymentRes.json();
         console.log(paymentData, "<<<<<<");
+
 
         if (!paymentData.success) {
           throw new Error(paymentData.error || "Failed to create payment");

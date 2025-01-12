@@ -46,6 +46,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   // Fetch cart data from API or fallback to localStorage
   const fetchCart = async () => {
     try {
+
       const response = await axios.get(
         "http://localhost:8000/v1/api/user/items",
         {
@@ -54,6 +55,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
           },
         }
       );
+
 
       const apiCart = response.data.data.items || [];
       setCart(
