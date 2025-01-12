@@ -54,6 +54,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
           },
         }
       );
+
       const apiCart = response.data.data.items || [];
       setCart(
         apiCart.map((item: any) => ({

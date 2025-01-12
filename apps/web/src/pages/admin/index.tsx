@@ -222,8 +222,10 @@ export default function PromoPage() {
       await axios.post("http://localhost:8000/v1/api/discounts/vouchers", {
         ...voucherForm,
         value: Number(voucherForm.value),
-        minPurchaseAmount: Number(voucherForm.minPurchaseAmount),
-        maxDiscount: Number(voucherForm.maxDiscount),
+      minPurchaseAmount: Number(voucherForm.minPurchaseAmount),
+      maxDiscount: Number(voucherForm.maxDiscount),
+      startDate: new Date(voucherForm.startDate).toISOString(), 
+      endDate: new Date(voucherForm.endDate).toISOString(),
       });
       setMessage("Voucher created successfully");
       setVoucherForm({
