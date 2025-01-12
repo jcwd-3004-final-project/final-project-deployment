@@ -4,8 +4,8 @@ import { useCart } from "@/context/cartContext";
 import CartItem from "@/components/cartItem";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
-import Image from "next/image"; // Untuk optimasi gambar jika diperlukan
-import Link from "next/link"; // Untuk navigasi jika ingin menambahkan tombol lanjut belanja
+import Image from "next/image";
+import Link from "next/link";
 
 const CartPage = () => {
   const { cart, totalItems, totalPrice } = useCart();
@@ -32,6 +32,7 @@ const CartPage = () => {
             {/* Daftar Item Keranjang */}
             <div className="lg:col-span-2 space-y-4">
               {cart.map((item) => (
+                // Pass each item to the CartItem component
                 <CartItem key={item.id} item={item} />
               ))}
 
@@ -87,10 +88,10 @@ const CartPage = () => {
           </div>
         ) : (
           // Empty Cart Display
-          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-            <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg shadow-md p-6 max-w-sm w-full">
+          <div className="flex flex-col items-center justify-center min-h-[50vh] bg-gray-100 p-4">
+            <div className="flex flex-col items-center justify-center bg-white rounded-lg shadow-md p-6 max-w-sm w-full">
               <Image
-                src="https://i.pinimg.com/474x/81/c4/fc/81c4fc9a4c06cf57abf23606689f7426.jpg" // Pastikan Anda memiliki gambar ini di folder public
+                src="/empty-cart.jpg"
                 alt="Empty Cart"
                 width={200}
                 height={200}
@@ -99,9 +100,9 @@ const CartPage = () => {
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                 Your cart is empty
               </h2>
-              <button className="text-gray-600 text-center mb-6">
+              <p className="text-gray-600 text-center mb-6">
                 Looks like you haven&apos;t added anything to your cart yet.
-              </button>
+              </p>
               <Link href="/">
                 <p className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors duration-200 shadow">
                   🛍️ Shop Now

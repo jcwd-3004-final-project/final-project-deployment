@@ -16,10 +16,7 @@ import discountRouter from "./routers/discount.router";
 import storeRouter from "./routers/store.router";
 import orderRouter from "./routers/admin.order.router";
 
-
-import paymentRouter from "./routers/payment.router"
-
-
+import paymentRouter from "./routers/payment.router";
 
 require("dotenv").config();
 
@@ -57,10 +54,8 @@ app.use("/v1/api/products", productRouter);
 app.use("/v1/api/categories", categoryRouter);
 app.use("/v1/api/stores", storeRouter);
 app.use("/v1/api/orders", orderRouter);
-app.use("/v1/api/payment", paymentRouter)
-app.use("/v1/api/discounts", discountRouter)
-
-
+app.use("/v1/api/payment", paymentRouter);
+app.use("/v1/api/discounts", discountRouter);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);

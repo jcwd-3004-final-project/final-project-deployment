@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { SuperAdminServices } from "../services/superAdmin.service";
 
 export class SuperAdminController {
@@ -83,14 +83,36 @@ export class SuperAdminController {
     }
   }
 
-  async assignStoreAdmin(req: Request, res: Response) {
-    const storeId = parseInt(req.params.storeId);
-    const userId = parseInt(req.params.userId);
-    await this.SuperAdminServices.assignStoreAdmin(storeId, userId);
-    res.status(200).send({
-      message: `Store admin was assigned to store with id ${storeId} successfully`,
-      status: res.statusCode,
-    });
+  async assignStoreAdmin(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Mengambil storeId dari params dan userId dari body
+      const storeId = parseInt(req.params.storeId, 10);
+      const userId = parseInt(req.body.userId, 10);
+
+      // Debugging: Memastikan nilai yang diterima
+      console.log("Store ID:", storeId);
+      console.log("User ID:", userId);
+      console.log("Request Body:", req.body);
+
+      // Validasi storeId dan userId
+      if (isNaN(storeId)) {
+        throw new Error("Invalid storeId");
+      }
+      if (isNaN(userId)) {
+        throw new Error("Invalid userId");
+      }
+
+      // Memanggil service untuk menetapkan admin toko
+      await this.SuperAdminServices.assignStoreAdmin(storeId, userId);
+
+      // Mengirim respons sukses
+      res.status(200).send({
+        message: `Store admin was assigned to store with id ${storeId} successfully`,
+        status: res.statusCode,
+      });
+    } catch (error) {
+      next(error); // Mengirim error ke middleware error handler
+    }
   }
 
   /**
