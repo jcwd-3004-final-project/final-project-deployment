@@ -46,9 +46,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   // Fetch cart data from API or fallback to localStorage
   const fetchCart = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/v1/api/user/cart", {
+      const response = await axios.get("http://localhost:8000/v1/api/user/items", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       const apiCart = response.data.data.items || [];
@@ -84,7 +84,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         { productId: product.id, quantity: 1 },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -114,7 +114,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     try {
       await axios.delete(`http://localhost:8000/v1/api/user/items/${id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       // Refresh cart from API after removing
@@ -135,7 +135,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         { productId: id, quantity },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );

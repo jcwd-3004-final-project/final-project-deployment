@@ -91,8 +91,7 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         credentials: "include", // or pass Bearer token
-        body: JSON.stringify(orderBody),
-      });
+        body: JSON.stringify(orderBody),});
       const data = await res.json();
 
       if (!data.success) {
@@ -101,6 +100,7 @@ export default function CheckoutPage() {
 
       const newOrder = data.data; 
       const orderId = newOrder.id;
+      
 
       // 2) If Payment Method = TRANSFER => go to "/payment" to upload proof
       if (selectedPayment === "TRANSFER") {
@@ -108,6 +108,7 @@ export default function CheckoutPage() {
       } 
       // 3) If Payment Method = PAYMENT_GATEWAY => call payment create, then redirect
       else {
+        console.log("payment_gateaway")
         const paymentRes = await fetch("http://localhost:8000/v1/api/payment/create", {
           method: "POST",
           headers: {
@@ -116,7 +117,9 @@ export default function CheckoutPage() {
           credentials: "include", // or token
           body: JSON.stringify({ orderId }),
         });
+        
         const paymentData = await paymentRes.json();
+
 
         if (!paymentData.success) {
           throw new Error(paymentData.error || "Failed to create payment");
