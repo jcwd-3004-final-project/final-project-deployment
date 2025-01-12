@@ -1,4 +1,5 @@
 // pages/payment.tsx
+
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/navbar/navbar";
@@ -6,7 +7,7 @@ import Footer from "@/components/footer";
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { orderId } = router.query; // from ?orderId=123
+  const { orderId } = router.query; // e.g. ?orderId=123
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -30,23 +31,42 @@ export default function PaymentPage() {
     try {
       setIsUploading(true);
 
+      // Buat FormData
       const formData = new FormData();
       formData.append("orderId", String(orderId));
       formData.append("paymentProof", selectedFile);
 
-      // Post to your order upload endpoint
-      const res = await fetch("http://localhost:8000/v1/api/user/order/upload", {
-        method: "POST",
-        body: formData, // we send the form data directly
-        credentials: "include", // or token if needed
-      });
+      // Ambil token dari localStorage (diasumsikan Anda menyimpannya saat login)
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        alert("No token found, please log in again.");
+        setIsUploading(false);
+        return;
+      }
+
+      // Lakukan request ke backend dengan header Authorization
+      const res = await fetch(
+        "http://localhost:8000/v1/api/user/order/upload",
+        {
+          method: "POST",
+          body: formData,
+          credentials: "include", // Kirim cookie juga, jika diperlukan
+          headers: {
+            // Sertakan token di Authorization header
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       const data = await res.json();
-      if (!data.success) {
+
+      // Jika server mengembalikan success = false atau res.ok = false, lempar error
+      if (!res.ok || !data.success) {
         throw new Error(data.error || "Upload failed");
       }
 
       alert("Payment proof uploaded successfully!");
-      router.push("/"); // or go to an order confirmation page
+      router.push("/"); // Arahkan ke halaman lain setelah upload sukses
     } catch (error) {
       console.error("Error uploading payment proof:", error);
       alert("Failed to upload payment proof.");
@@ -69,7 +89,7 @@ export default function PaymentPage() {
           <input
             type="file"
             id="paymentProof"
-            accept="image/*" // restrict to images
+            accept="image/*" // Hanya file gambar
             onChange={handleFileChange}
             disabled={isUploading}
             className="block w-full"
