@@ -1,3 +1,4 @@
+// pages/checkout/index.tsx
 import React, { useEffect, useState } from "react";
 import { useCart } from "@/context/cartContext";
 import Navbar from "@/components/navbar/navbar";
@@ -24,14 +25,29 @@ export default function CheckoutPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>("TRANSFER");
   const [storeId] = useState<number>(1); // Example store ID
 
+  // If there's no token, you may want to redirect or show an error
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+
   // Fetch user addresses
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        // Adjust to your actual server & token usage
-        const response = await fetch("http://localhost:8000/v1/api/user/addresses", {
-          credentials: "include", // or pass bearer token
-        });
+        if (!token) {
+          console.error("No access token found; please login.");
+          return;
+        }
+        const response = await fetch(
+          "http://localhost:8000/v1/api/user/addresses",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         const result = await response.json();
         if (result.success) {
           setAddresses(result.data || []);
@@ -45,8 +61,9 @@ export default function CheckoutPage() {
         console.error("Error fetching addresses:", error);
       }
     };
+
     fetchAddresses();
-  }, []);
+  }, [token]);
 
   // Format currency
   const formatRupiah = (num: number) => {
@@ -59,6 +76,11 @@ export default function CheckoutPage() {
   };
 
   const handleCheckout = async () => {
+    if (!token) {
+      alert("No access token found. Please log in first.");
+      return;
+    }
+
     if (!selectedAddress) {
       alert("Please select a shipping address");
       return;
@@ -84,46 +106,60 @@ export default function CheckoutPage() {
     };
 
     try {
-      // 1) Create the order first
+      // 1) Create the order
       const res = await fetch("http://localhost:8000/v1/api/user/order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`, // <-- Bearer token here
         },
-        credentials: "include", // or pass Bearer token
         body: JSON.stringify(orderBody),
       });
-      const data = await res.json();
 
+
+      const data = await res.json();
+      console.log(data, "ini data");
       if (!data.success) {
         throw new Error(data.error || "Failed to create order");
       }
 
-      const newOrder = data.data; 
+      const newOrder = data.data;
       const orderId = newOrder.id;
 
-      // 2) If Payment Method = TRANSFER => go to "/payment" to upload proof
+      // 2) Next steps depending on payment method
       if (selectedPayment === "TRANSFER") {
+        // If Payment Method = TRANSFER => go to "/payment" to upload proof
         router.push(`/payment?orderId=${orderId}`);
-      } 
-      // 3) If Payment Method = PAYMENT_GATEWAY => call payment create, then redirect
-      else {
-        const paymentRes = await fetch("http://localhost:8000/v1/api/payment/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // or token
-          body: JSON.stringify({ orderId }),
-        });
+
+      } else {
+        console.log("payment");
+        // If Payment Method = PAYMENT_GATEWAY => call payment create, then redirect
+        const paymentRes = await fetch(
+          "http://localhost:8000/v1/api/payment/create",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`, // <-- Bearer token here
+            },
+            body: JSON.stringify({ orderId }),
+          }
+        );
+        console.log(paymentRes);
+        console.log(JSON.stringify({ orderId }));
+
+
         const paymentData = await paymentRes.json();
+        console.log(paymentData, "<<<<<<");
+
 
         if (!paymentData.success) {
           throw new Error(paymentData.error || "Failed to create payment");
         }
+
         // e.g. "redirectUrl" from the response
         const redirectUrl = paymentData.data.redirectUrl;
-        window.location.href = redirectUrl; // redirect to Midtrans (or whichever gateway)
+        window.location.href = redirectUrl; // redirect to gateway (Midtrans, etc.)
       }
     } catch (error) {
       console.error("Checkout error:", error);

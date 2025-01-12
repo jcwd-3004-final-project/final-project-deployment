@@ -199,7 +199,7 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
         </h2>
         {storeId ? (
           <Link href="/superadmin/CRUD">
-            <a className="mt-4 md:mt-0 bg-gray-600 text-white px-6 py-2 rounded-lg shadow hover:bg-gray-700 transition duration-300">
+            <p className="mt-4 md:mt-0 bg-gray-600 text-white px-6 py-2 rounded-lg shadow hover:bg-gray-700 transition duration-300">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 mr-2"
@@ -215,7 +215,7 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
                 />
               </svg>
               Kembali
-            </a>
+            </p>
           </Link>
         ) : (
           <button

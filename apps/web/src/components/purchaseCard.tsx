@@ -6,7 +6,7 @@ interface PurchaseCardProps {
   productImg?: string;
   variation?: string;
   quantity: number;
-  totalPrice: number;
+  totalPrice?: number; // <-- Bisa diubah jadi optional jika dari backend kadang tidak ada
   status: string;
   onConfirm?: () => void;
   onRefund?: () => void;
@@ -29,7 +29,9 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
     <div className="border rounded-md p-4 shadow-sm mb-4">
       {/* Shop header */}
       <div className="flex items-center justify-between mb-2">
-        <div className="font-semibold text-gray-700">{shopName || "Shop Name"}</div>
+        <div className="font-semibold text-gray-700">
+          {shopName || "Shop Name"}
+        </div>
         <div className="text-sm text-orange-500 font-semibold">{status}</div>
       </div>
 
@@ -49,7 +51,10 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
             <div className="text-sm text-gray-500">x{quantity}</div>
           </div>
           <div className="text-lg font-bold text-gray-800">
-            Rp {totalPrice.toLocaleString()}
+            {/**
+             * Gunakan fallback 0 jika totalPrice undefined
+             */}
+            Rp {(totalPrice ?? 0).toLocaleString()}
           </div>
         </div>
       </div>

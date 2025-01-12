@@ -1,31 +1,23 @@
 import prisma from "../models/models";
 
 export class InventoryService {
-  /**
-   * Update stock quantity di StoreProduct
-   * @param storeId  ID Toko
-   * @param productId ID Produk
-   * @param changeQuantity (+) jika menambah stok, (-) jika mengurangi stok
-   * @param reason Alasan perubahan stok
-   */
   async updateStock(
     storeId: number,
     productId: number,
     changeQuantity: number,
-    reason: string
+    reason: string // <- param reason tetap ada, tapi akan diabaikan, atau dipakai logika tertentu
   ) {
     console.log(
       `Attempting to update stock for Store ID: ${storeId}, Product ID: ${productId}`
     );
 
-    // 1. Pastikan StoreProduct ada
+    // 1. Cek StoreProduct
     const storeProduct = await prisma.storeProduct.findFirst({
       where: {
         storeId: storeId,
         productId: productId,
       },
     });
-
     if (!storeProduct) {
       console.error(
         `StoreProduct with storeId=${storeId} and productId=${productId} not found.`
@@ -34,47 +26,47 @@ export class InventoryService {
     }
 
     console.log(
-      `Current stock for Store ID ${storeId}, Product ID ${productId}: ${storeProduct.stock}`
+      `Current stock: ${storeProduct.stock} (storeId=${storeId}, productId=${productId})`
     );
 
     // 2. Hitung stok baru
     const newStock = storeProduct.stock + changeQuantity;
-    console.log(`New stock after change: ${newStock}`);
-
     if (newStock < 0) {
       console.error(
-        `Insufficient stock for StoreProduct storeId=${storeId}, productId=${productId}.`
+        `Insufficient stock for storeId=${storeId}, productId=${productId}.`
       );
       throw new Error("Insufficient stock");
     }
 
-    // 3. Update storeProduct.stock
+    // 3. Update storeProduct
     const updatedStoreProduct = await prisma.storeProduct.update({
       where: {
-        id: storeProduct.id, // atau unique compound (storeId, productId) jika sudah di-set
+        id: storeProduct.id,
       },
       data: {
         stock: newStock,
       },
     });
+    console.log(`Stock updated to: ${updatedStoreProduct.stock}`);
 
-    console.log(
-      `Stock updated for StoreProduct. New stock: ${updatedStoreProduct.stock}`
-    );
+    // 4. Buat log / penyesuaian stok (StockAdjustment)
+    //    Tentukan reason enum:
+    const adjustmentType = changeQuantity >= 0 ? "INCREASE" : "DECREASE";
 
-    // 4. Buat log / penyesuaian stok
-    //    Jika Anda menggunakan StockAdjustment:
+    // Misal logic: kalau stok berkurang -> SALE, stok bertambah -> PURCHASE
+    const stockAdjustmentReason = changeQuantity >= 0 ? "PURCHASE" : "SALE";
+
     await prisma.stockAdjustment.create({
       data: {
         storeProductId: storeProduct.id,
-        adjustmentType: changeQuantity >= 0 ? "INCREASE" : "DECREASE",
+        adjustmentType, // "INCREASE" / "DECREASE"
         quantity: Math.abs(changeQuantity),
-        reason: reason as any,
+        reason: stockAdjustmentReason, // enum valid
       },
     });
 
     console.log(
-      `Stock log (StockAdjustment) created for storeProductId=${storeProduct.id}`
+      `Stock log created (StockAdjustment) for storeProductId=${storeProduct.id}`
     );
 
     return updatedStoreProduct;
