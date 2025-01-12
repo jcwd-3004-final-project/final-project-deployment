@@ -46,9 +46,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   // Fetch cart data from API or fallback to localStorage
   const fetchCart = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/v1/api/user/cart", {
+      const response = await axios.get("http://localhost:8000/v1/api/user/item", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       const apiCart = response.data.data.items || [];
