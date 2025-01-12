@@ -38,8 +38,14 @@ export class UserService {
     return newAddress;
   }
 
-  async updateUserAddress(userId: number, addressId: number, data: AddressInput) {
-    const address = await prisma.address.findUnique({ where: { address_id: addressId } });
+  async updateUserAddress(
+    userId: number,
+    addressId: number,
+    data: AddressInput
+  ) {
+    const address = await prisma.address.findUnique({
+      where: { address_id: addressId },
+    });
     if (!address || address.userId !== userId) {
       throw new Error("Address not found or not authorized");
     }
@@ -69,7 +75,9 @@ export class UserService {
   }
 
   async deleteUserAddress(userId: number, addressId: number) {
-    const address = await prisma.address.findUnique({ where: { address_id: addressId } });
+    const address = await prisma.address.findUnique({
+      where: { address_id: addressId },
+    });
     if (!address || address.userId !== userId) {
       throw new Error("Address not found or not authorized");
     }
@@ -78,8 +86,14 @@ export class UserService {
     return { message: "Address deleted successfully" };
   }
 
-  async setShippingAddressForOrder(userId: number, orderId: number, addressId: number) {
-    const address = await prisma.address.findUnique({ where: { address_id: addressId } });
+  async setShippingAddressForOrder(
+    userId: number,
+    orderId: number,
+    addressId: number
+  ) {
+    const address = await prisma.address.findUnique({
+      where: { address_id: addressId },
+    });
     if (!address || address.userId !== userId) {
       throw new Error("Address not found or not authorized");
     }
@@ -128,7 +142,10 @@ export class UserService {
     return found.province_id; // e.g. "12"
   }
 
-  private async getCityIdByProvinceAndCityName(provinceId: string, cityName: string): Promise<string> {
+  private async getCityIdByProvinceAndCityName(
+    provinceId: string,
+    cityName: string
+  ): Promise<string> {
     if (!cityName) throw new Error("No city provided");
 
     const apiKey = process.env.RAJA_ONGKIR_API_KEY as string;
@@ -157,14 +174,22 @@ export class UserService {
     return foundCity.city_id; // e.g. "176"
   }
 
-  private async buildLocationCode(state: string, city: string): Promise<string> {
+  private async buildLocationCode(
+    state: string,
+    city: string
+  ): Promise<string> {
     const provinceId = await this.getProvinceIdByName(state);
     const cityId = await this.getCityIdByProvinceAndCityName(provinceId, city);
     // e.g. "12" + "176" => "12176"
     return `${cityId}`;
   }
 
-  async calculateShippingCost({ origin, destination, weight, courier }: ShippingCostInput) {
+  async calculateShippingCost({
+    origin,
+    destination,
+    weight,
+    courier,
+  }: ShippingCostInput) {
     const RAJA_ONGKIR_API_KEY = process.env.RAJA_ONGKIR_API_KEY;
     const RAJA_ONGKIR_COST_URL = `https://api.rajaongkir.com/starter/cost`;
     // console.log("origin : ", origin, "destination : ", destination, "weight :", weight, "courier : ", courier )
@@ -200,7 +225,10 @@ export class UserService {
     courier: string
   ): Promise<number> {
     const originCode = await this.buildLocationCode(storeState, storeCity);
-    const destinationCode = await this.buildLocationCode(addressState, addressCity);
+    const destinationCode = await this.buildLocationCode(
+      addressState,
+      addressCity
+    );
 
     const cost = await this.calculateShippingCost({
       origin: originCode,
