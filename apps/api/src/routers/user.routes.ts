@@ -6,7 +6,6 @@ import { AuthenticateJwtMiddleware } from "../middlewares/user.middleware";
 import { CartController } from "../controllers/cart.controller";
 import { PurchaseController } from "../controllers/purchase.controller";
 
-
 const router = Router();
 const authenticateJwt = new AuthenticateJwtMiddleware();
 const upload = multer({ dest: "uploads/" }); // local folder for uploads
@@ -16,7 +15,11 @@ const upload = multer({ dest: "uploads/" }); // local folder for uploads
  * are properly passed to next() for Express error handling.
  */
 function asyncWrap(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<Response | void>
+  fn: (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => Promise<Response | void>
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     fn(req, res, next).catch(next);
@@ -155,6 +158,12 @@ router.put(
   asyncWrap(CartController.removeItem)
 );
 
+router.delete(
+  "/items/:productId",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(CartController.deleteItem) // <= Pastikan ada method deleteItem di CartController
+);
 
 // ---------------------------
 // purchase ENDPOINTS
@@ -165,10 +174,5 @@ router.get(
   authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
   asyncWrap(PurchaseController.getPurchases)
 );
-
-
-
-
-
 
 export default router;

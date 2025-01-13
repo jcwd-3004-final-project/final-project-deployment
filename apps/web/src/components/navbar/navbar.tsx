@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import Swal from "sweetalert2";
 import { useCart } from "@/context/cartContext";
-import { useUser } from "@/context/userContext"; 
+import { useUser } from "@/context/userContext";
 import { SelectScrollable } from "../category";
 import { PlaceholdersAndVanishInput } from "../ui/placeholders-and-vanish-input";
 
@@ -57,12 +57,12 @@ export default function Navbar({
             setCity(cityName);
           } catch (err) {
             console.error("Error fetching city name:", err);
-            setCity(""); 
+            setCity("");
           }
         },
         (err) => {
           console.error("Geolocation error:", err);
-          setCity(""); 
+          setCity("");
         }
       );
     }
@@ -101,7 +101,7 @@ export default function Navbar({
     }).then((result) => {
       if (result.isConfirmed) {
         // The "logout" here should clear tokens, user context, etc.
-        logout(); 
+        logout();
         router.push("/"); // or wherever you want to redirect
       }
     });
@@ -147,18 +147,18 @@ export default function Navbar({
               </Link>
 
               {/* User dropdown on hover */}
-                <div
-                  className="relative inline-block" // Make it an inline-block container
-                  onMouseEnter={() => setIsDropdownOpen(true)}
-                  onMouseLeave={() => setIsDropdownOpen(false)}
-                >
-                  <span className="text-gray-700 hover:text-green-600 cursor-pointer">
-                    Hi, {user?.lastName || "User"}
-                  </span>
+              <div
+                className="relative inline-block" // Make it an inline-block container
+                onMouseEnter={() => setIsDropdownOpen(true)}
+                onMouseLeave={() => setIsDropdownOpen(false)}
+              >
+                <span className="text-gray-700 hover:text-green-600 cursor-pointer">
+                  Hi, {user?.lastName || "User"}
+                </span>
 
-                  {isDropdownOpen && (
-                    <div
-                      className="
+                {isDropdownOpen && (
+                  <div
+                    className="
                         absolute
                         right-0
                         top-full  /* Positions dropdown just below the trigger */
@@ -170,28 +170,28 @@ export default function Navbar({
                         shadow-md
                         z-10
                       "
+                  >
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                     >
-                      <Link
-                        href="/profile"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      >
-                        My Profile
-                      </Link>
-                      <Link
-                        href="/purchase"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      >
-                        My Purchase
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      >
-                        Log Out
-                      </button>
-                    </div>
-                  )}
-                </div>
+                      My Profile
+                    </Link>
+                    <Link
+                      href="/purchase"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    >
+                      My Purchase
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    >
+                      Log Out
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function Navbar({
                 My Profile
               </Link>
               <Link
-                href="/purchases"
+                href="/purchase"
                 className="text-gray-700 hover:text-green-600"
                 onClick={() => setIsMenuOpen(false)}
               >

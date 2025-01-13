@@ -1,13 +1,17 @@
 // pages/checkout/index.tsx
 import React, { useEffect, useState } from "react";
-import { useCart } from "@/context/cartContext";
+import { useRouter } from "next/router";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
-import { useRouter } from "next/router";
 
+// Misalnya ada context cart
+import { useCart } from "@/context/cartContext";
+
+// Tipe untuk Shipping dan Payment Method
 const shippingMethods = ["REGULAR", "EXPRESS", "OVERNIGHT"] as const;
 const paymentMethods = ["TRANSFER", "PAYMENT_GATEWAY"] as const;
 
+// Tipe untuk alamat pengiriman
 interface Address {
   address_id: number;
   addressLine?: string;
@@ -15,28 +19,51 @@ interface Address {
   state?: string;
 }
 
+// Tipe untuk data Store (sesuai response backend)
+interface Store {
+  store_id: number;
+  name: string;
+  address: string;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  latitude: number;
+  longitude: number;
+  maxDeliveryDistance?: number | null;
+  // properti lain jika dibutuhkan
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, totalPrice } = useCart();
 
+  // State untuk alamat
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<number | null>(null);
+
+  // State untuk metode pengiriman dan pembayaran
   const [selectedShipping, setSelectedShipping] = useState<string>("REGULAR");
   const [selectedPayment, setSelectedPayment] = useState<string>("TRANSFER");
-  const [storeId] = useState<number>(1); // Example store ID
 
-  // If there's no token, you may want to redirect or show an error
+  // State untuk stores dan storeId yang dipilih
+  const [stores, setStores] = useState<Store[]>([]);
+  const [storeId, setStoreId] = useState<number>(0);
+
+  // Ambil token dari localStorage (pastikan halaman browser)
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
-  // Fetch user addresses
+  // ===============================
+  // Fetch Data Alamat
+  // ===============================
   useEffect(() => {
     const fetchAddresses = async () => {
+      if (!token) {
+        console.error("No access token found; please login.");
+        return;
+      }
       try {
-        if (!token) {
-          console.error("No access token found; please login.");
-          return;
-        }
         const response = await fetch(
           "http://localhost:8000/v1/api/user/addresses",
           {
@@ -65,7 +92,47 @@ export default function CheckoutPage() {
     fetchAddresses();
   }, [token]);
 
-  // Format currency
+  // ===============================
+  // Fetch Data Store dari Backend
+  // ===============================
+  useEffect(() => {
+    const fetchStores = async () => {
+      if (!token) {
+        console.error("No access token found; please login.");
+        return;
+      }
+      try {
+        const response = await fetch(
+          "http://localhost:8000/v1/api/superadmin/stores",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const result = await response.json();
+        if (result.status === 200 && result.data) {
+          setStores(result.data);
+          // Set default storeId ke store pertama jika ada
+          if (result.data.length > 0) {
+            setStoreId(result.data[0].store_id);
+          }
+        } else {
+          console.error("Gagal mengambil data store:", result.error);
+        }
+      } catch (error) {
+        console.error("Error fetching stores:", error);
+      }
+    };
+
+    fetchStores();
+  }, [token]);
+
+  // ===============================
+  // Format Currency (Rupiah)
+  // ===============================
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -75,6 +142,9 @@ export default function CheckoutPage() {
     }).format(num);
   };
 
+  // ===============================
+  // Handle Checkout
+  // ===============================
   const handleCheckout = async () => {
     if (!token) {
       alert("No access token found. Please log in first.");
@@ -91,14 +161,15 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Build items array
+    // Bangun payload untuk items
     const itemsPayload = cart.map((item) => ({
-      productId: item.id, // or item.productId if needed
+      productId: item.id, // pastikan sesuai dengan struktur item di context cart
       quantity: item.quantity,
     }));
 
+    // Bangun payload order termasuk storeId yang dipilih
     const orderBody = {
-      storeId,
+      storeId, // menggunakan storeId yang sudah dipilih dari dropdown
       shippingAddressId: selectedAddress,
       shippingMethod: selectedShipping,
       paymentMethod: selectedPayment,
@@ -106,60 +177,45 @@ export default function CheckoutPage() {
     };
 
     try {
-      // 1) Create the order
+      // Pembuatan order
       const res = await fetch("http://localhost:8000/v1/api/user/order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`, // <-- Bearer token here
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(orderBody),
       });
 
-
       const data = await res.json();
-      console.log(data, "ini data");
       if (!data.success) {
         throw new Error(data.error || "Failed to create order");
       }
-
       const newOrder = data.data;
       const orderId = newOrder.id;
 
-      // 2) Next steps depending on payment method
+      // Jika metode pembayaran TRANSFER: redirect ke halaman payment untuk upload bukti transfer
       if (selectedPayment === "TRANSFER") {
-        // If Payment Method = TRANSFER => go to "/payment" to upload proof
         router.push(`/payment?orderId=${orderId}`);
-
       } else {
-        console.log("payment");
-        // If Payment Method = PAYMENT_GATEWAY => call payment create, then redirect
+        // Jika PAYMENT_GATEWAY: panggil API pembayaran dan redirect ke gateway (misalnya Midtrans)
         const paymentRes = await fetch(
           "http://localhost:8000/v1/api/payment/create",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`, // <-- Bearer token here
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ orderId }),
           }
         );
-        console.log(paymentRes);
-        console.log(JSON.stringify({ orderId }));
-
-
         const paymentData = await paymentRes.json();
-        console.log(paymentData, "<<<<<<");
-
-
         if (!paymentData.success) {
           throw new Error(paymentData.error || "Failed to create payment");
         }
-
-        // e.g. "redirectUrl" from the response
         const redirectUrl = paymentData.data.redirectUrl;
-        window.location.href = redirectUrl; // redirect to gateway (Midtrans, etc.)
+        window.location.href = redirectUrl;
       }
     } catch (error) {
       console.error("Checkout error:", error);
@@ -167,13 +223,36 @@ export default function CheckoutPage() {
     }
   };
 
+  // ===============================
+  // Render Halaman Checkout
+  // ===============================
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
-        {/* Addresses */}
+        {/* Dropdown Pilih Store */}
+        <section className="mb-6">
+          <h2 className="text-xl font-semibold mb-2">Pilih Toko</h2>
+          {stores.length > 0 ? (
+            <select
+              className="border border-gray-300 p-2 rounded w-full sm:w-1/2"
+              value={storeId}
+              onChange={(e) => setStoreId(Number(e.target.value))}
+            >
+              {stores.map((store) => (
+                <option key={store.store_id} value={store.store_id}>
+                  {store.name} ({store.address})
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p>Loading stores...</p>
+          )}
+        </section>
+
+        {/* Dropdown Pilih Alamat Pengiriman */}
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Shipping Address</h2>
           {addresses.length > 0 ? (
@@ -193,7 +272,7 @@ export default function CheckoutPage() {
           )}
         </section>
 
-        {/* Shipping Method */}
+        {/* Dropdown Pilih Metode Pengiriman */}
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Shipping Method</h2>
           <select
@@ -209,7 +288,7 @@ export default function CheckoutPage() {
           </select>
         </section>
 
-        {/* Payment Method */}
+        {/* Dropdown Pilih Metode Pembayaran */}
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Payment Method</h2>
           <select
@@ -225,7 +304,7 @@ export default function CheckoutPage() {
           </select>
         </section>
 
-        {/* Order Summary */}
+        {/* Ringkasan Pesanan */}
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Order Summary</h2>
           <div className="bg-white p-4 rounded shadow">
@@ -240,7 +319,7 @@ export default function CheckoutPage() {
           </div>
         </section>
 
-        {/* Place Order Button */}
+        {/* Tombol Place Order */}
         <button
           onClick={handleCheckout}
           className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"

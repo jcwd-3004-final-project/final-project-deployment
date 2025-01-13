@@ -203,7 +203,7 @@ export default function SuperAdminHome() {
       }
 
       // Memanggil endpoint put, gunakan store_id yang ditemukan
-      const response = await axios.put(
+      await axios.put(
         `${BASE_URL}/store/${selectedStore.store_id}/admin`,
         {
           userId: Number(assignData.adminUserId),
@@ -214,9 +214,6 @@ export default function SuperAdminHome() {
       setIsAssignModalOpen(false);
       fetchStores();
       toast.success("Admin berhasil diassign ke toko.");
-      console.log(
-        `Assigned admin ID ${assignData.adminUserId} to store ID ${selectedStore.store_id}`
-      );
     } catch (error) {
       console.error("Error assigning admin:", error);
       toast.error("Failed to assign admin. Please try again.");
@@ -249,7 +246,7 @@ export default function SuperAdminHome() {
         </h1>
 
         {/* Tombol Aksi */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
           <button
             onClick={handleOpenCreateModal}
             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded shadow"
@@ -284,72 +281,74 @@ export default function SuperAdminHome() {
 
         {/* Tabel Daftar Store */}
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          <table className="min-w-full table-auto">
-            <thead>
-              <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
-                <th className="py-3 px-6 text-left">Store Name</th>
-                <th className="py-3 px-6 text-left">Address</th>
-                <th className="py-3 px-6 text-left">Admins</th>
-                <th className="py-3 px-6 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-700 text-sm font-medium">
-              {stores.map((store) => {
-                const adminNames =
-                  store.storeAdmins.length > 0
-                    ? store.storeAdmins
-                        .map(
-                          (admin) => `${admin.first_name} ${admin.last_name}`
-                        )
-                        .join(", ")
-                    : "Unassigned";
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                  <th className="py-3 px-6 text-left">Store Name</th>
+                  <th className="py-3 px-6 text-left">Address</th>
+                  <th className="py-3 px-6 text-left">Admins</th>
+                  <th className="py-3 px-6 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-700 text-sm font-medium">
+                {stores.map((store) => {
+                  const adminNames =
+                    store.storeAdmins.length > 0
+                      ? store.storeAdmins
+                          .map(
+                            (admin) => `${admin.first_name} ${admin.last_name}`
+                          )
+                          .join(", ")
+                      : "Unassigned";
 
-                return (
-                  <tr
-                    key={store.store_id}
-                    className="border-b hover:bg-gray-50 transition"
-                  >
-                    <td
-                      className="py-3 px-6 text-blue-600 underline cursor-pointer"
-                      onClick={() =>
-                        router.push(
-                          `/superadmin/CRUD?storeId=${store.store_id}`
-                        )
-                      }
+                  return (
+                    <tr
+                      key={store.store_id}
+                      className="border-b hover:bg-gray-50 transition"
                     >
-                      {store.name}
-                    </td>
-                    <td className="py-3 px-6">{store.address}</td>
-                    <td className="py-3 px-6">{adminNames}</td>
-                    <td className="py-3 px-6">
-                      <div className="flex space-x-4">
-                        <button
-                          onClick={() => handleOpenEditModal(store)}
-                          className="text-blue-500 hover:underline"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteStore(store.store_id)}
-                          className="text-red-500 hover:underline"
-                        >
-                          Delete
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleOpenAddProductModal(store.store_id)
-                          }
-                          className="text-green-500 hover:underline"
-                        >
-                          Add Product
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td
+                        className="py-3 px-6 text-blue-600 underline cursor-pointer"
+                        onClick={() =>
+                          router.push(
+                            `/superadmin/CRUD?storeId=${store.store_id}`
+                          )
+                        }
+                      >
+                        {store.name}
+                      </td>
+                      <td className="py-3 px-6">{store.address}</td>
+                      <td className="py-3 px-6">{adminNames}</td>
+                      <td className="py-3 px-6">
+                        <div className="flex flex-col md:flex-row md:space-x-4 space-y-2 md:space-y-0">
+                          <button
+                            onClick={() => handleOpenEditModal(store)}
+                            className="text-blue-500 hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStore(store.store_id)}
+                            className="text-red-500 hover:underline"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleOpenAddProductModal(store.store_id)
+                            }
+                            className="text-green-500 hover:underline"
+                          >
+                            Add Product
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Modal Components */}
@@ -366,8 +365,8 @@ export default function SuperAdminHome() {
         )}
 
         {isAssignModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="bg-white p-8 rounded-md shadow-lg w-96">
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 p-4">
+            <div className="bg-white p-8 rounded-md shadow-lg w-full max-w-sm">
               <h2 className="text-xl font-bold mb-4">Assign Admin</h2>
               <form onSubmit={handleAssignAdmin}>
                 <div className="mb-4">
