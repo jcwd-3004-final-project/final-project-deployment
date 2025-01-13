@@ -143,30 +143,32 @@ async socialCallbackJson(req: Request, res: Response): Promise<void> {
   // Return JSON instead of redirect
   res.json({ accessToken, refreshToken, user });
 }
-}
-
   // --------------------- GET REFERRAL INFO ---------------------
   /**
    * Pastikan middleware otentikasi mengisi req.user dengan data user (minimal user.id).
    */
-  async getReferralInfo(req: Request, res: Response): Promise<Response> {
-    try {
-      // Ambil userId dari req.user (misalnya, jika sudah diisi oleh middleware autentikasi)
-      const userId = (req.user as any)?.id;
-      console.log(userId, "disamping adalah user id");
-      if (!userId) {
-        return res.status(400).json({ error: 'User ID is required.' });
-      }
-      const referral = await authService.getReferralInfo(userId);
-      // Misalnya, kita juga ingin mengembalikan poin referral (usageCount * 10000)
-      const referralData = {
-        ...referral,
-        points: referral.usageCount * 10000,
-      };
-      return res.status(200).json(referralData);
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+  
+async getReferralInfo(req: Request, res: Response): Promise<Response> {
+  try {
+    // Ambil userId dari req.user (misalnya, jika sudah diisi oleh middleware autentikasi)
+    const userId = (req.user as any)?.id;
+    console.log(userId, "disamping adalah user id");
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required.' });
     }
+    const referral = await authService.getReferralInfo(userId);
+    // Misalnya, kita juga ingin mengembalikan poin referral (usageCount * 10000)
+    const referralData = {
+      ...referral,
+      points: referral.usageCount * 10000,
+    };
+    return res.status(200).json(referralData);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
   }
 }
+
+
+
 
