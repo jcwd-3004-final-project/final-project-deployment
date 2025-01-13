@@ -21,11 +21,24 @@ export default function Navbar({
 }: NavbarProps) {
   const router = useRouter();
   const { totalItems } = useCart();
-  const { user, isLoggedIn, logout } = useUser(); // Make sure your userContext has a logout() function
-
+  const { user, isLoggedIn, logout, setUserAndLogin } = useUser(); // <-- Make sure your userContext exposes setUserAndLogin
+  
   const [city, setCity] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // ---------------------------------------------------
+  // [ADDED] 0) Sync user from localStorage if tokens exist
+  // ---------------------------------------------------
+  useEffect(() => {
+    // If we aren't logged in, but we have a "user" in localStorage, set it
+    if (!isLoggedIn) {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUserAndLogin(JSON.parse(storedUser));
+      }
+    }
+  }, [isLoggedIn, setUserAndLogin]);
 
   // ---------------------------------------------------
   // 1) Real Geolocation -> City
@@ -48,7 +61,7 @@ export default function Navbar({
               `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
             );
             const data = await res.json();
-            // You can pick any address field you like (city, county, state, etc.)
+            // You can pick any address field you like (city, town, state, etc.)
             const cityName =
               data.address?.city ||
               data.address?.town ||
@@ -79,8 +92,7 @@ export default function Navbar({
   const handleValueChange = (value: string) => {
     if (value === "") onSearchChange?.("");
   };
-  const handleCategorySelect = (category: string) =>
-    onCategoryChange?.(category);
+  const handleCategorySelect = (category: string) => onCategoryChange?.(category);
 
   // ---------------------------------------------------
   // 3) Auth links
@@ -100,9 +112,12 @@ export default function Navbar({
       cancelButtonText: "Cancel",
     }).then((result) => {
       if (result.isConfirmed) {
-        // The "logout" here should clear tokens, user context, etc.
+
         logout();
-        router.push("/"); // or wherever you want to redirect
+        router.push("/");
+
+        // The "logout" here should clear tokens, user context, etc.
+
       }
     });
   };
@@ -148,7 +163,9 @@ export default function Navbar({
 
               {/* User dropdown on hover */}
               <div
-                className="relative inline-block" // Make it an inline-block container
+
+                className="relative inline-block"
+
                 onMouseEnter={() => setIsDropdownOpen(true)}
                 onMouseLeave={() => setIsDropdownOpen(false)}
               >
@@ -159,6 +176,7 @@ export default function Navbar({
                 {isDropdownOpen && (
                   <div
                     className="
+
                         absolute
                         right-0
                         top-full  /* Positions dropdown just below the trigger */
@@ -180,6 +198,7 @@ export default function Navbar({
                     <Link
                       href="/purchase"
                       className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+
                     >
                       My Purchase
                     </Link>
@@ -187,6 +206,7 @@ export default function Navbar({
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
                     >
+
                       Log Out
                     </button>
                   </div>

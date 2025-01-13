@@ -1,3 +1,4 @@
+// src/services/order.service.ts
 import prisma from "../models/models";
 import { InventoryService } from "./inventory.service";
 import { UserService } from "./user.service";
@@ -14,6 +15,35 @@ interface OrderItemInput {
   quantity: number;
 }
 
+/**
+ * Returns the distance in km between two lat/long points
+ * using the Haversine formula.
+ */
+function getDistanceInKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+
+  function toRad(angle: number) {
+    return (angle * Math.PI) / 180;
+  }
+}
+
 export class OrderService {
   private inventoryService: InventoryService;
   private userService: UserService;
@@ -23,6 +53,11 @@ export class OrderService {
     this.userService = new UserService();
   }
 
+  /**
+   * Create a new order
+   * - Checks if the distance between store and user address > 50km => throw error
+   * - Validates stock, calculates total & shipping, deducts inventory
+   */
   async createOrder(
     userId: number,
     storeId: number,
@@ -43,9 +78,34 @@ export class OrderService {
       throw new Error("Invalid shipping address");
     }
 
-    // 3) Validate stock & sum total
+    // 3) Check coordinates & distance <= 50km
+    if (
+      store.latitude == null ||
+      store.longitude == null ||
+      address.latitude == null ||
+      address.longitude == null
+    ) {
+      throw new Error("Store or address coordinates missing");
+    }
+
+    const distanceKm = getDistanceInKm(
+      store.latitude,
+      store.longitude,
+      address.latitude,
+      address.longitude
+    );
+
+    if (distanceKm > 50) {
+      throw new Error(
+        `Sorry, delivery is not available beyond 50km. Distance is ${distanceKm.toFixed(
+          2
+        )}km`
+      );
+    }
+
+    // 4) Validate stock & sum total
     let totalAmount = 0;
-    let totalWeight = 0; // If product weight is in DB, sum it; otherwise approximate
+    let totalWeight = 0; // If you track product weight, sum it. Otherwise approximate.
     const orderItemsData = [];
 
     for (const item of items) {
@@ -73,7 +133,8 @@ export class OrderService {
       });
     }
 
-    // 4) Auto-calc shipping cost using your userService method
+    // 5) Auto-calc shipping cost
+    // (Assuming you have a method in userService to do so.)
     const courierMap: Record<ShippingMethod, string> = {
       REGULAR: "jne",
       EXPRESS: "tiki",
@@ -83,15 +144,15 @@ export class OrderService {
 
     // Important: pass store.state / store.city & address.state / address.city
     const shippingCost = await this.userService.getAutoShippingCost(
-      store.state!,   // storeState (province)
-      store.city!,    // storeCity
-      address.state!, // addressState (province)
-      address.city!,  // addressCity
+      store.state!,
+      store.city!,
+      address.state!,
+      address.city!,
       totalWeight,
       courier
     );
 
-    // 5) Create the order
+    // 6) Create the order
     const newOrder = await prisma.order.create({
       data: {
         userId,
@@ -109,33 +170,40 @@ export class OrderService {
       include: { items: true },
     });
 
-    // 6) Deduct stock
+    // 7) Deduct stock
     for (const item of items) {
       await this.inventoryService.updateStock(
         storeId,
         item.productId,
         -item.quantity,
-        `Order #${newOrder.id} created - deduct stock`,
+        `Order #${newOrder.id} created - deduct stock`
       );
     }
 
     return newOrder;
   }
 
+  /**
+   * Upload payment proof for an existing order
+   */
   async uploadPaymentProof(
     userId: number,
     orderId: number,
     localFilePath: string
   ): Promise<Order> {
-    const existingOrder = await prisma.order.findUnique({ where: { id: orderId } });
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
     if (!existingOrder || existingOrder.userId !== userId) {
       throw new Error("Order not found or unauthorized");
     }
 
+    // Upload to Cloudinary
     const uploadResult = await cloudinary.uploader.upload(localFilePath, {
       folder: "payment_proofs",
     });
 
+    // Update order with payment proof
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
@@ -147,6 +215,9 @@ export class OrderService {
     return updatedOrder;
   }
 
+  /**
+   * Retrieve one order by ID along with an invoice, if authorized
+   */
   async getOrderWithInvoice(orderId: number, userId: number) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },

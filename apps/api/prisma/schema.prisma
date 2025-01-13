@@ -258,6 +258,7 @@ model Referral {
   referredId   Int?
   referralCode String   @unique
   createdAt    DateTime @default(now())
+   usageCount   Int      @default(0)
 }
 
 

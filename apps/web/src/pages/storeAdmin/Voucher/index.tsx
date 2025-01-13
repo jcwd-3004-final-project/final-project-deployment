@@ -46,7 +46,7 @@ interface Product {
 }
 
 export default function PromoPage() {
-  const [activeTab, setActiveTab] = useState<"discount" | "voucher" | "referral" | "integrate">("discount");
+  const [activeTab, setActiveTab] = useState<"discount" | "voucher" | "integrate">("discount");
 
   // ------------------ DISCOUNT STATE ------------------
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -74,10 +74,6 @@ export default function PromoPage() {
     maxDiscount: 0,
     // expiryDate: "", // jika ingin user input expiryDate
   });
-
-  // ------------------ REFERRAL STATE ------------------
-  const [referrerId, setReferrerId] = useState<number>(0);
-  const [redeemData, setRedeemData] = useState({ code: "", referredUserId: 0 });
 
   // ------------------ INTEGRATE DISCOUNT/VOUCHER -> PRODUCT ------------------
   const [integrationForm, setIntegrationForm] = useState({
@@ -159,8 +155,6 @@ export default function PromoPage() {
       fetchDiscounts();
     } else if (activeTab === "voucher") {
       fetchVouchers();
-    } else if (activeTab === "referral") {
-      // fetchReferrals() jika ada endpoint GET referral
     } else if (activeTab === "integrate") {
       fetchProducts();
       fetchDiscounts();
@@ -245,40 +239,6 @@ export default function PromoPage() {
     }
   };
 
-  // ------------------ HANDLER: CREATE REFERRAL CODE ------------------
-  const handleCreateReferral = async (e: FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-    setErrorMsg(null);
-
-    try {
-      const res = await axios.post("http://localhost:8000/v1/api/discounts/referrals/create", {
-        referrerId: referrerId,
-      });
-      setMessage("Referral code created: " + res.data.referralCode);
-      setReferrerId(0);
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.error || err.message || "Error creating referral code");
-    }
-  };
-
-  // ------------------ HANDLER: REDEEM REFERRAL CODE ------------------
-  const handleRedeemReferral = async (e: FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-    setErrorMsg(null);
-
-    try {
-      const res = await axios.post("http://localhost:8000/v1/api/discounts/referrals/redeem", {
-        code: redeemData.code,
-        referredUserId: Number(redeemData.referredUserId),
-      });
-      setMessage(res.data.message || "Referral redeemed");
-      setRedeemData({ code: "", referredUserId: 0 });
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.error || err.message || "Error redeeming referral code");
-    }
-  };
 
   // ------------------ HANDLER: INTEGRATION ------------------
   const handleAssignDiscountToProduct = async (e: FormEvent) => {
@@ -314,7 +274,7 @@ export default function PromoPage() {
   };
 
   // Helpers
-  const handleTabSwitch = (tab: "discount" | "voucher" | "referral" | "integrate") => {
+  const handleTabSwitch = (tab: "discount" | "voucher" | "integrate") => {
     setMessage(null);
     setErrorMsg(null);
     setActiveTab(tab);
@@ -344,15 +304,6 @@ export default function PromoPage() {
             )}
           >
             Voucher
-          </button>
-          <button
-            onClick={() => handleTabSwitch("referral")}
-            className={clsx(
-              "px-4 py-2 rounded",
-              activeTab === "referral" ? "bg-blue-500 text-white" : "bg-gray-200"
-            )}
-          >
-            Referral
           </button>
           <button
             onClick={() => handleTabSwitch("integrate")}
@@ -654,48 +605,6 @@ export default function PromoPage() {
                 </tbody>
               </table>
             )}
-          </div>
-        )}
-
-        {activeTab === "referral" && (
-          <div>
-            {/* CREATE REFERRAL CODE */}
-            <form onSubmit={handleCreateReferral} className="mb-4">
-              <label className="block mb-1 font-medium">Referrer ID</label>
-              <input
-                type="number"
-                className="border border-gray-300 rounded p-2 w-full mb-2"
-                value={referrerId}
-                onChange={(e) => setReferrerId(+e.target.value)}
-                required
-              />
-              <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Create Referral Code
-              </button>
-            </form>
-
-            {/* REDEEM REFERRAL CODE */}
-            <form onSubmit={handleRedeemReferral} className="mb-4">
-              <label className="block mb-1 font-medium">Referral Code</label>
-              <input
-                type="text"
-                className="border border-gray-300 rounded p-2 w-full mb-2"
-                value={redeemData.code}
-                onChange={(e) => setRedeemData({ ...redeemData, code: e.target.value })}
-                required
-              />
-              <label className="block mb-1 font-medium">Referred User ID</label>
-              <input
-                type="number"
-                className="border border-gray-300 rounded p-2 w-full mb-2"
-                value={redeemData.referredUserId}
-                onChange={(e) => setRedeemData({ ...redeemData, referredUserId: +e.target.value })}
-                required
-              />
-              <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                Redeem Referral
-              </button>
-            </form>
           </div>
         )}
 
