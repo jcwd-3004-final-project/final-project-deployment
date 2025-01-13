@@ -6,7 +6,7 @@ interface PurchaseCardProps {
   productImg?: string;
   variation?: string;
   quantity: number;
-  totalPrice?: number; // <-- Bisa diubah jadi optional jika dari backend kadang tidak ada
+  totalPrice?: number; // Bisa diubah jadi optional jika dari backend kadang tidak ada
   status: string;
   onConfirm?: () => void;
   onRefund?: () => void;
@@ -28,7 +28,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   return (
     <div className="border rounded-md p-4 shadow-sm mb-4">
       {/* Shop header */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-wrap items-center justify-between mb-2">
         <div className="font-semibold text-gray-700">
           {shopName || "Shop Name"}
         </div>
@@ -36,11 +36,12 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
       </div>
 
       {/* Product Info */}
-      <div className="flex">
+      <div className="flex flex-col sm:flex-row">
+        {/* Gambar produk: Pada layar kecil, tampil full width; pada layar sm ke atas tampil dengan ukuran tetap */}
         <img
           src={productImg || "/placeholder.png"}
           alt={productName}
-          className="w-20 h-20 object-cover rounded-md mr-4"
+          className="w-full sm:w-20 h-20 object-cover rounded-md mb-4 sm:mb-0 sm:mr-4"
         />
         <div className="flex flex-col justify-between">
           <div>
@@ -51,16 +52,13 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
             <div className="text-sm text-gray-500">x{quantity}</div>
           </div>
           <div className="text-lg font-bold text-gray-800">
-            {/**
-             * Gunakan fallback 0 jika totalPrice undefined
-             */}
             Rp {(totalPrice ?? 0).toLocaleString()}
           </div>
         </div>
       </div>
 
       {/* Actions (Confirm, Refund, Contact, etc.) */}
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         {onConfirm && (
           <button
             onClick={onConfirm}

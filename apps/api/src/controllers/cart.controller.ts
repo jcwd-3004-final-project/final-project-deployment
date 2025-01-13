@@ -69,4 +69,21 @@ export class CartController {
       return res.status(400).json({ success: false, error: error.message });
     }
   }
+
+  static async deleteItem(req: Request, res: Response) {
+    try {
+      const userId = CartController.getUserIdFromToken(req);
+      const productId = parseInt(req.params.productId, 10);
+
+      const deletedItem = await cartService.deleteCartItem(userId, productId);
+
+      return res.json({
+        success: true,
+        data: deletedItem,
+        message: "Item has been removed from cart",
+      });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+  }
 }

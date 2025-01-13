@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import PurchaseCard from "@/components/purchaseCard"; // The card component from above
+import PurchaseCard from "@/components/purchaseCard";
 import Navbar from "@/components/navbar/navbar";
 
-// Example statuses you want:
+// Daftar status untuk filter
 const STATUSES = [
   { key: "ALL", label: "Semua" },
   { key: "WAITING_FOR_PAYMENT", label: "Belum Bayar" },
@@ -13,39 +13,41 @@ const STATUSES = [
   { key: "CANCELLED", label: "Dibatalkan" },
 ];
 
-// Sample type: adjust to match your actual Order model
+// Tipe data berdasarkan struktur respons API
 type Purchase = {
   id: number;
-  status: string;       // e.g. BELUM_BAYAR, DIKIRIM, etc.
-  shopName: string;
-  productName: string;
-  productImg: string;
-  variation: string;
-  quantity: number;
-  totalPrice: number;
+  store: { name: string } | null;
+  totalAmount: number;
+  status: string;
+  items: Array<{
+    quantity: number;
+    variation?: string;
+    product: {
+      name: string;
+      imageUrl?: string;
+    };
+  }>;
 };
 
 const PurchasesPage: React.FC = () => {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [filterStatus, setFilterStatus] = useState("ALL");
-   const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
         let url = "http://localhost:8000/v1/api/user/purchases";
-        
-        // If not "ALL", append the status as a query param
         if (filterStatus !== "ALL") {
           url += `?status=${filterStatus}`;
         }
-
+        const token = localStorage.getItem("accessToken");
         const res = await axios.get(url, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
-        setPurchases(res.data.data); // Adjust based on your backend response shape
+        setPurchases(res.data.data);
       } catch (err) {
         console.error("Error fetching purchases:", err);
       }
@@ -54,26 +56,25 @@ const PurchasesPage: React.FC = () => {
     fetchPurchases();
   }, [filterStatus]);
 
-  // Example handlers for "Pesanan Selesai", "Ajukan Pengembalian", etc.
+  // Handler untuk aksi tombol
   const handleConfirm = (purchaseId: number) => {
-    // Make an API call to confirm this purchase.
-    console.log("Pesanan Selesai clicked for purchaseId:", purchaseId);
+    console.log("Pesanan Selesai untuk purchaseId:", purchaseId);
+    // Lakukan API call atau logika lainnya di sini
   };
 
   const handleRefund = (purchaseId: number) => {
-    // Make an API call to request a refund/return
-    console.log("Refund clicked for purchaseId:", purchaseId);
+    console.log("Ajukan Pengembalian untuk purchaseId:", purchaseId);
+    // Lakukan API call atau logika lainnya di sini
   };
 
-  const handleContact = (purchaseId: number) => {
-    console.log("Contact Seller for purchaseId:", purchaseId);
+  const handleContactSeller = (purchaseId: number) => {
+    console.log("Hubungi Penjual untuk purchaseId:", purchaseId);
+    // Lakukan API call atau logika lainnya di sini
   };
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
   };
-
-
 
   const handleSearchSubmit = () => {
     const productSection = document.querySelector("#product-section");
@@ -83,55 +84,82 @@ const PurchasesPage: React.FC = () => {
   };
 
   return (
-    
     <div className="min-h-screen flex flex-col">
-        
+      {/* Header */}
       <header className="p-4 border-b">
         <Navbar
-            onSearchChange={handleSearchChange}
-            onSearchSubmit={handleSearchSubmit}
+          onSearchChange={handleSearchChange}
+          onSearchSubmit={handleSearchSubmit}
         />
       </header>
 
-      {/* Status Tabs */}
-      <nav className="flex space-x-4 p-4 border-b">
-        {STATUSES.map((status) => (
-          <button
-            key={status.key}
-            className={`px-4 py-2 ${
-              filterStatus === status.key
-                ? "border-b-2 border-orange-500 font-semibold"
-                : "text-gray-500"
-            }`}
-            onClick={() => setFilterStatus(status.key)}
-          >
-            {status.label}
-          </button>
-        ))}
+      {/* Filter Tabs (Responsive untuk mobile: scrollable secara horizontal) */}
+      <nav className="p-4 border-b overflow-x-auto">
+        <div className="flex space-x-4">
+          {STATUSES.map((status) => (
+            <button
+              key={status.key}
+              className={`flex-shrink-0 px-4 py-2 ${
+                filterStatus === status.key
+                  ? "border-b-2 border-orange-500 font-semibold"
+                  : "text-gray-500"
+              }`}
+              onClick={() => setFilterStatus(status.key)}
+            >
+              {status.label}
+            </button>
+          ))}
+        </div>
       </nav>
 
-      {/* Purchase Cards */}
-      <main className="flex-grow p-4 bg-gray-100">
+      {/* Purchase Cards - Tampilan list (satu kolom) yang tidak berubah untuk desktop */}
+      <main
+        id="product-section"
+        className="flex-grow p-4 bg-gray-100 grid grid-cols-1 gap-4"
+      >
         {purchases.length === 0 ? (
-          <div className="text-center text-gray-600 mt-8">
+          <div className="text-center text-gray-600 mt-8 col-span-full">
             Tidak ada pesanan.
           </div>
         ) : (
-          purchases.map((purchase) => (
-            <PurchaseCard
-              key={purchase.id}
-              shopName={purchase.shopName}
-              productName={purchase.productName}
-              productImg={purchase.productImg}
-              variation={purchase.variation}
-              quantity={purchase.quantity}
-              totalPrice={purchase.totalPrice}
-              status={purchase.status}
-              onConfirm={() => handleConfirm(purchase.id)}
-              onRefund={() => handleRefund(purchase.id)}
-              onContactSeller={() => handleContact(purchase.id)}
-            />
-          ))
+          purchases.map((purchase) => {
+            const firstItem =
+              purchase.items && purchase.items.length > 0
+                ? purchase.items[0]
+                : null;
+
+            const formattedPurchase = {
+              id: purchase.id,
+              shopName: purchase.store ? purchase.store.name : "Shop Name",
+              productName: firstItem ? firstItem.product.name : "Product Name",
+              productImg:
+                firstItem && firstItem.product.imageUrl
+                  ? firstItem.product.imageUrl
+                  : undefined,
+              variation: firstItem ? firstItem.variation || "" : "",
+              quantity: firstItem ? firstItem.quantity : 0,
+              totalPrice: purchase.totalAmount,
+              status: purchase.status,
+            };
+
+            return (
+              <PurchaseCard
+                key={formattedPurchase.id}
+                shopName={formattedPurchase.shopName}
+                productName={formattedPurchase.productName}
+                productImg={formattedPurchase.productImg}
+                variation={formattedPurchase.variation}
+                quantity={formattedPurchase.quantity}
+                totalPrice={formattedPurchase.totalPrice}
+                status={formattedPurchase.status}
+                onConfirm={() => handleConfirm(formattedPurchase.id)}
+                onRefund={() => handleRefund(formattedPurchase.id)}
+                onContactSeller={() =>
+                  handleContactSeller(formattedPurchase.id)
+                }
+              />
+            );
+          })
         )}
       </main>
     </div>

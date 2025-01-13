@@ -112,8 +112,12 @@ export default function Navbar({
       cancelButtonText: "Cancel",
     }).then((result) => {
       if (result.isConfirmed) {
+
         logout();
         router.push("/");
+
+        // The "logout" here should clear tokens, user context, etc.
+
       }
     });
   };
@@ -159,7 +163,9 @@ export default function Navbar({
 
               {/* User dropdown on hover */}
               <div
+
                 className="relative inline-block"
+
                 onMouseEnter={() => setIsDropdownOpen(true)}
                 onMouseLeave={() => setIsDropdownOpen(false)}
               >
@@ -170,17 +176,18 @@ export default function Navbar({
                 {isDropdownOpen && (
                   <div
                     className="
-                      absolute
-                      right-0
-                      top-full
-                      w-40
-                      bg-white
-                      border
-                      border-gray-200
-                      rounded
-                      shadow-md
-                      z-10
-                    "
+
+                        absolute
+                        right-0
+                        top-full  /* Positions dropdown just below the trigger */
+                        w-40
+                        bg-white
+                        border
+                        border-gray-200
+                        rounded
+                        shadow-md
+                        z-10
+                      "
                   >
                     <Link
                       href="/profile"
@@ -191,6 +198,7 @@ export default function Navbar({
                     <Link
                       href="/purchase"
                       className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+
                     >
                       My Purchase
                     </Link>
@@ -198,6 +206,7 @@ export default function Navbar({
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
                     >
+
                       Log Out
                     </button>
                   </div>
@@ -265,7 +274,7 @@ export default function Navbar({
                 My Profile
               </Link>
               <Link
-                href="/purchases"
+                href="/purchase"
                 className="text-gray-700 hover:text-green-600"
                 onClick={() => setIsMenuOpen(false)}
               >
