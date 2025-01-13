@@ -9,7 +9,7 @@ function Footer() {
         <div className="flex flex-col lg:flex-row justify-between">
           {/* Logo and Description */}
           <div className="mb-8 lg:mb-0 lg:w-1/3">
-            <h2 className="text-2xl font-bold text-white mb-4">Your Company</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">Pesan Aja</h2>
             <p className="text-gray-400">
               Kami adalah perusahaan yang berdedikasi untuk memberikan layanan
               terbaik kepada pelanggan kami. Hubungi kami untuk informasi lebih
@@ -154,7 +154,7 @@ function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="text-sm text-gray-500 mb-4 md:mb-0">
-            &copy; {new Date().getFullYear()} Your Company. All Rights Reserved.
+            &copy; {new Date().getFullYear()} Pesan Aja. All Rights Reserved.
           </div>
           <div className="flex space-x-4">
             <a

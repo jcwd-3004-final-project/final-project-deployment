@@ -30,6 +30,14 @@ router.get(
   passport.authenticate('google', { session: false }),
   asyncHandler(authController.socialCallback.bind(authController))
 );
+
+// JSON-based Google callback (no redirect)
+router.get(
+  '/google/callback/json',
+  passport.authenticate('google', { session: false }),
+  asyncHandler(authController.socialCallbackJson.bind(authController))
+);
+
 // Facebook OAuth
 router.get( '/facebook', passport.authenticate('facebook', { scope: ['email'] }) );
 router.get('/facebook/callback', passport.authenticate('facebook', { session: false }), asyncHandler(authController.socialCallback.bind(authController)));
