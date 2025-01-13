@@ -6,7 +6,31 @@ import Footer from "@/components/footer";
 import { Product } from "@/components/productList";
 import axios from "axios";
 
+// ADDED: Import Next.js router
+import { useRouter } from "next/router";
+
 const Home = () => {
+  // ADDED: Initialize the Next.js router
+  const router = useRouter();
+
+  // ADDED: This useEffect checks if you landed on "/" with ?accessToken & ?refreshToken
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const { accessToken, refreshToken } = router.query;
+    if (accessToken && refreshToken) {
+      localStorage.setItem("accessToken", accessToken as string);
+      localStorage.setItem("refreshToken", refreshToken as string);
+      console.log("Tokens stored from query params:", { accessToken, refreshToken });
+
+      // Optionally remove them from the URL so they don’t stay visible
+      router.replace("/", undefined, { shallow: true });
+    }
+  }, [router.isReady, router.query]);
+
+  // ------------------------------
+  // Original code below
+  // ------------------------------
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -157,15 +181,15 @@ const Home = () => {
         <section id="product-section" className="my-12">
           <ProductList products={filteredProducts} />
         </section>
-
+{/* 
         <section className="location-display my-12">
           <h2>Your Location</h2>
           <p>Latitude: {latitude || "N/A"}</p>
           <p>Longitude: {longitude || "N/A"}</p>
-        </section>
+        </section> */}
 
         <section className="cart-display my-12">
-          <h2>Your Cart</h2>
+          {/* <h2>Your Cart</h2> */}
           <ul>
             {cart.map((item, index) => (
               <li key={index}>

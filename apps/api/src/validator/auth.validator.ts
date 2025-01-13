@@ -7,6 +7,7 @@ export const signUpValidator = Joi.object({
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   phoneNumber: Joi.string().pattern(/^[0-9]+$/).required(),
+  referralCode: Joi.string().optional().allow(''),
 });
 
 export const signInValidator = Joi.object({

@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+// src/pages/register.tsx
+
+import React, { useState, useEffect } from 'react'; 
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { registerUser } from '@/lib/authApi';
+import { toast } from 'react-toastify'; // Pastikan Anda telah menginstal react-toastify
+import 'react-toastify/dist/ReactToastify.css';
 
 interface FormState {
   email: string;
@@ -9,6 +13,7 @@ interface FormState {
   firstName: string;
   lastName: string;
   phoneNumber: string;
+  referralCode?: string;
 }
 
 const RegisterPage: NextPage = () => {
@@ -17,12 +22,21 @@ const RegisterPage: NextPage = () => {
     password: '',
     firstName: '',
     lastName: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    referralCode: '',
   });
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false); // State untuk loading
 
   const router = useRouter();
+
+  useEffect(() => {
+    // Jika halaman diakses dengan query parameter ?ref=CODE, prefill referralCode
+    const { ref } = router.query;
+    if (ref && typeof ref === 'string') {
+      setForm(prev => ({ ...prev, referralCode: ref }));
+    }
+  }, [router.query]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -36,8 +50,10 @@ const RegisterPage: NextPage = () => {
       await registerUser(form);
       // Jika berhasil, arahkan ke halaman register-success
       router.push('/auth/register-success');
+      toast.success('Registrasi berhasil! Silakan periksa email Anda untuk konfirmasi.'); // Notifikasi sukses
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Registrasi gagal.');
+      toast.error(err?.response?.data?.error || 'Registrasi gagal.'); // Notifikasi error
     } finally {
       setIsLoading(false); // Selesai loading
     }
@@ -45,6 +61,8 @@ const RegisterPage: NextPage = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      {/* Tambahkan ToastContainer untuk notifikasi */}
+      <ToastContainer />
       <form 
         className="bg-white p-6 text-black rounded shadow-md w-full max-w-md"
         onSubmit={handleSubmit}
@@ -118,6 +136,19 @@ const RegisterPage: NextPage = () => {
           />
         </div>
 
+        <div className="mb-4">
+          <label className="block mb-2" htmlFor="referralCode">Referral Code (Optional)</label>
+          <input 
+            className="w-full border p-2 rounded"
+            type="text"
+            name="referralCode"
+            value={form.referralCode}
+            onChange={handleChange}
+            placeholder="Masukkan referral code jika ada"
+            disabled={isLoading} // Disable saat loading
+          />
+        </div>
+
         <button 
           className={`bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 w-full flex items-center justify-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           type="submit"
@@ -136,5 +167,8 @@ const RegisterPage: NextPage = () => {
     </div>
   );
 };
+
+// Pastikan Anda telah mengimpor ToastContainer di bagian atas
+import { ToastContainer } from 'react-toastify';
 
 export default RegisterPage;

@@ -47,4 +47,11 @@ router.put(
   asyncWrap(CartController.removeItem)
 );
 
+router.delete(
+  "/items/:id",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(CartController.deleteItem) // <= Pastikan ada method deleteItem di CartController
+);
+
 export default router;
