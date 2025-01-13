@@ -22,10 +22,6 @@ router.get('/vouchers', discountController.getVouchers.bind(discountController))
 router.put('/vouchers/:id', discountController.updateVoucher.bind(discountController));
 router.delete('/vouchers/:id', discountController.deleteVoucher.bind(discountController));
 
-// ------------------ Referral Code Operations ------------------
-router.post('/referrals/create', discountController.createReferralCode.bind(discountController));
-router.post('/referrals/redeem', discountController.redeemReferralCode.bind(discountController));
-
 // ------------------ Calculate Discount ------------------
 router.post('/calculate', discountController.calculateDiscount.bind(discountController));
 

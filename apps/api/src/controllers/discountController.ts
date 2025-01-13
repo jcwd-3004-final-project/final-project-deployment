@@ -123,31 +123,6 @@ export class DiscountController {
       res.status(500).json({ error: error.message });
     }
   }
-
-  // ------------------ Referral ------------------
-
-  public async createReferralCode(req: Request, res: Response): Promise<void> {
-    try {
-      const { referrerId } = req.body;
-      const referral = await this.discountService.createReferralCode(referrerId);
-      res.status(201).json(referral);
-    } catch (error: any) {
-      console.error('Error creating referral code:', error.message);
-      res.status(500).json({ error: error.message });
-    }
-  }
-
-  public async redeemReferralCode(req: Request, res: Response): Promise<void> {
-    try {
-      const { code, referredUserId } = req.body;
-      const result = await this.discountService.redeemReferralCode(code, referredUserId);
-      res.status(200).json(result);
-    } catch (error: any) {
-      console.error('Error redeeming referral code:', error.message);
-      res.status(500).json({ error: error.message });
-    }
-  }
-
   // ------------------ Calculate Discount ------------------
 
   public async calculateDiscount(req: Request, res: Response): Promise<void> {

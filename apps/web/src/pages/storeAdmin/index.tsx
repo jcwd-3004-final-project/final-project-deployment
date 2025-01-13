@@ -1,12 +1,13 @@
 "use client";
 import { FormEvent, useState, useEffect } from "react";
+import Link from "next/link";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 
 // Tipe data untuk Product
 interface Product {
   productId: number;
   name: string;
-  stock: number; // atau field lain sesuai backend
+  stock: number;
 }
 
 // Tipe data untuk Stock Log
@@ -164,6 +165,15 @@ export default function AdminDashboardPage() {
         Store Admin Dashboard
       </h1>
 
+      {/* Tombol halaman voucher */}
+      <div className="mb-4">
+        <Link href="/storeAdmin/Voucher">
+          <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+            Go to Voucher Page
+          </button>
+        </Link>
+      </div>
+
       {/* Notification */}
       {message && (
         <div
@@ -301,9 +311,7 @@ export default function AdminDashboardPage() {
             <thead>
               <tr className="bg-green-100 border-b">
                 <th className="py-2 px-4 text-left text-green-800">Log ID</th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Product ID
-                </th>
+                <th className="py-2 px-4 text-left text-green-800">Product ID</th>
                 <th className="py-2 px-4 text-left text-green-800">
                   Change Quantity
                 </th>

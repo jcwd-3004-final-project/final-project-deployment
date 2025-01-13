@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+// src/pages/profile.tsx
+
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Swal from "sweetalert2";
 import Navbar from "@/components/navbar/navbar";
 
+// Interface untuk Address dan UserProfile
 interface Address {
-  address_id: number; // Ganti dari 'id' ke 'address_id'
+  address_id: number;
   addressLine: string;
   city: string;
   state: string;
@@ -27,10 +30,22 @@ interface UserProfile {
   addresses?: Address[];
 }
 
+// Interface untuk Referral Information
+interface ReferralInfo {
+  id: number;
+  referrerId: number;
+  referralCode: string;
+  usageCount: number;
+  createdAt: string;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [referral, setReferral] = useState<ReferralInfo | null>(null);
+
+  // State dan fungsi lainnya untuk alamat (sudah ada)
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState<Omit<Address, "address_id">>({
     addressLine: "",
@@ -54,23 +69,19 @@ export default function ProfilePage() {
     isDefault: false,
   });
 
-  // Fetch user profile and addresses on mount
+  // Fetch profile, addresses, dan referral info
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      // Not logged in
       router.push("/auth/login");
       return;
     }
 
     const fetchProfile = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:8000/v1/api/user/profile",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await fetch("http://localhost:8000/v1/api/user/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch profile");
         }
@@ -84,17 +95,14 @@ export default function ProfilePage() {
 
     const fetchAddresses = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:8000/v1/api/user/addresses",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await fetch("http://localhost:8000/v1/api/user/addresses", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch addresses");
         }
         const result = await response.json();
-        console.log("Fetched Addresses:", result.data); // Debug
+        console.log("Fetched Addresses:", result.data);
         setAddresses(result.data);
       } catch (error) {
         console.error(error);
@@ -102,8 +110,25 @@ export default function ProfilePage() {
       }
     };
 
+    const fetchReferral = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/v1/api/auth/referral", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch referral information");
+        }
+        const result = await response.json();
+        setReferral(result);
+      } catch (error) {
+        console.error(error);
+        Swal.fire("Error", "Gagal mengambil informasi referral.", "error");
+      }
+    };
+
     fetchProfile();
     fetchAddresses();
+    fetchReferral();
   }, [router]);
 
   const handleLogout = () => {
@@ -117,18 +142,16 @@ export default function ProfilePage() {
     }).then((result) => {
       if (result.isConfirmed) {
         localStorage.removeItem("accessToken");
-        Swal.fire("Keluar!", "Kamu telah berhasil keluar.", "success").then(
-          () => {
-            router.push("/");
-          }
-        );
+        Swal.fire("Keluar!", "Kamu telah berhasil keluar.", "success").then(() => {
+          router.push("/");
+        });
       }
     });
   };
 
   const goToEditPage = () => router.push("/profile/edit");
 
-  // Handle input change for adding address
+  // Fungsi penanganan alamat (sama seperti sebelumnya)
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
 
@@ -136,11 +159,7 @@ export default function ProfilePage() {
 
     if (name === "latitude" || name === "longitude") {
       const parsedValue = parseFloat(value);
-      if (isNaN(parsedValue)) {
-        updatedValue = 0; // Atau Anda bisa menampilkan pesan error
-      } else {
-        updatedValue = parsedValue;
-      }
+      updatedValue = isNaN(parsedValue) ? 0 : parsedValue;
     } else if (type === "checkbox") {
       updatedValue = checked;
     }
@@ -151,56 +170,39 @@ export default function ProfilePage() {
     }));
   };
 
-  // Handle submit for adding address
   const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      Swal.fire(
-        "Error",
-        "Token tidak ditemukan. Silakan login kembali.",
-        "error"
-      );
+      Swal.fire("Error", "Token tidak ditemukan. Silakan login kembali.", "error");
       router.push("/auth/login");
       return;
     }
 
-    console.log("New Address:", newAddress); // Debug
-
     try {
-      const response = await fetch(
-        "http://localhost:8000/v1/api/user/addresses",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(newAddress),
-        }
-      );
+      const response = await fetch("http://localhost:8000/v1/api/user/addresses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newAddress),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error Response:", errorData); // Debug
         throw new Error(errorData.message || "Gagal menambahkan alamat");
       }
 
       const result = await response.json();
 
-      // Jika alamat yang ditambahkan adalah default, perbarui alamat default sebelumnya
       if (result.data.isDefault) {
         setAddresses((prev) =>
-          prev.map((addr) =>
-            addr.isDefault ? { ...addr, isDefault: false } : addr
-          )
+          prev.map((addr) => (addr.isDefault ? { ...addr, isDefault: false } : addr))
         );
       }
 
-      // Tambahkan alamat baru ke state
       setAddresses((prev) => [...prev, result.data]);
-
-      // Reset form
       setNewAddress({
         addressLine: "",
         city: "",
@@ -215,18 +217,13 @@ export default function ProfilePage() {
 
       Swal.fire("Sukses", "Alamat berhasil ditambahkan.", "success");
     } catch (error: any) {
-      console.error(error);
-      Swal.fire(
-        "Error",
-        error.message || "Terjadi kesalahan saat menambahkan alamat.",
-        "error"
-      );
+      Swal.fire("Error", error.message || "Terjadi kesalahan saat menambahkan alamat.", "error");
     }
   };
 
-  // Start editing an address
+  // Fungsi-fungsi editing dan menghapus alamat (tetap sama)
   const startEditingAddress = (address: Address) => {
-    setEditingAddressId(address.address_id); // Ganti dari 'id' ke 'address_id'
+    setEditingAddressId(address.address_id);
     setEditAddress({
       addressLine: address.addressLine,
       city: address.city,
@@ -239,7 +236,6 @@ export default function ProfilePage() {
     });
   };
 
-  // Cancel editing
   const cancelEditingAddress = () => {
     setEditingAddressId(null);
     setEditAddress({
@@ -254,7 +250,6 @@ export default function ProfilePage() {
     });
   };
 
-  // Handle input change for editing address
   const handleEditAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
 
@@ -262,11 +257,7 @@ export default function ProfilePage() {
 
     if (name === "latitude" || name === "longitude") {
       const parsedValue = parseFloat(value);
-      if (isNaN(parsedValue)) {
-        updatedValue = 0; // Atau Anda bisa menampilkan pesan error
-      } else {
-        updatedValue = parsedValue;
-      }
+      updatedValue = isNaN(parsedValue) ? 0 : parsedValue;
     } else if (type === "checkbox") {
       updatedValue = checked;
     }
@@ -277,77 +268,53 @@ export default function ProfilePage() {
     }));
   };
 
-  // Handle submit for editing address
   const handleEditAddressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingAddressId === null) return;
 
-    console.log("Editing Address ID:", editingAddressId); // Debug
-
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      Swal.fire(
-        "Error",
-        "Token tidak ditemukan. Silakan login kembali.",
-        "error"
-      );
+      Swal.fire("Error", "Token tidak ditemukan. Silakan login kembali.", "error");
       router.push("/auth/login");
       return;
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:8000/v1/api/user/addresses/${editingAddressId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(editAddress),
-        }
-      );
+      const response = await fetch(`http://localhost:8000/v1/api/user/addresses/${editingAddressId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editAddress),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error Response:", errorData); // Debug
         throw new Error(errorData.message || "Gagal memperbarui alamat");
       }
 
       const result = await response.json();
 
-      // Jika alamat yang diedit adalah default, perbarui alamat default lainnya
       if (result.data.isDefault) {
         setAddresses((prev) =>
           prev.map((addr) =>
-            addr.address_id === result.data.address_id
-              ? result.data
-              : { ...addr, isDefault: false }
+            addr.address_id === result.data.address_id ? result.data : { ...addr, isDefault: false }
           )
         );
       } else {
         setAddresses((prev) =>
-          prev.map((addr) =>
-            addr.address_id === result.data.address_id ? result.data : addr
-          )
+          prev.map((addr) => (addr.address_id === result.data.address_id ? result.data : addr))
         );
       }
 
-      // Reset form edit
       cancelEditingAddress();
-
       Swal.fire("Sukses", "Alamat berhasil diperbarui.", "success");
     } catch (error: any) {
-      console.error(error);
-      Swal.fire(
-        "Error",
-        error.message || "Terjadi kesalahan saat memperbarui alamat.",
-        "error"
-      );
+      Swal.fire("Error", error.message || "Terjadi kesalahan saat memperbarui alamat.", "error");
     }
   };
 
-  // Handle delete address
   const handleDeleteAddress = (addressId: number) => {
     Swal.fire({
       title: "Apakah kamu yakin?",
@@ -363,86 +330,59 @@ export default function ProfilePage() {
     });
   };
 
-  // Fungsi untuk mengirim request DELETE
   const deleteAddress = async (addressId: number) => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      Swal.fire(
-        "Error",
-        "Token tidak ditemukan. Silakan login kembali.",
-        "error"
-      );
+      Swal.fire("Error", "Token tidak ditemukan. Silakan login kembali.", "error");
       router.push("/auth/login");
       return;
     }
 
     try {
-      // Cek apakah alamat yang dihapus adalah default
-      const addressToDelete = addresses.find(
-        (addr) => addr.address_id === addressId
-      );
+      const addressToDelete = addresses.find((addr) => addr.address_id === addressId);
       const isDefault = addressToDelete?.isDefault;
 
-      const response = await fetch(
-        `http://localhost:8000/v1/api/user/addresses/${addressId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`http://localhost:8000/v1/api/user/addresses/${addressId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error Response:", errorData);
         throw new Error(errorData.message || "Gagal menghapus alamat");
       }
 
-      // Jika alamat default dihapus, tetapkan alamat default baru
       if (isDefault) {
-        const remainingAddresses = addresses.filter(
-          (addr) => addr.address_id !== addressId
-        );
+        const remainingAddresses = addresses.filter((addr) => addr.address_id !== addressId);
         if (remainingAddresses.length > 0) {
-          const newDefaultAddress = remainingAddresses[0]; // Atur alamat pertama sebagai default
-          await fetch(
-            `http://localhost:8000/v1/api/user/addresses/${newDefaultAddress.address_id}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ ...newDefaultAddress, isDefault: true }),
-            }
-          );
+          const newDefaultAddress = remainingAddresses[0];
+          await fetch(`http://localhost:8000/v1/api/user/addresses/${newDefaultAddress.address_id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ ...newDefaultAddress, isDefault: true }),
+          });
 
-          // Update state untuk mengganti alamat default
           setAddresses((prev) =>
             prev.map((addr) =>
-              addr.address_id === newDefaultAddress.address_id
-                ? { ...addr, isDefault: true }
-                : addr
+              addr.address_id === newDefaultAddress.address_id ? { ...addr, isDefault: true } : addr
             )
           );
         }
       }
 
-      // Perbarui state dengan menghapus alamat yang telah dihapus
       setAddresses((prev) =>
         prev.filter((addr) => addr.address_id !== addressId)
       );
 
       Swal.fire("Sukses", "Alamat berhasil dihapus.", "success");
     } catch (error: any) {
-      console.error(error);
-      Swal.fire(
-        "Error",
-        error.message || "Terjadi kesalahan saat menghapus alamat.",
-        "error"
-      );
+      Swal.fire("Error", error.message || "Terjadi kesalahan saat menghapus alamat.", "error");
     }
   };
 
@@ -485,10 +425,32 @@ export default function ProfilePage() {
             )}
           </div>
 
+          {/* New: Section Referral Info */}
+          <div className="mt-8 text-center">
+            <h2 className="text-xl font-semibold text-gray-800">Referral Info</h2>
+            {referral ? (
+              <div className="mt-4">
+                <p>
+                  <strong>Referral Code: </strong>
+                  <span className="font-bold">{referral.referralCode}</span>
+                </p>
+                <p>
+                  <strong>Poin: </strong>
+                  <span className="font-bold">{referral.usageCount * 10000}</span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  (Setiap penggunaan referral memberikan potongan 10.000, maksimal 30.000)
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600">Loading referral information...</p>
+            )}
+          </div>
+
           {/* Action Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
             <button
-              onClick={goToEditPage}
+              onClick={() => router.push("/profile/edit")}
               className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-full shadow-md hover:from-blue-600 hover:to-indigo-600 focus:outline-none transition transform hover:scale-105"
             >
               Edit Profile
@@ -501,7 +463,7 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          {/* Daftar Alamat */}
+          {/* Existing Address Section */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Alamat Saya
@@ -516,8 +478,8 @@ export default function ProfilePage() {
                     className="bg-gray-50 p-4 rounded-lg shadow"
                   >
                     {editingAddressId === address.address_id ? (
-                      /* Form Edit Alamat */
                       <form onSubmit={handleEditAddressSubmit}>
+                        {/* Form Edit Alamat */}
                         <div className="mb-4">
                           <label className="block text-gray-700">Alamat</label>
                           <input
@@ -543,9 +505,7 @@ export default function ProfilePage() {
                           />
                         </div>
                         <div className="mb-4">
-                          <label className="block text-gray-700">
-                            Provinsi
-                          </label>
+                          <label className="block text-gray-700">Provinsi</label>
                           <input
                             type="text"
                             name="state"
@@ -557,9 +517,7 @@ export default function ProfilePage() {
                           />
                         </div>
                         <div className="mb-4">
-                          <label className="block text-gray-700">
-                            Kode Pos
-                          </label>
+                          <label className="block text-gray-700">Kode Pos</label>
                           <input
                             type="text"
                             name="postalCode"
@@ -583,9 +541,7 @@ export default function ProfilePage() {
                           />
                         </div>
                         <div className="mb-4">
-                          <label className="block text-gray-700">
-                            Latitude
-                          </label>
+                          <label className="block text-gray-700">Latitude</label>
                           <input
                             type="number"
                             name="latitude"
@@ -598,9 +554,7 @@ export default function ProfilePage() {
                           />
                         </div>
                         <div className="mb-4">
-                          <label className="block text-gray-700">
-                            Longitude
-                          </label>
+                          <label className="block text-gray-700">Longitude</label>
                           <input
                             type="number"
                             name="longitude"
@@ -641,7 +595,6 @@ export default function ProfilePage() {
                         </div>
                       </form>
                     ) : (
-                      /* Tampilan Alamat Biasa */
                       <>
                         <p className="font-semibold">{address.addressLine}</p>
                         <p>
@@ -649,8 +602,7 @@ export default function ProfilePage() {
                         </p>
                         <p>{address.country}</p>
                         <p className="text-sm text-gray-500">
-                          Latitude: {address.latitude}, Longitude:{" "}
-                          {address.longitude}
+                          Latitude: {address.latitude}, Longitude: {address.longitude}
                         </p>
                         {address.isDefault && (
                           <span className="mt-2 inline-block px-3 py-1 text-xs text-white bg-green-600 rounded-full">
@@ -665,9 +617,7 @@ export default function ProfilePage() {
                             Edit
                           </button>
                           <button
-                            onClick={() =>
-                              handleDeleteAddress(address.address_id)
-                            }
+                            onClick={() => handleDeleteAddress(address.address_id)}
                             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                           >
                             Delete

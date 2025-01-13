@@ -32,6 +32,7 @@ app.use(
       "https://event-idham-gilang.vercel.app/",
       "http://localhost:3000",
     ],
+    credentials: true,
   })
 );
 
