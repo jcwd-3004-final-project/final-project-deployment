@@ -6,11 +6,12 @@ interface PurchaseCardProps {
   productImg?: string;
   variation?: string;
   quantity: number;
-  totalPrice?: number; // Bisa diubah jadi optional jika dari backend kadang tidak ada
+  totalPrice?: number; // optional if sometimes missing from backend
   status: string;
   onConfirm?: () => void;
   onRefund?: () => void;
   onContactSeller?: () => void;
+  onDetail?: () => void; // <-- NEW
 }
 
 const PurchaseCard: React.FC<PurchaseCardProps> = ({
@@ -24,6 +25,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   onConfirm,
   onRefund,
   onContactSeller,
+  onDetail,
 }) => {
   return (
     <div className="border rounded-md p-4 shadow-sm mb-4">
@@ -37,7 +39,6 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
 
       {/* Product Info */}
       <div className="flex flex-col sm:flex-row">
-        {/* Gambar produk: Pada layar kecil, tampil full width; pada layar sm ke atas tampil dengan ukuran tetap */}
         <img
           src={productImg || "/placeholder.png"}
           alt={productName}
@@ -57,8 +58,18 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
         </div>
       </div>
 
-      {/* Actions (Confirm, Refund, Contact, etc.) */}
+      {/* Actions (Detail, Confirm, Refund, Contact, etc.) */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
+        {/* Always show the Detail button if onDetail is passed */}
+        {onDetail && (
+          <button
+            onClick={onDetail}
+            className="px-4 py-2 rounded-md bg-blue-500 text-white text-sm"
+          >
+            Detail
+          </button>
+        )}
+
         {onConfirm && (
           <button
             onClick={onConfirm}
@@ -67,6 +78,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
             Pesanan Selesai
           </button>
         )}
+
         {onRefund && (
           <button
             onClick={onRefund}
@@ -75,6 +87,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
             Ajukan Pengembalian
           </button>
         )}
+
         {onContactSeller && (
           <button
             onClick={onContactSeller}

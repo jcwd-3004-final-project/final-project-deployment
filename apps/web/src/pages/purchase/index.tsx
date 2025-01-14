@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useRouter } from "next/router";
 import PurchaseCard from "@/components/purchaseCard";
 import Navbar from "@/components/navbar/navbar";
 
-// Daftar status untuk filter
+// Status filter options
 const STATUSES = [
   { key: "ALL", label: "Semua" },
   { key: "WAITING_FOR_PAYMENT", label: "Belum Bayar" },
@@ -13,7 +14,7 @@ const STATUSES = [
   { key: "CANCELLED", label: "Dibatalkan" },
 ];
 
-// Tipe data berdasarkan struktur respons API
+// Type definitions for API response
 type Purchase = {
   id: number;
   store: { name: string } | null;
@@ -32,8 +33,9 @@ type Purchase = {
 const PurchasesPage: React.FC = () => {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [filterStatus, setFilterStatus] = useState("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
+  // Fetch purchases based on filter status
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
@@ -56,44 +58,34 @@ const PurchasesPage: React.FC = () => {
     fetchPurchases();
   }, [filterStatus]);
 
-  // Handler untuk aksi tombol
+  // Button handlers
   const handleConfirm = (purchaseId: number) => {
     console.log("Pesanan Selesai untuk purchaseId:", purchaseId);
-    // Lakukan API call atau logika lainnya di sini
+    // Add API call or logic for confirming the order here
   };
 
   const handleRefund = (purchaseId: number) => {
     console.log("Ajukan Pengembalian untuk purchaseId:", purchaseId);
-    // Lakukan API call atau logika lainnya di sini
+    // Add API call or logic for refund request here
   };
 
   const handleContactSeller = (purchaseId: number) => {
     console.log("Hubungi Penjual untuk purchaseId:", purchaseId);
-    // Lakukan API call atau logika lainnya di sini
+    // Add API call or logic for contacting the seller here
   };
 
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  const handleSearchSubmit = () => {
-    const productSection = document.querySelector("#product-section");
-    if (productSection) {
-      productSection.scrollIntoView({ behavior: "smooth" });
-    }
+  const handleDetail = (purchaseId: number) => {
+    router.push(`/purchase/${purchaseId}`);
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="p-4 border-b">
-        <Navbar
-          onSearchChange={handleSearchChange}
-          onSearchSubmit={handleSearchSubmit}
-        />
+        <Navbar />
       </header>
 
-      {/* Filter Tabs (Responsive untuk mobile: scrollable secara horizontal) */}
+      {/* Filter Tabs */}
       <nav className="p-4 border-b overflow-x-auto">
         <div className="flex space-x-4">
           {STATUSES.map((status) => (
@@ -112,11 +104,8 @@ const PurchasesPage: React.FC = () => {
         </div>
       </nav>
 
-      {/* Purchase Cards - Tampilan list (satu kolom) yang tidak berubah untuk desktop */}
-      <main
-        id="product-section"
-        className="flex-grow p-4 bg-gray-100 grid grid-cols-1 gap-4"
-      >
+      {/* Purchase Cards */}
+      <main className="flex-grow p-4 bg-gray-100 grid grid-cols-1 gap-4">
         {purchases.length === 0 ? (
           <div className="text-center text-gray-600 mt-8 col-span-full">
             Tidak ada pesanan.
@@ -157,6 +146,7 @@ const PurchasesPage: React.FC = () => {
                 onContactSeller={() =>
                   handleContactSeller(formattedPurchase.id)
                 }
+                onDetail={() => handleDetail(formattedPurchase.id)} // Detail button handler
               />
             );
           })

@@ -3,12 +3,16 @@ import { Request, Response, NextFunction, RequestHandler } from 'express';
 
 /**
  * Membungkus fungsi handler async dan menangani error secara otomatis.
- * @param fn Fungsi handler async.
- * @returns Fungsi handler yang dibungkus.
+ * Fungsi ini dibuat generic agar dapat menerima Request yang telah di-extend, seperti AuthenticatedRequest.
+ *
+ * @param fn Fungsi handler async dengan tipe Request khusus.
+ * @returns Fungsi handler yang dibungkus sebagai RequestHandler.
  */
-const asyncHandler = (fn: RequestHandler): RequestHandler => {
+const asyncHandler = <Req extends Request = Request>(
+  fn: (req: Req, res: Response, next: NextFunction) => Promise<any>
+): RequestHandler => {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req as Req, res, next)).catch(next);
   };
 };
 

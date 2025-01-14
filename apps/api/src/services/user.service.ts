@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import axios from "axios";
 import { AddressInput, ShippingCostInput } from "../models/user.models";
 
+import cloudinary from 'cloudinary';
+
 const prisma = new PrismaClient();
 const RAJA_ONGKIR_BASE_URL = "https://api.rajaongkir.com/starter";
 
@@ -114,7 +116,7 @@ export class UserService {
   // -------------------------
   // RajaOngkir Helpers
   // -------------------------
-  private async getProvinceIdByName(provinceName: string): Promise<string> {
+  public async getProvinceIdByName(provinceName: string): Promise<string> {
     if (!provinceName) throw new Error("No state/province provided");
 
     const apiKey = process.env.RAJA_ONGKIR_API_KEY as string;
@@ -268,6 +270,36 @@ export class UserService {
     });
 
     return updatedUser;
+  }
+
+  async updateUserProfilePicture(userId: number, avatarUrl: string) {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { avatar: avatarUrl }, // Menyimpan URL avatar gambar dari Cloudinary
+    });
+    return updatedUser;
+  }
+  
+  async getUserProfile(userId: number) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        avatar: true, // Include avatar field
+        phone_number: true,
+        role: true,
+        isVerified: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return user;
   }
 
   async deleteUser(userId: number) {

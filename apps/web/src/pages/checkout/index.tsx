@@ -1,10 +1,11 @@
-// pages/checkout/index.tsx
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
 
-// Misalnya ada context cart
+// Import SweetAlert2
+import Swal from "sweetalert2";
+
 import { useCart } from "@/context/cartContext";
 
 // Tipe untuk Shipping dan Payment Method
@@ -19,7 +20,7 @@ interface Address {
   state?: string;
 }
 
-// Tipe untuk data Store (sesuai response backend)
+// Tipe untuk data Store
 interface Store {
   store_id: number;
   name: string;
@@ -31,12 +32,17 @@ interface Store {
   latitude: number;
   longitude: number;
   maxDeliveryDistance?: number | null;
-  // properti lain jika dibutuhkan
 }
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, totalPrice } = useCart();
+  const {
+    cart,
+    totalPrice,
+    voucherDiscount,
+    referralDiscount,
+    discount,
+  } = useCart(); // Context cart mendukung voucher dan referral
 
   // State untuk alamat
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -50,7 +56,6 @@ export default function CheckoutPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [storeId, setStoreId] = useState<number>(0);
 
-  // Ambil token dari localStorage (pastikan halaman browser)
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
@@ -60,7 +65,11 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!token) {
-        console.error("No access token found; please login.");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "No access token found; please login.",
+        });
         return;
       }
       try {
@@ -82,10 +91,19 @@ export default function CheckoutPage() {
             setSelectedAddress(result.data[0].address_id);
           }
         } else {
-          console.error(result.error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: result.error || "Gagal mengambil data alamat.",
+          });
         }
       } catch (error) {
         console.error("Error fetching addresses:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error fetching addresses. Please try again later.",
+        });
       }
     };
 
@@ -98,7 +116,11 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchStores = async () => {
       if (!token) {
-        console.error("No access token found; please login.");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "No access token found; please login.",
+        });
         return;
       }
       try {
@@ -115,15 +137,23 @@ export default function CheckoutPage() {
         const result = await response.json();
         if (result.status === 200 && result.data) {
           setStores(result.data);
-          // Set default storeId ke store pertama jika ada
           if (result.data.length > 0) {
             setStoreId(result.data[0].store_id);
           }
         } else {
-          console.error("Gagal mengambil data store:", result.error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: result.error || "Gagal mengambil data store.",
+          });
         }
       } catch (error) {
         console.error("Error fetching stores:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error fetching stores. Please try again later.",
+        });
       }
     };
 
@@ -147,37 +177,49 @@ export default function CheckoutPage() {
   // ===============================
   const handleCheckout = async () => {
     if (!token) {
-      alert("No access token found. Please log in first.");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "No access token found. Please log in first.",
+      });
       return;
     }
 
     if (!selectedAddress) {
-      alert("Please select a shipping address");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Please select a shipping address",
+      });
       return;
     }
 
     if (cart.length === 0) {
-      alert("Your cart is empty");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Your cart is empty",
+      });
       return;
     }
 
-    // Bangun payload untuk items
     const itemsPayload = cart.map((item) => ({
-      productId: item.id, // pastikan sesuai dengan struktur item di context cart
+      productId: item.id,
       quantity: item.quantity,
     }));
 
-    // Bangun payload order termasuk storeId yang dipilih
     const orderBody = {
-      storeId, // menggunakan storeId yang sudah dipilih dari dropdown
+      storeId,
       shippingAddressId: selectedAddress,
       shippingMethod: selectedShipping,
       paymentMethod: selectedPayment,
       items: itemsPayload,
+      voucherDiscount,
+      referralDiscount,
+      total: totalPrice - discount, // Total after all discounts
     };
 
     try {
-      // Pembuatan order
       const res = await fetch("http://localhost:8000/v1/api/user/order", {
         method: "POST",
         headers: {
@@ -194,11 +236,9 @@ export default function CheckoutPage() {
       const newOrder = data.data;
       const orderId = newOrder.id;
 
-      // Jika metode pembayaran TRANSFER: redirect ke halaman payment untuk upload bukti transfer
       if (selectedPayment === "TRANSFER") {
         router.push(`/payment?orderId=${orderId}`);
       } else {
-        // Jika PAYMENT_GATEWAY: panggil API pembayaran dan redirect ke gateway (misalnya Midtrans)
         const paymentRes = await fetch(
           "http://localhost:8000/v1/api/payment/create",
           {
@@ -219,20 +259,26 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      alert("Could not complete your order. Please try again later.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Could not complete your order. Please try again later.",
+      });
     }
   };
 
   // ===============================
   // Render Halaman Checkout
   // ===============================
+  const totalAfterDiscount = totalPrice - discount;
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
-        {/* Dropdown Pilih Store */}
+        {/* Pilih Toko */}
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Pilih Toko</h2>
           {stores.length > 0 ? (
@@ -252,7 +298,7 @@ export default function CheckoutPage() {
           )}
         </section>
 
-        {/* Dropdown Pilih Alamat Pengiriman */}
+        {/* Pilih Alamat */}
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Shipping Address</h2>
           {addresses.length > 0 ? (
@@ -272,7 +318,7 @@ export default function CheckoutPage() {
           )}
         </section>
 
-        {/* Dropdown Pilih Metode Pengiriman */}
+        {/* Metode Pengiriman */}
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Shipping Method</h2>
           <select
@@ -288,7 +334,7 @@ export default function CheckoutPage() {
           </select>
         </section>
 
-        {/* Dropdown Pilih Metode Pembayaran */}
+        {/* Metode Pembayaran */}
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Payment Method</h2>
           <select
@@ -315,7 +361,9 @@ export default function CheckoutPage() {
                 </p>
               </div>
             ))}
-            <p className="mt-4 font-bold">Total: {formatRupiah(totalPrice)}</p>
+            <p className="mt-4 font-bold">Voucher Discount: {formatRupiah(voucherDiscount)}</p>
+            <p className="mt-2 font-bold">Referral Discount: {formatRupiah(referralDiscount)}</p>
+            <p className="mt-2 font-bold">Total: {formatRupiah(totalAfterDiscount)}</p>
           </div>
         </section>
 
