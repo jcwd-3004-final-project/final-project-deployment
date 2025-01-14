@@ -1,4 +1,3 @@
-// context/cartContext.tsx
 import React, {
   createContext,
   useContext,
@@ -31,6 +30,7 @@ type CartContextType = {
   addToCart: (product: Product) => Promise<void>;
   removeFromCart: (id: number) => Promise<void>;
   updateQuantity: (id: number, quantity: number) => Promise<void>;
+  incrementQuantity: (id: number) => Promise<void>;
   fetchCart: () => Promise<void>;
   totalItems: number;
   totalPrice: number;
@@ -43,7 +43,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [cart, setCart] = useState<CartProductItem[]>([]);
 
-  // Fetch cart data from API or fallback to localStorage
+  // Fungsi fetchCart: mengambil data dari API atau fallback ke localStorage
   const fetchCart = async () => {
     try {
       const response = await axios.get(
@@ -56,16 +56,27 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       );
 
       const apiCart = response.data.data.items || [];
-      setCart(
-        apiCart.map((item: any) => ({
-          ...item.product,
-          quantity: item.quantity,
-        }))
-      );
+
+      if (apiCart.length > 0) {
+        // Jika API mengembalikan data, gunakan data dari API
+        setCart(
+          apiCart.map((item: any) => ({
+            ...item.product,
+            quantity: item.quantity,
+          }))
+        );
+      } else {
+        // Jika data API kosong, coba ambil data dari localStorage
+        const storedCart = localStorage.getItem("cart");
+        if (storedCart) {
+          setCart(JSON.parse(storedCart));
+        } else {
+          setCart([]);
+        }
+      }
     } catch (error) {
       console.error("Failed to fetch cart from API:", error);
-
-      // Fallback to localStorage
+      // Jika terjadi error, ambil data dari localStorage
       const storedCart = localStorage.getItem("cart");
       if (storedCart) {
         setCart(JSON.parse(storedCart));
@@ -73,7 +84,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  // Save cart to localStorage when it changes
+  // Panggil fetchCart saat pertama kali provider di-mount
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  // Simpan data cart ke localStorage setiap kali terjadi perubahan
   useEffect(() => {
     try {
       localStorage.setItem("cart", JSON.stringify(cart));
@@ -82,7 +98,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [cart]);
 
-  // Add item to cart and sync with API
+  // Tambahkan produk ke cart dan sinkronkan dengan API
   const addToCart = async (product: Product) => {
     try {
       await axios.post(
@@ -94,12 +110,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
           },
         }
       );
-      // Refresh cart from API after adding
+      // Setelah berhasil tambah ke API, perbarui data cart
       await fetchCart();
     } catch (error) {
       console.error("Failed to add item to cart via API:", error);
-
-      // Fallback to local update
+      // Fallback: update cart secara lokal
       setCart((prev) => {
         const existingItem = prev.find((item) => item.id === product.id);
         if (existingItem) {
@@ -115,7 +130,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  // Remove item from cart and sync with API
+  // Hapus produk dari cart dan sinkronkan dengan API
   const removeFromCart = async (id: number) => {
     try {
       await axios.delete(`http://localhost:8000/v1/api/user/items/${id}`, {
@@ -123,19 +138,19 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
-      // Refresh cart from API after removing
+      // Setelah berhasil menghapus dari API, perbarui data cart
       await fetchCart();
     } catch (error) {
       console.error("Failed to remove item from cart via API:", error);
-
-      // Fallback to local update
+      // Fallback: update cart secara lokal
       setCart((prev) => prev.filter((item) => item.id !== id));
     }
   };
 
-  // Update item quantity and sync with API
+  // Perbarui jumlah produk pada cart dan sinkronkan dengan API
   const updateQuantity = async (id: number, quantity: number) => {
     try {
+      console.log("Updating quantity:", { id, quantity });
       await axios.put(
         "http://localhost:8000/v1/api/user/items/remove",
         { productId: id, quantity },
@@ -145,15 +160,39 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
           },
         }
       );
-      // Refresh cart from API after updating
+      // Setelah pembaruan, refresh data cart
       await fetchCart();
     } catch (error) {
       console.error("Failed to update item quantity via API:", error);
-
-      // Fallback to local update
+      // Fallback: update cart secara lokal
       setCart((prev) =>
         prev.map((item) =>
           item.id === id ? { ...item, quantity: quantity } : item
+        )
+      );
+    }
+  };
+
+  // Increment jumlah produk dan sinkronkan dengan API
+  const incrementQuantity = async (id: number) => {
+    try {
+      await axios.put(
+        "http://localhost:8000/v1/api/user/items/increment",
+        { productId: id },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      // Setelah berhasil, refresh data cart
+      await fetchCart();
+    } catch (error) {
+      console.error("Failed to increment item quantity via API:", error);
+      // Fallback: update cart secara lokal
+      setCart((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity + 1 } : item
         )
       );
     }
@@ -172,6 +211,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         addToCart,
         removeFromCart,
         updateQuantity,
+        incrementQuantity,
         fetchCart,
         totalItems,
         totalPrice,
