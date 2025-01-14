@@ -1,12 +1,14 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/user.service';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
+import cloudinary from 'cloudinary';
 
 const userService = new UserService();
+const upload = multer({ dest: "uploads/" });
 
 export class UserController {
   static getUserIdFromToken(req: Request): number {
-    // console.log(req)
     try {
       const token = req.headers.authorization?.split(' ')[1];
       if (!token) throw new Error('Authorization token is missing');
@@ -23,7 +25,6 @@ export class UserController {
       }
     }
   }
-  
 
   static async getAddresses(req: Request, res: Response) {
     try {
@@ -38,7 +39,6 @@ export class UserController {
   static async addAddress(req: Request, res: Response) {
     try {
       const userId = UserController.getUserIdFromToken(req);
-      // console.log(userId)
       const data = req.body;
       const newAddress = await userService.addUserAddress(userId, data);
       res.json({ success: true, data: newAddress });
@@ -96,19 +96,6 @@ export class UserController {
     }
   }
 
-  // static getUserIdFromToken(req: Request): number {
-  //   const token = req.headers.authorization?.split(" ")[1];
-  //   if (!token) throw new Error("Authorization token is missing");
-
-  //   const decoded: any = jwt.verify(
-  //     token,
-  //     process.env.JWT_ACCESS_TOKEN_SECRET as string
-  //   );
-  //   if (!decoded || !decoded.userId) throw new Error("Invalid token");
-
-  //   return decoded.userId;
-  // }
-
   static async getProfile(req: Request, res: Response) {
     try {
       const userId = UserController.getUserIdFromToken(req);
@@ -163,6 +150,63 @@ export class UserController {
       });
     } catch (error: any) {
       return res.status(400).json({ success: false, error: error.message });
+    }
+  }
+
+  static async updateProfilePhoto(req: Request, res: Response) {
+    try {
+      // Mendapatkan userId dari token yang ada di header Authorization
+      const userId = UserController.getUserIdFromToken(req);
+  
+      // Pastikan file telah berhasil diupload melalui multer dan tersedia di req.file
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: "No file uploaded" });
+      }
+  
+      const avatarFile = req.file;
+  
+      // Upload gambar ke Cloudinary
+      const result = await cloudinary.v2.uploader.upload(avatarFile.path, {
+        folder: 'user_avatars', // Folder tempat gambar disimpan di Cloudinary
+        use_filename: true,     // Gunakan nama file asli dari file yang diupload
+        unique_filename: true,  // Gunakan nama file unik agar tidak ada konflik
+      });
+  
+      // Mendapatkan URL gambar dari hasil upload Cloudinary
+      const avatarUrl = result.secure_url;
+  
+      // Mengupdate data avatar pengguna di database dengan URL dari Cloudinary
+      const updatedUser = await userService.updateUserProfilePicture(userId, avatarUrl);
+  
+      // Menanggapi dengan data pengguna yang telah diperbarui
+      return res.json({
+        success: true,
+        data: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.first_name,
+          lastName: updatedUser.last_name,
+          phoneNumber: updatedUser.phone_number,
+          role: updatedUser.role,
+          isVerified: updatedUser.isVerified,
+          avatar: updatedUser.avatar, // URL gambar baru dari Cloudinary
+        },
+      });
+    } catch (error: any) {
+      console.error('Error updating profile photo:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  }
+  
+  
+
+  static async getUserProfile(req: Request, res: Response) {
+    try {
+      const userId = UserController.getUserIdFromToken(req);
+      const userProfile = await userService.getUserProfile(userId);
+      res.json({ success: true, data: userProfile });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
     }
   }
 

@@ -34,6 +34,9 @@ type CartContextType = {
   fetchCart: () => Promise<void>;
   totalItems: number;
   totalPrice: number;
+  voucherDiscount: number;
+  referralDiscount: number;
+  discount: number;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -215,6 +218,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         fetchCart,
         totalItems,
         totalPrice,
+        voucherDiscount: 0,
+        referralDiscount: 0,
+        discount: 0
       }}
     >
       {children}
