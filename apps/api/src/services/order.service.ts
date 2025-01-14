@@ -1,4 +1,5 @@
 // src/services/order.service.ts
+
 import prisma from "../models/models";
 import { InventoryService } from "./inventory.service";
 import { UserService } from "./user.service";
@@ -15,35 +16,6 @@ interface OrderItemInput {
   quantity: number;
 }
 
-/**
- * Returns the distance in km between two lat/long points
- * using the Haversine formula.
- */
-function getDistanceInKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-
-  function toRad(angle: number) {
-    return (angle * Math.PI) / 180;
-  }
-}
-
 export class OrderService {
   private inventoryService: InventoryService;
   private userService: UserService;
@@ -55,7 +27,7 @@ export class OrderService {
 
   /**
    * Create a new order
-   * - Checks if the distance between store and user address > 50km => throw error
+   * - Checks if store's province == user address's province (using RajaOngkir)
    * - Validates stock, calculates total & shipping, deducts inventory
    */
   async createOrder(
@@ -68,7 +40,9 @@ export class OrderService {
   ): Promise<Order> {
     // 1) Validate store
     const store = await prisma.store.findUnique({ where: { store_id: storeId } });
-    if (!store) throw new Error("Store not found");
+    if (!store) {
+      throw new Error("Store not found");
+    }
 
     // 2) Validate shipping address
     const address = await prisma.address.findUnique({
@@ -78,34 +52,24 @@ export class OrderService {
       throw new Error("Invalid shipping address");
     }
 
-    // 3) Check coordinates & distance <= 50km
-    if (
-      store.latitude == null ||
-      store.longitude == null ||
-      address.latitude == null ||
-      address.longitude == null
-    ) {
-      throw new Error("Store or address coordinates missing");
+    // 3) Check if store.state == address.state via RajaOngkir
+    //    We'll do it by comparing the province IDs from RajaOngkir
+    if (!store.state || !address.state) {
+      throw new Error("Store or user address does not have a valid province name");
     }
 
-    const distanceKm = getDistanceInKm(
-      store.latitude,
-      store.longitude,
-      address.latitude,
-      address.longitude
-    );
+    const storeProvinceId = await this.userService.getProvinceIdByName(store.state);
+    const userProvinceId = await this.userService.getProvinceIdByName(address.state);
 
-    if (distanceKm > 50) {
+    if (storeProvinceId !== userProvinceId) {
       throw new Error(
-        `Sorry, delivery is not available beyond 50km. Distance is ${distanceKm.toFixed(
-          2
-        )}km`
+        `Cannot ship across provinces. Store province ID=${storeProvinceId}, user province ID=${userProvinceId}.`
       );
     }
 
     // 4) Validate stock & sum total
     let totalAmount = 0;
-    let totalWeight = 0; // If you track product weight, sum it. Otherwise approximate.
+    let totalWeight = 0; // If you track product weight, sum it. Otherwise approximate
     const orderItemsData = [];
 
     for (const item of items) {
@@ -133,8 +97,7 @@ export class OrderService {
       });
     }
 
-    // 5) Auto-calc shipping cost
-    // (Assuming you have a method in userService to do so.)
+    // 5) Auto-calc shipping cost (using RajaOngkir in userService)
     const courierMap: Record<ShippingMethod, string> = {
       REGULAR: "jne",
       EXPRESS: "tiki",
@@ -142,7 +105,8 @@ export class OrderService {
     };
     const courier = courierMap[shippingMethod];
 
-    // Important: pass store.state / store.city & address.state / address.city
+    // Pass store + address provinces/cities, totalWeight, etc.
+    // (store.state, store.city) + (address.state, address.city)
     const shippingCost = await this.userService.getAutoShippingCost(
       store.state!,
       store.city!,

@@ -114,7 +114,7 @@ export class UserService {
   // -------------------------
   // RajaOngkir Helpers
   // -------------------------
-  private async getProvinceIdByName(provinceName: string): Promise<string> {
+  public async getProvinceIdByName(provinceName: string): Promise<string> {
     if (!provinceName) throw new Error("No state/province provided");
 
     const apiKey = process.env.RAJA_ONGKIR_API_KEY as string;
