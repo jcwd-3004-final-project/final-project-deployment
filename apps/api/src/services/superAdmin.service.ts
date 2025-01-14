@@ -5,6 +5,9 @@ import {
   StockAdjustmentReason,
 } from "@prisma/client";
 import { storeSchema } from "../validator/store.schema";
+import bcrypt from "bcryptjs";
+// Jika diperlukan, buat juga schema validasi untuk user store admin misalnya:
+// import { storeAdminSchema } from "../validator/storeAdmin.schema";
 
 export class SuperAdminServices {
   private prisma: PrismaClient;
@@ -13,12 +16,16 @@ export class SuperAdminServices {
     this.prisma = new PrismaClient();
   }
 
+  // ===============================
+  // Methods untuk _Store_
+  // ===============================
+
   // Create a new store
   async createStore(data: any) {
     const validateData = storeSchema.parse(data);
     return this.prisma.store.create({
       data: {
-        name: validateData.name, // Matches "name" in schema
+        name: validateData.name,
         address: validateData.address,
         latitude: validateData.latitude,
         longitude: validateData.longitude,
@@ -31,7 +38,7 @@ export class SuperAdminServices {
   async getAllStores() {
     return this.prisma.store.findMany({
       include: {
-        storeAdmins: true, // Include related admins
+        storeAdmins: true,
         storeProducts: true,
       },
     });
@@ -42,7 +49,7 @@ export class SuperAdminServices {
     return this.prisma.store.findUnique({
       where: { store_id: storeId },
       include: {
-        storeAdmins: true, // Include related admins
+        storeAdmins: true,
         storeProducts: true,
       },
     });
@@ -70,6 +77,110 @@ export class SuperAdminServices {
     });
   }
 
+  // ===============================
+  // Methods untuk _User_ dengan role STORE_ADMIN
+  // ===============================
+
+  /**
+   * Membuat user baru dengan role STORE_ADMIN.
+   * Pastikan untuk melakukan validasi data terlebih dahulu jika diperlukan.
+   */
+  async createStoreAdmin(data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    password: string;
+
+    storeId?: number;
+  }) {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    return this.prisma.user.create({
+      data: {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        password: hashedPassword, // Pastikan password di-hash
+        role: Role.STORE_ADMIN,
+        isVerified: true,
+        ...(data.storeId && {
+          store: {
+            connect: { store_id: data.storeId },
+          },
+        }),
+      },
+    });
+  }
+
+  /**
+   * Memperbarui data user dengan role STORE_ADMIN.
+   * Hanya superadmin yang bisa melakukan perubahan data user.
+   */
+  async updateStoreAdmin(
+    userId: number,
+    data: Partial<{
+      first_name: string;
+      last_name: string;
+      email: string;
+      password: string;
+      storeId: number;
+    }>
+  ) {
+    // Periksa apakah user ada dan role-nya STORE_ADMIN
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new Error("User not found");
+    if (user.role !== Role.STORE_ADMIN)
+      throw new Error("User is not a store admin");
+
+    const updateData: any = {
+      ...(data.first_name ? { first_name: data.first_name } : {}),
+      ...(data.last_name ? { last_name: data.last_name } : {}),
+      ...(data.email ? { email: data.email } : {}),
+      ...(data.password ? { password: data.password } : {}), // Jangan lupa hash password jika diperlukan
+    };
+
+    if ("storeId" in data) {
+      updateData.store = data.storeId
+        ? { connect: { store_id: data.storeId } }
+        : { disconnect: true };
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+  }
+
+  /**
+   * Menghapus user dengan role STORE_ADMIN.
+   */
+  async deleteStoreAdmin(userId: number) {
+    // Pastikan terlebih dahulu bahwa user tersebut ada dan berperan sebagai STORE_ADMIN
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new Error("User not found");
+    if (user.role !== Role.STORE_ADMIN)
+      throw new Error("User is not a store admin");
+
+    // Hapus semua token yang terkait dengan user ini
+    await this.prisma.token.deleteMany({
+      where: { userId: userId },
+    });
+
+    // Setelah token-token terkait dihapus, hapus user tersebut
+    return this.prisma.user.delete({
+      where: { id: userId },
+    });
+  }
+
+  // ===============================
+  // Method-method tambahan lain
+  // ===============================
+
   // Assign a user as a store admin
   async assignStoreAdmin(storeId: number, userId: number): Promise<void> {
     console.log(typeof userId, userId); // Cek tipe data userId
@@ -90,7 +201,7 @@ export class SuperAdminServices {
       data: {
         role: Role.STORE_ADMIN,
         store: {
-          connect: { store_id: storeId }, // Assign store
+          connect: { store_id: storeId },
         },
       },
     });
@@ -101,7 +212,16 @@ export class SuperAdminServices {
     return this.prisma.user.findMany({
       where: { role },
       include: {
-        store: true, // Include related store for store admins
+        store: true,
+      },
+    });
+  }
+
+  // **New Method: Get all users (for Super Admin)**
+  async getAllUsers() {
+    return this.prisma.user.findMany({
+      include: {
+        store: true, // Include related store data jika ada
       },
     });
   }
@@ -111,7 +231,7 @@ export class SuperAdminServices {
     return this.prisma.storeProduct.findMany({
       where: { storeId },
       include: {
-        product: true, // Include product details
+        product: true,
       },
     });
   }
@@ -130,11 +250,10 @@ export class SuperAdminServices {
   // Adjust stock for a store product
   async adjustProductStock(
     storeProductId: number,
-    adjustmentType: AdjustmentType, // Use the enum type
+    adjustmentType: AdjustmentType,
     quantity: number,
-    reason: StockAdjustmentReason // Use the enum type
+    reason: StockAdjustmentReason
   ) {
-    // Create the stock adjustment record
     return this.prisma.stockAdjustment.create({
       data: {
         storeProductId,

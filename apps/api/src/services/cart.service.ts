@@ -2,6 +2,49 @@ import prisma from "../models/models"; // Make sure this points to the same pris
 
 export class CartService {
   /**
+   * Increment quantity of an item in the cart by 1.
+   */
+  async incrementItemQuantity(userId: number, productId: number) {
+    // 1) Check if product exists
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+    if (!product) {
+      throw new Error(`Product with id=${productId} does not exist`);
+    }
+
+    // 2) Get or create cart
+    const cart = await this.getCart(userId);
+
+    // 3) Check if item already in cart
+    const existingItem = await prisma.cartItem.findFirst({
+      where: {
+        cartId: cart.id,
+        productId,
+      },
+    });
+
+    if (!existingItem) {
+      // If item doesn't exist, create it with quantity 1
+      return prisma.cartItem.create({
+        data: {
+          cartId: cart.id,
+          productId,
+          quantity: 1,
+        },
+      });
+    } else {
+      // If item exists, increment the quantity
+      return prisma.cartItem.update({
+        where: { id: existingItem.id },
+        data: {
+          quantity: existingItem.quantity + 1,
+        },
+      });
+    }
+  }
+
+  /**
    * Get or create a cart for a user.
    */
   async getCart(userId: number) {
@@ -39,9 +82,7 @@ export class CartService {
    * Add item to the user's cart.
    * If the item already exists, we increment quantity.
    */
-  // cart.service.ts
   async addItemToCart(userId: number, productId: number, quantity: number) {
-    // 1) Check if product exists
     const product = await prisma.product.findUnique({
       where: { id: productId },
     });
@@ -49,10 +90,8 @@ export class CartService {
       throw new Error(`Product with id=${productId} does not exist`);
     }
 
-    // 2) Get or create cart
     const cart = await this.getCart(userId);
 
-    // 3) Check if item already in cart
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
@@ -60,7 +99,6 @@ export class CartService {
       },
     });
 
-    // 4) If item exists, update. Otherwise, create new item
     if (existingItem) {
       return prisma.cartItem.update({
         where: { id: existingItem.id },
@@ -109,7 +147,6 @@ export class CartService {
     }
 
     if (cartItem.quantity > quantity) {
-      // Decrement quantity
       return prisma.cartItem.update({
         where: { id: cartItem.id },
         data: {
@@ -117,7 +154,6 @@ export class CartService {
         },
       });
     } else {
-      // Remove the item if quantity to remove is >= current quantity
       return prisma.cartItem.delete({
         where: { id: cartItem.id },
       });

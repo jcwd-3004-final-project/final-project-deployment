@@ -148,7 +148,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 router.get(
   "/items",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  authenticateJwt.authorizeRole(["USER", "SUPER_ADMIN"]).bind(authenticateJwt),
   asyncWrap(CartController.getCart)
 );
 
@@ -171,6 +171,13 @@ router.delete(
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
   authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
   asyncWrap(CartController.deleteItem) // <= Pastikan ada method deleteItem di CartController
+);
+
+router.put(
+  "/items/increment",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(CartController.incrementItem)
 );
 
 // ---------------------------

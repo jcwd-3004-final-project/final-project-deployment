@@ -86,4 +86,21 @@ export class CartController {
       return res.status(400).json({ success: false, error: error.message });
     }
   }
+
+  // PUT /v1/api/user/cart/items/increment
+  static async incrementItem(req: Request, res: Response) {
+    try {
+      const userId = CartController.getUserIdFromToken(req);
+      const { productId } = req.body;
+
+      const updatedItem = await cartService.incrementItemQuantity(
+        userId,
+        productId
+      );
+
+      return res.json({ success: true, data: updatedItem });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+  }
 }

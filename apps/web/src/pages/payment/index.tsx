@@ -1,9 +1,9 @@
 // pages/payment.tsx
-
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
+import Swal from "sweetalert2";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -20,11 +20,19 @@ export default function PaymentPage() {
 
   const handleUpload = async () => {
     if (!orderId) {
-      alert("No order ID provided!");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "No order ID provided!",
+      });
       return;
     }
     if (!selectedFile) {
-      alert("Please select a payment proof image.");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Please select a payment proof image.",
+      });
       return;
     }
 
@@ -39,7 +47,11 @@ export default function PaymentPage() {
       // Ambil token dari localStorage (diasumsikan Anda menyimpannya saat login)
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        alert("No token found, please log in again.");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "No token found, please log in again.",
+        });
         setIsUploading(false);
         return;
       }
@@ -65,11 +77,19 @@ export default function PaymentPage() {
         throw new Error(data.error || "Upload failed");
       }
 
-      alert("Payment proof uploaded successfully!");
+      await Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Payment proof uploaded successfully!",
+      });
       router.push("/"); // Arahkan ke halaman lain setelah upload sukses
     } catch (error) {
       console.error("Error uploading payment proof:", error);
-      alert("Failed to upload payment proof.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to upload payment proof.",
+      });
     } finally {
       setIsUploading(false);
     }
@@ -89,7 +109,7 @@ export default function PaymentPage() {
           <input
             type="file"
             id="paymentProof"
-            accept="image/*" // Hanya file gambar
+            accept="image/*"
             onChange={handleFileChange}
             disabled={isUploading}
             className="block w-full"

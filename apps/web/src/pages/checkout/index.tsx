@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
+
+// Import SweetAlert2
+import Swal from "sweetalert2";
+
 import { useCart } from "@/context/cartContext";
 
 // Tipe untuk Shipping dan Payment Method
@@ -61,7 +65,11 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!token) {
-        console.error("No access token found; please login.");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "No access token found; please login.",
+        });
         return;
       }
       try {
@@ -83,10 +91,19 @@ export default function CheckoutPage() {
             setSelectedAddress(result.data[0].address_id);
           }
         } else {
-          console.error(result.error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: result.error || "Gagal mengambil data alamat.",
+          });
         }
       } catch (error) {
         console.error("Error fetching addresses:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error fetching addresses. Please try again later.",
+        });
       }
     };
 
@@ -99,7 +116,11 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchStores = async () => {
       if (!token) {
-        console.error("No access token found; please login.");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "No access token found; please login.",
+        });
         return;
       }
       try {
@@ -120,10 +141,19 @@ export default function CheckoutPage() {
             setStoreId(result.data[0].store_id);
           }
         } else {
-          console.error("Gagal mengambil data store:", result.error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: result.error || "Gagal mengambil data store.",
+          });
         }
       } catch (error) {
         console.error("Error fetching stores:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error fetching stores. Please try again later.",
+        });
       }
     };
 
@@ -147,17 +177,29 @@ export default function CheckoutPage() {
   // ===============================
   const handleCheckout = async () => {
     if (!token) {
-      alert("No access token found. Please log in first.");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "No access token found. Please log in first.",
+      });
       return;
     }
 
     if (!selectedAddress) {
-      alert("Please select a shipping address");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Please select a shipping address",
+      });
       return;
     }
 
     if (cart.length === 0) {
-      alert("Your cart is empty");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Your cart is empty",
+      });
       return;
     }
 
@@ -217,7 +259,11 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      alert("Could not complete your order. Please try again later.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Could not complete your order. Please try again later.",
+      });
     }
   };
 

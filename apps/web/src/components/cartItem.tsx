@@ -1,4 +1,3 @@
-// components/cartItem.tsx
 import React from "react";
 import Image from "next/image";
 import { CartProductItem, useCart } from "@/context/cartContext";
@@ -8,12 +7,12 @@ interface CartItemProps {
 }
 
 const CartItem: React.FC<CartItemProps> = ({ item }) => {
-  const { removeFromCart, updateQuantity } = useCart();
+  const { removeFromCart, incrementQuantity, updateQuantity } = useCart();
 
-  // Increase quantity if not exceeding stock
+  // Increase quantity using incrementQuantity API
   const handleIncrease = () => {
     if (item.quantity < item.stockQuantity) {
-      updateQuantity(item.id, item.quantity + 1);
+      incrementQuantity(item.id);
     }
   };
 

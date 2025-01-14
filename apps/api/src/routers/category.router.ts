@@ -11,8 +11,8 @@ const authenticateJwt = new AuthenticateJwtMiddleware();
 // Protect all routes with authentication and authorization
 router.post(
   "/",
-  authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   categoryController.createCategory.bind(categoryController)
 );
 
@@ -39,8 +39,8 @@ router.put(
 
 router.delete(
   "/:id",
-  authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   categoryController.deleteCategory.bind(categoryController)
 );
 
