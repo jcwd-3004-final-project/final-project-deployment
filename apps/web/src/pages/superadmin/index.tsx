@@ -4,6 +4,7 @@ import StoreModal from "../../components/storeModal";
 import AddStoreProductModal from "../../components/addStoreProductModal"; // Import komponen baru
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import SuperAdminSidebar from "@/components/superAdminSidebar";
 
 interface Admin {
   id: number;
@@ -239,8 +240,12 @@ export default function SuperAdminHome() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="flex">
+      {/* Sidebar */}
+      <SuperAdminSidebar />
+
+      {/* Konten Utama */}
+      <div className="flex-1 ml-0 md:ml-64 p-4">
         <h1 className="text-4xl font-extrabold text-gray-800 mb-6">
           Store Management 🏬
         </h1>

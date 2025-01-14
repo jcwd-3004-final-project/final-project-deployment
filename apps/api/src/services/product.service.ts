@@ -136,43 +136,57 @@ export class ProductService {
     try {
       // Mulai transaksi
       const deletedProduct = await prisma.$transaction(async (tx) => {
-        // Hapus entri terkait di StoreProduct
+        // 1. Cari terlebih dahulu semua entri StoreProduct yang berelasi dengan produk ini
+        const storeProducts = await tx.storeProduct.findMany({
+          where: { productId: id },
+          select: { id: true },
+        });
+
+        // Jika ada, ambil id-nya
+        const storeProductIds = storeProducts.map((sp) => sp.id);
+
+        // 2. Hapus entri terkait di StockAdjustment jika ada
+        if (storeProductIds.length > 0) {
+          await tx.stockAdjustment.deleteMany({
+            where: { storeProductId: { in: storeProductIds } },
+          });
+        }
+
+        // 3. Hapus entri terkait di StoreProduct
         await tx.storeProduct.deleteMany({
           where: { productId: id },
         });
 
-        // Hapus entri terkait di Image
+        // 4. Hapus entri terkait di Image
         await tx.image.deleteMany({
           where: { productId: id },
         });
 
-        // Hapus entri terkait di CartItem
+        // 5. Hapus entri terkait di CartItem
         await tx.cartItem.deleteMany({
           where: { productId: id },
         });
 
-        // Hapus entri terkait di OrderItem
+        // 6. Hapus entri terkait di OrderItem
         await tx.orderItem.deleteMany({
           where: { productId: id },
         });
 
-        // Hapus entri terkait di Voucher
+        // 7. Hapus entri terkait di Voucher
         await tx.voucher.deleteMany({
           where: {
             products: {
-              some: {
-                id: id,
-              },
+              some: { id: id },
             },
           },
         });
 
-        // Hapus entri terkait di StockLog
+        // 8. Hapus entri terkait di StockLog
         await tx.stockLog.deleteMany({
           where: { productId: id },
         });
 
-        // Hapus produk
+        // 9. Hapus produk itu sendiri
         const deleted = await tx.product.delete({
           where: { id: id },
         });

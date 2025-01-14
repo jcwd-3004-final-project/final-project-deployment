@@ -130,16 +130,24 @@ export class AuthService {
   // ----------------------------------------------------
   // SIGN IN
   // ----------------------------------------------------
-  async signIn(
-    data: SignInInput
-  ): Promise<{ accessToken: string; refreshToken: string; user: AuthenticatedUser }> {
+  async signIn(data: SignInInput): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: AuthenticatedUser;
+  }> {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
     });
     if (!user || !user.password) {
+      console.error(
+        "User not found or password missing for email:",
+        data.email
+      );
       throw new Error("Invalid email or password");
     }
+    console.log("User found:", user);
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
+    console.log("Password valid?", isPasswordValid);
     if (!isPasswordValid) {
       throw new Error("Invalid email or password");
     }
@@ -180,7 +188,11 @@ export class AuthService {
   async socialLogin(
     profile: any,
     provider: string
-  ): Promise<{ accessToken: string; refreshToken: string; user: AuthenticatedUser }> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: AuthenticatedUser;
+  }> {
     let user = await prisma.user.findUnique({
       where: { email: profile.emails[0].value },
     });
