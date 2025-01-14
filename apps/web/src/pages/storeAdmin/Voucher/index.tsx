@@ -87,24 +87,10 @@ export default function PromoPage() {
   const [products, setProducts] = useState<Product[]>([]);
 
   // ------------------ Fetch Products ------------------
-  /**
-   * Hanya bagian ini yang diperbaiki agar tidak error 
-   * jika respons backend bukan array secara langsung.
-   */
   const fetchProducts = async () => {
     try {
-      // Misalkan respons backend: { success: true, data: { products: [...] } }
-      // atau mungkin langsung [ {...}, {...} ]
       const res = await axios.get("http://localhost:8000/v1/api/products");
       console.log("Fetched products response:", res.data);
-
-      // Contoh 1: Jika respons langsung array, cukup:
-      // if (Array.isArray(res.data)) setProducts(res.data);
-      // else setProducts([]);
-
-      // Contoh 2 (lebih fleksibel):
-      // Asumsi: { success: boolean, data: { products: array } }
-      // Silakan sesuaikan dengan real format respons di backend.
       if (
         res.data && 
         res.data.success === true &&
@@ -113,10 +99,8 @@ export default function PromoPage() {
       ) {
         setProducts(res.data.data.products);
       } else if (Array.isArray(res.data)) {
-        // Jika ternyata res.data adalah array langsung
         setProducts(res.data);
       } else {
-        // Fallback kalau format tidak sesuai
         console.error("Unexpected response format for products:", res.data);
         setProducts([]);
         setErrorMsg("Unexpected format for products (not an array).");
@@ -124,7 +108,6 @@ export default function PromoPage() {
     } catch (err: any) {
       console.error("Error fetching products:", err);
       setErrorMsg(err.message || "Error fetching products");
-      // fallback ke array kosong agar .map tidak error
       setProducts([]);
     }
   };
@@ -216,10 +199,10 @@ export default function PromoPage() {
       await axios.post("http://localhost:8000/v1/api/discounts/vouchers", {
         ...voucherForm,
         value: Number(voucherForm.value),
-      minPurchaseAmount: Number(voucherForm.minPurchaseAmount),
-      maxDiscount: Number(voucherForm.maxDiscount),
-      startDate: new Date(voucherForm.startDate).toISOString(), 
-      endDate: new Date(voucherForm.endDate).toISOString(),
+        minPurchaseAmount: Number(voucherForm.minPurchaseAmount),
+        maxDiscount: Number(voucherForm.maxDiscount),
+        startDate: new Date(voucherForm.startDate).toISOString(), 
+        endDate: new Date(voucherForm.endDate).toISOString(),
       });
       setMessage("Voucher created successfully");
       setVoucherForm({
@@ -238,7 +221,6 @@ export default function PromoPage() {
       setErrorMsg(err.response?.data?.error || err.message || "Error creating voucher");
     }
   };
-
 
   // ------------------ HANDLER: INTEGRATION ------------------
   const handleAssignDiscountToProduct = async (e: FormEvent) => {
@@ -273,7 +255,7 @@ export default function PromoPage() {
     }
   };
 
-  // Helpers
+  // Helpers untuk switching tab
   const handleTabSwitch = (tab: "discount" | "voucher" | "integrate") => {
     setMessage(null);
     setErrorMsg(null);
@@ -332,7 +314,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.type}
-                  onChange={(e) => setDiscountForm({ ...discountForm, type: e.target.value })}
+                  onChange={(e) =>
+                    setDiscountForm({ ...discountForm, type: e.target.value })
+                  }
                 >
                   <option value="">Select</option>
                   <option value="PRODUCT_DISCOUNT">PRODUCT_DISCOUNT</option>
@@ -341,13 +325,23 @@ export default function PromoPage() {
                 </select>
               </div>
               <div>
-                <label className="block mb-1 font-medium">Value</label>
+                <label className="block mb-1 font-medium">
+                  Value {discountForm.valueType === "PERCENTAGE" && <span>(% 0-100)</span>}
+                </label>
                 <input
                   type="number"
                   required
+                  min={0}
+                  // Jika tipe persentase, batasi maksimum 100
+                  max={discountForm.valueType === "PERCENTAGE" ? 100 : undefined}
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.value}
-                  onChange={(e) => setDiscountForm({ ...discountForm, value: +e.target.value })}
+                  onChange={(e) =>
+                    setDiscountForm({
+                      ...discountForm,
+                      value: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
               <div>
@@ -356,7 +350,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.valueType}
-                  onChange={(e) => setDiscountForm({ ...discountForm, valueType: e.target.value })}
+                  onChange={(e) =>
+                    setDiscountForm({ ...discountForm, valueType: e.target.value })
+                  }
                 >
                   <option value="">Select</option>
                   <option value="PERCENTAGE">PERCENTAGE</option>
@@ -370,7 +366,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.startDate}
-                  onChange={(e) => setDiscountForm({ ...discountForm, startDate: e.target.value })}
+                  onChange={(e) =>
+                    setDiscountForm({ ...discountForm, startDate: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -380,7 +378,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.endDate}
-                  onChange={(e) => setDiscountForm({ ...discountForm, endDate: e.target.value })}
+                  onChange={(e) =>
+                    setDiscountForm({ ...discountForm, endDate: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -389,7 +389,12 @@ export default function PromoPage() {
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.maxDiscount}
-                  onChange={(e) => setDiscountForm({ ...discountForm, maxDiscount: +e.target.value })}
+                  onChange={(e) =>
+                    setDiscountForm({
+                      ...discountForm,
+                      maxDiscount: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
               <div>
@@ -398,7 +403,12 @@ export default function PromoPage() {
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.minPurchase}
-                  onChange={(e) => setDiscountForm({ ...discountForm, minPurchase: +e.target.value })}
+                  onChange={(e) =>
+                    setDiscountForm({
+                      ...discountForm,
+                      minPurchase: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
               <div className="col-span-2">
@@ -461,7 +471,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.code}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, code: e.target.value })}
+                  onChange={(e) =>
+                    setVoucherForm({ ...voucherForm, code: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -470,22 +482,32 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.discountType}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, discountType: e.target.value })}
+                  onChange={(e) =>
+                    setVoucherForm({ ...voucherForm, discountType: e.target.value })
+                  }
                 >
                   <option value="">Select</option>
                   <option value="MIN_PURCHASE_DISCOUNT">MIN_PURCHASE_DISCOUNT</option>
                   <option value="PRODUCT_DISCOUNT">PRODUCT_DISCOUNT</option>
-                  {/* dsb, sesuai backend enum */}
                 </select>
               </div>
               <div>
-                <label className="block mb-1 font-medium">Value</label>
+                <label className="block mb-1 font-medium">
+                  Value {voucherForm.valueType === "PERCENTAGE" && <span>(% 0-100)</span>}
+                </label>
                 <input
                   type="number"
+                  required
+                  min={0}
+                  max={voucherForm.valueType === "PERCENTAGE" ? 100 : undefined}
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.value}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, value: +e.target.value })}
-                  required
+                  onChange={(e) =>
+                    setVoucherForm({
+                      ...voucherForm,
+                      value: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
               <div>
@@ -494,7 +516,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.valueType}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, valueType: e.target.value })}
+                  onChange={(e) =>
+                    setVoucherForm({ ...voucherForm, valueType: e.target.value })
+                  }
                 >
                   <option value="">Select</option>
                   <option value="PERCENTAGE">PERCENTAGE</option>
@@ -507,7 +531,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.usageType}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, usageType: e.target.value })}
+                  onChange={(e) =>
+                    setVoucherForm({ ...voucherForm, usageType: e.target.value })
+                  }
                 >
                   <option value="">Select</option>
                   <option value="PRODUCT">PRODUCT</option>
@@ -522,7 +548,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.startDate}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, startDate: e.target.value })}
+                  onChange={(e) =>
+                    setVoucherForm({ ...voucherForm, startDate: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -532,7 +560,9 @@ export default function PromoPage() {
                   required
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.endDate}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, endDate: e.target.value })}
+                  onChange={(e) =>
+                    setVoucherForm({ ...voucherForm, endDate: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -541,7 +571,12 @@ export default function PromoPage() {
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.minPurchaseAmount}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, minPurchaseAmount: +e.target.value })}
+                  onChange={(e) =>
+                    setVoucherForm({
+                      ...voucherForm,
+                      minPurchaseAmount: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
               <div>
@@ -550,20 +585,15 @@ export default function PromoPage() {
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.maxDiscount}
-                  onChange={(e) => setVoucherForm({ ...voucherForm, maxDiscount: +e.target.value })}
+                  onChange={(e) =>
+                    setVoucherForm({
+                      ...voucherForm,
+                      maxDiscount: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
-              {/* 
-              <div>
-                <label className="block mb-1 font-medium">Expiry Date</label>
-                <input
-                  type="date"
-                  className="border border-gray-300 rounded p-2 w-full"
-                  // jika user mau input expiryDate
-                  onChange={(e) => setVoucherForm({ ...voucherForm, expiryDate: e.target.value })}
-                />
-              </div>
-              */}
+              {/* Jika diperlukan, tambahkan input untuk expiryDate */}
               <div className="col-span-2">
                 <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
                   Create Voucher
@@ -612,7 +642,6 @@ export default function PromoPage() {
           <div>
             <h2 className="text-lg font-semibold mb-4">Assign Discount/Voucher to Product</h2>
 
-            {/* Pilih product, discount, voucher pakai <select> */}
             {/* Products list */}
             <div className="mb-4">
               <h3 className="font-semibold mb-2">Products</h3>
@@ -667,7 +696,9 @@ export default function PromoPage() {
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
                   value={integrationForm.discountId}
-                  onChange={(e) => setIntegrationForm({ ...integrationForm, discountId: +e.target.value })}
+                  onChange={(e) =>
+                    setIntegrationForm({ ...integrationForm, discountId: Number(e.target.value) })
+                  }
                 />
               </div>
               <div>
@@ -676,7 +707,9 @@ export default function PromoPage() {
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
                   value={integrationForm.productId}
-                  onChange={(e) => setIntegrationForm({ ...integrationForm, productId: +e.target.value })}
+                  onChange={(e) =>
+                    setIntegrationForm({ ...integrationForm, productId: Number(e.target.value) })
+                  }
                 />
               </div>
               <div className="flex items-end">
@@ -694,7 +727,9 @@ export default function PromoPage() {
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
                   value={integrationForm.voucherId}
-                  onChange={(e) => setIntegrationForm({ ...integrationForm, voucherId: +e.target.value })}
+                  onChange={(e) =>
+                    setIntegrationForm({ ...integrationForm, voucherId: Number(e.target.value) })
+                  }
                 />
               </div>
               <div>
@@ -703,7 +738,9 @@ export default function PromoPage() {
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
                   value={integrationForm.productId}
-                  onChange={(e) => setIntegrationForm({ ...integrationForm, productId: +e.target.value })}
+                  onChange={(e) =>
+                    setIntegrationForm({ ...integrationForm, productId: Number(e.target.value) })
+                  }
                 />
               </div>
               <div className="flex items-end">

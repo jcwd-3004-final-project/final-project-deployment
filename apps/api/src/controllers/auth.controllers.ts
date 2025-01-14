@@ -1,8 +1,11 @@
+// src/controllers/auth.controllers.ts
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { AuthService } from '../services/auth.service';
 import { signUpValidator, signInValidator, refreshTokenValidator } from '../validator/auth.validator';
 
 const authService = new AuthService();
+const JWT_ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET || 'your_access_token_secret';
 
 export class AuthController {
   // --------------------- SIGN UP (USER) ---------------------
@@ -128,47 +131,53 @@ export class AuthController {
     // Asumsi: req.user telah diisi oleh middleware seperti Passport
     const { accessToken, refreshToken, user } = await authService.socialLogin(req.user, req.params.provider);
     const userStr = encodeURIComponent(JSON.stringify(user));
-    // Replace `http://localhost:3000` with whichever URL your frontend is actually using
-    + res.redirect(`http://localhost:3000/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${userStr}`);
+    // Replace `http://localhost:3000` with the URL your frontend is using
+    res.redirect(`http://localhost:3000/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${userStr}`);
   }
 
+  // --------------------- JSON-BASED SOCIAL CALLBACK ---------------------
+  async socialCallbackJson(req: Request, res: Response): Promise<void> {
+    const { accessToken, refreshToken, user } = await authService.socialLogin(req.user, req.params.provider);
+    // Return JSON instead of redirect
+    res.json({ accessToken, refreshToken, user });
+  }
 
-  // New JSON-based social callback
-async socialCallbackJson(req: Request, res: Response): Promise<void> {
-  const { accessToken, refreshToken, user } = await authService.socialLogin(
-    req.user,
-    req.params.provider
-  );
-
-  // Return JSON instead of redirect
-  res.json({ accessToken, refreshToken, user });
-}
-  // --------------------- GET REFERRAL INFO ---------------------
+  // --------------------- GET REFERRAL INFO (TANPA MENGGUNAKAN MIDDLEWARE 'authenticate') ---------------------
   /**
-   * Pastikan middleware otentikasi mengisi req.user dengan data user (minimal user.id).
+   * Verifikasi token dilakukan secara langsung di dalam controller.
+   * Token diambil dari header "Authorization" dengan format "Bearer <token>".
    */
-  
-async getReferralInfo(req: Request, res: Response): Promise<Response> {
-  try {
-    // Ambil userId dari req.user (misalnya, jika sudah diisi oleh middleware autentikasi)
-    const userId = (req.user as any)?.id;
-    console.log(userId, "disamping adalah user id");
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID is required.' });
+  async getReferralInfo(req: Request, res: Response): Promise<Response> {
+    // 1. Periksa header Authorization
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Authorization header missing' });
     }
-    const referral = await authService.getReferralInfo(userId);
-    // Misalnya, kita juga ingin mengembalikan poin referral (usageCount * 10000)
-    const referralData = {
-      ...referral,
-      points: referral.usageCount * 10000,
-    };
-    return res.status(200).json(referralData);
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
+
+    // 2. Ekstrak token (asumsi format "Bearer <token>")
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'Token not provided' });
+    }
+
+    try {
+      // 3. Verifikasi token
+      const payload = jwt.verify(token, JWT_ACCESS_TOKEN_SECRET) as { userId: number };
+      const userId = payload.userId;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found in token' });
+      }
+
+      // 4. Ambil data referral menggunakan service
+      const referral = await authService.getReferralInfo(userId);
+      const referralData = {
+        ...referral,
+        points: referral.usageCount * 10000,
+      };
+
+      return res.status(200).json(referralData);
+    } catch (err: any) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
   }
 }
-
-
-
-

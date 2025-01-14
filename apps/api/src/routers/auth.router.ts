@@ -22,7 +22,7 @@ router.post('/refresh-token', asyncHandler(authController.refreshToken.bind(auth
 router.get('/confirm-email', asyncHandler(authController.confirmEmail.bind(authController)));
 
 // Protected Referral Endpoint
-router.get('/referral/:userId', asyncHandler(authController.getReferralInfo.bind(authController)));
+router.get('/referral-info', asyncHandler(authController.getReferralInfo.bind(authController)));
 
 // Google OAuth
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

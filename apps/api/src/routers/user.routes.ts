@@ -120,6 +120,14 @@ router.put(
   asyncWrap(UserController.updateProfile)
 );
 
+router.put(
+  "/profile/photo",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  upload.single("avatar"), // gunakan field 'avatar' untuk upload file foto profil
+  asyncWrap(UserController.updateProfilePhoto)
+);
+
+
 router.delete(
   "/profile",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
