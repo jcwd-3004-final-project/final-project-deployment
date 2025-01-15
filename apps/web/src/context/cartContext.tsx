@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
 
 export type Category = {
@@ -36,15 +30,18 @@ type CartContextType = {
   totalPrice: number;
   voucherDiscount: number;
   referralDiscount: number;
-  discount: number;
+  discount: number; // Total diskon (voucher + referral)
+  totalAfterDiscount: number; // Total harga setelah diskon
+  setVoucherDiscount: (discount: number) => void;
+  setReferralDiscount: (discount: number) => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartProductItem[]>([]);
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [referralDiscount, setReferralDiscount] = useState(0);
 
   // Fungsi fetchCart: mengambil data dari API atau fallback ke localStorage
   const fetchCart = async () => {
@@ -136,11 +133,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   // Hapus produk dari cart dan sinkronkan dengan API
   const removeFromCart = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:8000/v1/api/user/items/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      });
+      await axios.delete(`http://localhost:8000/v1/api/user/items/${id}`);
       // Setelah berhasil menghapus dari API, perbarui data cart
       await fetchCart();
     } catch (error) {
@@ -153,7 +146,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   // Perbarui jumlah produk pada cart dan sinkronkan dengan API
   const updateQuantity = async (id: number, quantity: number) => {
     try {
-      console.log("Updating quantity:", { id, quantity });
       await axios.put(
         "http://localhost:8000/v1/api/user/items/remove",
         { productId: id, quantity },
@@ -206,6 +198,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     (acc, item) => acc + item.quantity * item.price,
     0
   );
+  const discount = voucherDiscount + referralDiscount;
+  const totalAfterDiscount = totalPrice - discount < 0 ? 0 : totalPrice - discount;
 
   return (
     <CartContext.Provider
@@ -218,9 +212,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         fetchCart,
         totalItems,
         totalPrice,
-        voucherDiscount: 0,
-        referralDiscount: 0,
-        discount: 0
+        voucherDiscount,
+        referralDiscount,
+        discount,
+        totalAfterDiscount,
+        setVoucherDiscount,
+        setReferralDiscount,
       }}
     >
       {children}

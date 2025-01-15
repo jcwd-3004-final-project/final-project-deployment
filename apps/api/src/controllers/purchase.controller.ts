@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 const purchaseService = new PurchaseService();
 
 export class PurchaseController {
-  // Utility to extract userId from JWT
+  // Utility untuk mengekstrak userId dari JWT
   private static getUserIdFromToken(req: Request): number {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
@@ -24,16 +24,18 @@ export class PurchaseController {
     return decoded.userId;
   }
 
-  // GET /v1/api/user/purchases?status=WAITING_FOR_PAYMENT (optional)
+  // GET /v1/api/user/purchases?status=WAITING_FOR_PAYMENT (opsional)
   static async getPurchases(req: Request, res: Response) {
     try {
       const userId = PurchaseController.getUserIdFromToken(req);
       const { status } = req.query;
 
+      // Mengambil data purchase yang telah di-mapping untuk menambahkan properti finalTotal
       const purchases = await purchaseService.getUserPurchases(
         userId,
         status as string
       );
+
       return res.json({ success: true, data: purchases });
     } catch (error: any) {
       console.error("Error in getPurchases:", error);

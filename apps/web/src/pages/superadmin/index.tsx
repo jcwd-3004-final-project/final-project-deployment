@@ -211,6 +211,7 @@ export default function SuperAdminHome() {
         },
         axiosConfig
       );
+      localStorage.setItem("assignedStoreId", String(selectedStore.store_id));
 
       setIsAssignModalOpen(false);
       fetchStores();

@@ -310,4 +310,31 @@ export class UserService {
     // This will delete user if references are set up with onDelete = Cascade
     await prisma.user.delete({ where: { id: userId } });
   }
+
+  async cancelOrder(userId: number, orderId: number) {
+    // Temukan pesanan berdasarkan ID
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    // Periksa apakah pesanan ditemukan dan milik pengguna
+    if (!order || order.userId !== userId) {
+      return {
+        success: false,
+        message: "Order not found or not authorized",
+      };
+    }
+
+    // Update status pesanan menjadi 'canceled'
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { status: "CANCELLED" },
+    });
+
+    return {
+      success: true,
+      message: "Order has been successfully canceled",
+      order: updatedOrder,
+    };
+  }
 }
