@@ -14,8 +14,7 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-  
-  
+
   // Access UserContext
 
   // Access UserContext
@@ -40,6 +39,8 @@ const LoginPage = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("user", JSON.stringify(user));
+
+      localStorage.setItem("userRole", user.role);
 
       // <-- Update global user context
       setUserAndLogin(user);
@@ -117,7 +118,9 @@ const LoginPage = () => {
             type="submit"
             disabled={isLoading}
             className={`w-full p-3 rounded-lg text-white font-bold bg-green-500 ${
-              isLoading ? "cursor-not-allowed bg-purple-400" : "hover:bg-green-600"
+              isLoading
+                ? "cursor-not-allowed bg-purple-400"
+                : "hover:bg-green-600"
             } transition-all duration-200`}
           >
             {isLoading ? (
@@ -146,7 +149,10 @@ const LoginPage = () => {
 
         <p className="text-center text-gray-500 mt-6 text-sm">
           Don’t have an account?{" "}
-          <a href="/auth/register" className="text-purple-600 font-medium hover:underline">
+          <a
+            href="/auth/register"
+            className="text-purple-600 font-medium hover:underline"
+          >
             Sign Up
           </a>
         </p>
