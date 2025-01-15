@@ -6,12 +6,14 @@ interface PurchaseCardProps {
   productImg?: string;
   variation?: string;
   quantity: number;
-  totalPrice?: number; // optional if sometimes missing from backend
+  totalPrice?: number; // harga asli sebelum diskon
+  voucherDiscount?: number; // diskon dari voucher, jika ada
+  referralDiscount?: number; // diskon dari referral, jika ada
   status: string;
   onConfirm?: () => void;
   onRefund?: () => void;
   onContactSeller?: () => void;
-  onDetail?: () => void; // <-- NEW
+  onDetail?: () => void; // handler untuk tombol Detail
 }
 
 const PurchaseCard: React.FC<PurchaseCardProps> = ({
@@ -21,15 +23,22 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   variation,
   quantity,
   totalPrice,
+  voucherDiscount = 0,
+  referralDiscount = 0,
   status,
   onConfirm,
   onRefund,
   onContactSeller,
   onDetail,
 }) => {
+  // Hitung total diskon dan harga efektif setelah diskon
+  const totalDiscount = voucherDiscount + referralDiscount;
+  const rawTotal = totalPrice ?? 0;
+  const effectiveTotal = rawTotal - totalDiscount < 0 ? 0 : rawTotal - totalDiscount;
+
   return (
     <div className="border rounded-md p-4 shadow-sm mb-4">
-      {/* Shop header */}
+      {/* Header Toko */}
       <div className="flex flex-wrap items-center justify-between mb-2">
         <div className="font-semibold text-gray-700">
           {shopName || "Shop Name"}
@@ -37,7 +46,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
         <div className="text-sm text-orange-500 font-semibold">{status}</div>
       </div>
 
-      {/* Product Info */}
+      {/* Informasi Produk */}
       <div className="flex flex-col sm:flex-row">
         <img
           src={productImg || "/placeholder.png"}
@@ -53,14 +62,22 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
             <div className="text-sm text-gray-500">x{quantity}</div>
           </div>
           <div className="text-lg font-bold text-gray-800">
-            Rp {(totalPrice ?? 0).toLocaleString()}
+            {totalDiscount > 0 ? (
+              <div>
+                <span className="line-through text-sm text-gray-500">
+                  Rp {rawTotal.toLocaleString()}
+                </span>{" "}
+                <span>Rp {effectiveTotal.toLocaleString()}</span>
+              </div>
+            ) : (
+              <span>Rp {rawTotal.toLocaleString()}</span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Actions (Detail, Confirm, Refund, Contact, etc.) */}
+      {/* Tombol Aksi */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        {/* Always show the Detail button if onDetail is passed */}
         {onDetail && (
           <button
             onClick={onDetail}

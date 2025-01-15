@@ -1,11 +1,8 @@
+// pages/checkout.tsx
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
-
-// Import SweetAlert2
-import Swal from "sweetalert2";
-
 import { useCart } from "@/context/cartContext";
 
 // Tipe untuk Shipping dan Payment Method
@@ -41,8 +38,8 @@ export default function CheckoutPage() {
     totalPrice,
     voucherDiscount,
     referralDiscount,
-    discount,
-  } = useCart(); // Context cart mendukung voucher dan referral
+    totalAfterDiscount,
+  } = useCart();
 
   // State untuk alamat
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -59,17 +56,23 @@ export default function CheckoutPage() {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
+  // Fungsi format Rupiah
+  const formatRupiah = (num: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
+
   // ===============================
   // Fetch Data Alamat
   // ===============================
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!token) {
-        Swal.fire({
-          icon: "error",
-          title: "Oops...",
-          text: "No access token found; please login.",
-        });
+        console.error("No access token found; please login.");
         return;
       }
       try {
@@ -91,19 +94,10 @@ export default function CheckoutPage() {
             setSelectedAddress(result.data[0].address_id);
           }
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: result.error || "Gagal mengambil data alamat.",
-          });
+          console.error(result.error);
         }
       } catch (error) {
         console.error("Error fetching addresses:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Error fetching addresses. Please try again later.",
-        });
       }
     };
 
@@ -116,11 +110,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchStores = async () => {
       if (!token) {
-        Swal.fire({
-          icon: "error",
-          title: "Oops...",
-          text: "No access token found; please login.",
-        });
+        console.error("No access token found; please login.");
         return;
       }
       try {
@@ -141,19 +131,10 @@ export default function CheckoutPage() {
             setStoreId(result.data[0].store_id);
           }
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: result.error || "Gagal mengambil data store.",
-          });
+          console.error("Gagal mengambil data store:", result.error);
         }
       } catch (error) {
         console.error("Error fetching stores:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Error fetching stores. Please try again later.",
-        });
       }
     };
 
@@ -161,53 +142,31 @@ export default function CheckoutPage() {
   }, [token]);
 
   // ===============================
-  // Format Currency (Rupiah)
-  // ===============================
-  const formatRupiah = (num: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(num);
-  };
-
-  // ===============================
   // Handle Checkout
   // ===============================
   const handleCheckout = async () => {
     if (!token) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "No access token found. Please log in first.",
-      });
+      alert("No access token found. Please log in first.");
       return;
     }
 
     if (!selectedAddress) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Please select a shipping address",
-      });
+      alert("Please select a shipping address");
       return;
     }
 
     if (cart.length === 0) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Your cart is empty",
-      });
+      alert("Your cart is empty");
       return;
     }
 
+    // Buat payload untuk item order
     const itemsPayload = cart.map((item) => ({
       productId: item.id,
       quantity: item.quantity,
     }));
 
+    // Perhatikan bahwa total order dikirim setelah diskon (totalAfterDiscount)
     const orderBody = {
       storeId,
       shippingAddressId: selectedAddress,
@@ -216,7 +175,7 @@ export default function CheckoutPage() {
       items: itemsPayload,
       voucherDiscount,
       referralDiscount,
-      total: totalPrice - discount, // Total after all discounts
+      total: totalAfterDiscount,
     };
 
     try {
@@ -259,18 +218,9 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Could not complete your order. Please try again later.",
-      });
+      alert("Could not complete your order. Please try again later.");
     }
   };
-
-  // ===============================
-  // Render Halaman Checkout
-  // ===============================
-  const totalAfterDiscount = totalPrice - discount;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">

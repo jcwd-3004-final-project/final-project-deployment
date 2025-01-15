@@ -27,6 +27,8 @@ export class SuperAdminServices {
       data: {
         name: validateData.name,
         address: validateData.address,
+        city: validateData.city,
+        state: validateData.state,
         latitude: validateData.latitude,
         longitude: validateData.longitude,
         maxDeliveryDistance: validateData.maxDeliveryDistance,
@@ -63,6 +65,8 @@ export class SuperAdminServices {
       data: {
         name: validateData.name,
         address: validateData.address,
+        city: validateData.city,
+        state: validateData.state,
         latitude: validateData.latitude,
         longitude: validateData.longitude,
         maxDeliveryDistance: validateData.maxDeliveryDistance,

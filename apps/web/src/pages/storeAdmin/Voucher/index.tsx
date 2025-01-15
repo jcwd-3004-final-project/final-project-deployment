@@ -1,6 +1,7 @@
 import React, { useState, useEffect, FormEvent } from "react";
 import axios from "axios";
 import clsx from "clsx";
+import Link from "next/link";
 
 // ------------------ Tipe Data ------------------
 interface Discount {
@@ -46,7 +47,9 @@ interface Product {
 }
 
 export default function PromoPage() {
-  const [activeTab, setActiveTab] = useState<"discount" | "voucher" | "integrate">("discount");
+  const [activeTab, setActiveTab] = useState<
+    "discount" | "voucher" | "integrate"
+  >("discount");
 
   // ------------------ DISCOUNT STATE ------------------
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -72,7 +75,6 @@ export default function PromoPage() {
     usageType: "",
     minPurchaseAmount: 0,
     maxDiscount: 0,
-    // expiryDate: "", // jika ingin user input expiryDate
   });
 
   // ------------------ INTEGRATE DISCOUNT/VOUCHER -> PRODUCT ------------------
@@ -84,38 +86,38 @@ export default function PromoPage() {
 
   const [message, setMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<{ [key: string]: Product }>({});
 
   // ------------------ Fetch Products ------------------
   const fetchProducts = async () => {
     try {
       const res = await axios.get("http://localhost:8000/v1/api/products");
       console.log("Fetched products response:", res.data);
-      if (
-        res.data && 
-        res.data.success === true &&
-        res.data.data &&
-        Array.isArray(res.data.data.products)
-      ) {
-        setProducts(res.data.data.products);
-      } else if (Array.isArray(res.data)) {
+
+      if (res.data && res.data.success === true && res.data.data) {
+        // Set data langsung sebagai objek
+        setProducts(res.data.data);
+      } else if (typeof res.data === "object" && !Array.isArray(res.data)) {
+        // Jika respons adalah objek, langsung set
         setProducts(res.data);
       } else {
         console.error("Unexpected response format for products:", res.data);
-        setProducts([]);
-        setErrorMsg("Unexpected format for products (not an array).");
+        setProducts({}); // Inisialisasi produk sebagai objek kosong
+        setErrorMsg("Unexpected format for products (not an object).");
       }
     } catch (err: any) {
       console.error("Error fetching products:", err);
       setErrorMsg(err.message || "Error fetching products");
-      setProducts([]);
+      setProducts({}); // Set sebagai objek kosong saat terjadi error
     }
   };
 
   // ------------------ Fetch DISCOUNT ------------------
   const fetchDiscounts = async () => {
     try {
-      const res = await axios.get<Discount[]>("http://localhost:8000/v1/api/discounts/discounts");
+      const res = await axios.get<Discount[]>(
+        "http://localhost:8000/v1/api/discounts/discounts"
+      );
       setDiscounts(res.data);
     } catch (err: any) {
       setErrorMsg(err.message || "Error fetching discounts");
@@ -125,12 +127,22 @@ export default function PromoPage() {
   // ------------------ Fetch VOUCHER ------------------
   const fetchVouchers = async () => {
     try {
-      const res = await axios.get<Voucher[]>("http://localhost:8000/v1/api/discounts/vouchers");
-      setVouchers(res.data);
+      const res = await axios.get<Voucher[]>(
+        "http://localhost:8000/v1/api/discounts/vouchers"
+      );
+  
+      const filteredVouchers = res.data.filter(
+        (voucher) =>
+          !voucher.code.startsWith("REF-REDEEM") &&
+          !voucher.code.startsWith("REF-BENEFIT")
+      );
+  
+      setVouchers(filteredVouchers);
     } catch (err: any) {
+      console.error("Error fetching vouchers:", err);
       setErrorMsg(err.message || "Error fetching vouchers");
     }
-  };
+  };  
 
   // ------------------ useEffect TAB ------------------
   useEffect(() => {
@@ -172,7 +184,9 @@ export default function PromoPage() {
       // Refresh discount list
       fetchDiscounts();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.error || err.message || "Error creating discount");
+      setErrorMsg(
+        err.response?.data?.error || err.message || "Error creating discount"
+      );
     }
   };
 
@@ -181,11 +195,15 @@ export default function PromoPage() {
     setMessage(null);
     setErrorMsg(null);
     try {
-      await axios.delete(`http://localhost:8000/v1/api/discounts/discounts/${id}`);
+      await axios.delete(
+        `http://localhost:8000/v1/api/discounts/discounts/${id}`
+      );
       setMessage("Discount deleted successfully");
       fetchDiscounts();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.error || err.message || "Error deleting discount");
+      setErrorMsg(
+        err.response?.data?.error || err.message || "Error deleting discount"
+      );
     }
   };
 
@@ -201,7 +219,7 @@ export default function PromoPage() {
         value: Number(voucherForm.value),
         minPurchaseAmount: Number(voucherForm.minPurchaseAmount),
         maxDiscount: Number(voucherForm.maxDiscount),
-        startDate: new Date(voucherForm.startDate).toISOString(), 
+        startDate: new Date(voucherForm.startDate).toISOString(),
         endDate: new Date(voucherForm.endDate).toISOString(),
       });
       setMessage("Voucher created successfully");
@@ -218,7 +236,25 @@ export default function PromoPage() {
       });
       fetchVouchers();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.error || err.message || "Error creating voucher");
+      setErrorMsg(
+        err.response?.data?.error || err.message || "Error creating voucher"
+      );
+    }
+  };
+
+  const handleDeleteVoucher = async (id: number) => {
+    setMessage(null);
+    setErrorMsg(null);
+    try {
+      await axios.delete(
+        `http://localhost:8000/v1/api/discounts/vouchers/${id}`
+      );
+      setMessage("Voucher deleted successfully");
+      fetchVouchers(); // Refresh voucher list
+    } catch (err: any) {
+      setErrorMsg(
+        err.response?.data?.error || err.message || "Error deleting voucher"
+      );
     }
   };
 
@@ -230,12 +266,17 @@ export default function PromoPage() {
 
     try {
       const { discountId, productId } = integrationForm;
-      await axios.post(`http://localhost:8000/v1/api/discounts/discounts/${discountId}/assign`, {
-        productId: Number(productId),
-      });
+      await axios.post(
+        `http://localhost:8000/v1/api/discounts/discounts/${discountId}/assign`,
+        {
+          productId: Number(productId),
+        }
+      );
       setMessage(`Assigned discount ${discountId} to product ${productId}`);
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.error || err.message || "Error assigning discount");
+      setErrorMsg(
+        err.response?.data?.error || err.message || "Error assigning discount"
+      );
     }
   };
 
@@ -246,12 +287,17 @@ export default function PromoPage() {
 
     try {
       const { voucherId, productId } = integrationForm;
-      await axios.post(`http://localhost:8000/v1/api/discounts/vouchers/${voucherId}/assign`, {
-        productId: Number(productId),
-      });
+      await axios.post(
+        `http://localhost:8000/v1/api/discounts/vouchers/${voucherId}/assign`,
+        {
+          productId: Number(productId),
+        }
+      );
       setMessage(`Assigned voucher ${voucherId} to product ${productId}`);
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.error || err.message || "Error assigning voucher");
+      setErrorMsg(
+        err.response?.data?.error || err.message || "Error assigning voucher"
+      );
     }
   };
 
@@ -266,6 +312,13 @@ export default function PromoPage() {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-4xl mx-auto bg-white p-6 shadow">
         <h1 className="text-3xl font-bold mb-4">Promo Management</h1>
+        <div className="mb-4">
+          <Link href="/storeAdmin">
+            <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+              Back
+            </button>
+          </Link>
+        </div>
 
         {/* TABS */}
         <div className="flex space-x-4 mb-6">
@@ -273,7 +326,9 @@ export default function PromoPage() {
             onClick={() => handleTabSwitch("discount")}
             className={clsx(
               "px-4 py-2 rounded",
-              activeTab === "discount" ? "bg-blue-500 text-white" : "bg-gray-200"
+              activeTab === "discount"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200"
             )}
           >
             Discount
@@ -291,7 +346,9 @@ export default function PromoPage() {
             onClick={() => handleTabSwitch("integrate")}
             className={clsx(
               "px-4 py-2 rounded",
-              activeTab === "integrate" ? "bg-blue-500 text-white" : "bg-gray-200"
+              activeTab === "integrate"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200"
             )}
           >
             Integrate Prod
@@ -299,14 +356,25 @@ export default function PromoPage() {
         </div>
 
         {/* Info message / error */}
-        {message && <div className="mb-4 p-3 bg-green-100 text-green-800 rounded">{message}</div>}
-        {errorMsg && <div className="mb-4 p-3 bg-red-100 text-red-800 rounded">{errorMsg}</div>}
+        {message && (
+          <div className="mb-4 p-3 bg-green-100 text-green-800 rounded">
+            {message}
+          </div>
+        )}
+        {errorMsg && (
+          <div className="mb-4 p-3 bg-red-100 text-red-800 rounded">
+            {errorMsg}
+          </div>
+        )}
 
         {/* TAB DISCOUNT */}
         {activeTab === "discount" && (
           <div>
             {/* CREATE DISCOUNT FORM */}
-            <form onSubmit={handleCreateDiscount} className="grid grid-cols-2 gap-4 mb-6">
+            <form
+              onSubmit={handleCreateDiscount}
+              className="grid grid-cols-2 gap-4 mb-6"
+            >
               <div>
                 <label className="block mb-1 font-medium">Type</label>
                 <select
@@ -321,19 +389,26 @@ export default function PromoPage() {
                   <option value="">Select</option>
                   <option value="PRODUCT_DISCOUNT">PRODUCT_DISCOUNT</option>
                   <option value="BUY_ONE_GET_ONE">BUY_ONE_GET_ONE</option>
-                  <option value="MIN_PURCHASE_DISCOUNT">MIN_PURCHASE_DISCOUNT</option>
+                  <option value="MIN_PURCHASE_DISCOUNT">
+                    MIN_PURCHASE_DISCOUNT
+                  </option>
                 </select>
               </div>
               <div>
                 <label className="block mb-1 font-medium">
-                  Value {discountForm.valueType === "PERCENTAGE" && <span>(% 0-100)</span>}
+                  Value{" "}
+                  {discountForm.valueType === "PERCENTAGE" && (
+                    <span>(% 0-100)</span>
+                  )}
                 </label>
                 <input
                   type="number"
                   required
                   min={0}
                   // Jika tipe persentase, batasi maksimum 100
-                  max={discountForm.valueType === "PERCENTAGE" ? 100 : undefined}
+                  max={
+                    discountForm.valueType === "PERCENTAGE" ? 100 : undefined
+                  }
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.value}
                   onChange={(e) =>
@@ -351,7 +426,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.valueType}
                   onChange={(e) =>
-                    setDiscountForm({ ...discountForm, valueType: e.target.value })
+                    setDiscountForm({
+                      ...discountForm,
+                      valueType: e.target.value,
+                    })
                   }
                 >
                   <option value="">Select</option>
@@ -367,7 +445,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.startDate}
                   onChange={(e) =>
-                    setDiscountForm({ ...discountForm, startDate: e.target.value })
+                    setDiscountForm({
+                      ...discountForm,
+                      startDate: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -379,7 +460,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={discountForm.endDate}
                   onChange={(e) =>
-                    setDiscountForm({ ...discountForm, endDate: e.target.value })
+                    setDiscountForm({
+                      ...discountForm,
+                      endDate: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -442,8 +526,12 @@ export default function PromoPage() {
                       <td className="p-2 border">{d.type}</td>
                       <td className="p-2 border">{d.value}</td>
                       <td className="p-2 border">{d.valueType}</td>
-                      <td className="p-2 border">{d.startDate?.substring(0, 10)}</td>
-                      <td className="p-2 border">{d.endDate?.substring(0, 10)}</td>
+                      <td className="p-2 border">
+                        {d.startDate?.substring(0, 10)}
+                      </td>
+                      <td className="p-2 border">
+                        {d.endDate?.substring(0, 10)}
+                      </td>
                       <td className="p-2 border">
                         <button
                           onClick={() => handleDeleteDiscount(d.id)}
@@ -463,7 +551,10 @@ export default function PromoPage() {
         {activeTab === "voucher" && (
           <div>
             {/* CREATE VOUCHER FORM */}
-            <form onSubmit={handleCreateVoucher} className="grid grid-cols-2 gap-4 mb-6">
+            <form
+              onSubmit={handleCreateVoucher}
+              className="grid grid-cols-2 gap-4 mb-6"
+            >
               <div>
                 <label className="block mb-1 font-medium">Code</label>
                 <input
@@ -483,17 +574,25 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.discountType}
                   onChange={(e) =>
-                    setVoucherForm({ ...voucherForm, discountType: e.target.value })
+                    setVoucherForm({
+                      ...voucherForm,
+                      discountType: e.target.value,
+                    })
                   }
                 >
                   <option value="">Select</option>
-                  <option value="MIN_PURCHASE_DISCOUNT">MIN_PURCHASE_DISCOUNT</option>
+                  <option value="MIN_PURCHASE_DISCOUNT">
+                    MIN_PURCHASE_DISCOUNT
+                  </option>
                   <option value="PRODUCT_DISCOUNT">PRODUCT_DISCOUNT</option>
                 </select>
               </div>
               <div>
                 <label className="block mb-1 font-medium">
-                  Value {voucherForm.valueType === "PERCENTAGE" && <span>(% 0-100)</span>}
+                  Value{" "}
+                  {voucherForm.valueType === "PERCENTAGE" && (
+                    <span>(% 0-100)</span>
+                  )}
                 </label>
                 <input
                   type="number"
@@ -517,7 +616,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.valueType}
                   onChange={(e) =>
-                    setVoucherForm({ ...voucherForm, valueType: e.target.value })
+                    setVoucherForm({
+                      ...voucherForm,
+                      valueType: e.target.value,
+                    })
                   }
                 >
                   <option value="">Select</option>
@@ -532,7 +634,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.usageType}
                   onChange={(e) =>
-                    setVoucherForm({ ...voucherForm, usageType: e.target.value })
+                    setVoucherForm({
+                      ...voucherForm,
+                      usageType: e.target.value,
+                    })
                   }
                 >
                   <option value="">Select</option>
@@ -549,7 +654,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={voucherForm.startDate}
                   onChange={(e) =>
-                    setVoucherForm({ ...voucherForm, startDate: e.target.value })
+                    setVoucherForm({
+                      ...voucherForm,
+                      startDate: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -566,7 +674,9 @@ export default function PromoPage() {
                 />
               </div>
               <div>
-                <label className="block mb-1 font-medium">Min Purchase Amount</label>
+                <label className="block mb-1 font-medium">
+                  Min Purchase Amount
+                </label>
                 <input
                   type="number"
                   className="border border-gray-300 rounded p-2 w-full"
@@ -617,6 +727,7 @@ export default function PromoPage() {
                     <th className="p-2 border">UsageType</th>
                     <th className="p-2 border">StartDate</th>
                     <th className="p-2 border">EndDate</th>
+                    <th className="p-2 border">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -628,8 +739,20 @@ export default function PromoPage() {
                       <td className="p-2 border">{v.value}</td>
                       <td className="p-2 border">{v.valueType}</td>
                       <td className="p-2 border">{v.usageType}</td>
-                      <td className="p-2 border">{v.startDate?.substring(0, 10)}</td>
-                      <td className="p-2 border">{v.endDate?.substring(0, 10)}</td>
+                      <td className="p-2 border">
+                        {v.startDate?.substring(0, 10)}
+                      </td>
+                      <td className="p-2 border">
+                        {v.endDate?.substring(0, 10)}
+                      </td>
+                      <td className="p-2 border">
+                        <button
+                          onClick={() => handleDeleteVoucher(v.id)}
+                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -640,16 +763,18 @@ export default function PromoPage() {
 
         {activeTab === "integrate" && (
           <div>
-            <h2 className="text-lg font-semibold mb-4">Assign Discount/Voucher to Product</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              Assign Discount/Voucher to Product
+            </h2>
 
             {/* Products list */}
             <div className="mb-4">
               <h3 className="font-semibold mb-2">Products</h3>
               <ul className="list-disc list-inside">
-                {products.length === 0 ? (
+                {Object.keys(products).length === 0 ? (
                   <li className="text-gray-600">No products found.</li>
                 ) : (
-                  products.map((p) => (
+                  Object.values(products).map((p) => (
                     <li key={p.id}>
                       {p.id} - {p.name} - Rp {p.price}
                     </li>
@@ -689,7 +814,10 @@ export default function PromoPage() {
             </div>
 
             {/* Form Assign Discount */}
-            <form onSubmit={handleAssignDiscountToProduct} className="mb-4 grid grid-cols-3 gap-4">
+            <form
+              onSubmit={handleAssignDiscountToProduct}
+              className="mb-4 grid grid-cols-3 gap-4"
+            >
               <div>
                 <label className="block font-medium mb-1">Discount ID</label>
                 <input
@@ -697,7 +825,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={integrationForm.discountId}
                   onChange={(e) =>
-                    setIntegrationForm({ ...integrationForm, discountId: Number(e.target.value) })
+                    setIntegrationForm({
+                      ...integrationForm,
+                      discountId: Number(e.target.value),
+                    })
                   }
                 />
               </div>
@@ -708,7 +839,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={integrationForm.productId}
                   onChange={(e) =>
-                    setIntegrationForm({ ...integrationForm, productId: Number(e.target.value) })
+                    setIntegrationForm({
+                      ...integrationForm,
+                      productId: Number(e.target.value),
+                    })
                   }
                 />
               </div>
@@ -720,7 +854,10 @@ export default function PromoPage() {
             </form>
 
             {/* Form Assign Voucher */}
-            <form onSubmit={handleAssignVoucherToProduct} className="grid grid-cols-3 gap-4">
+            <form
+              onSubmit={handleAssignVoucherToProduct}
+              className="grid grid-cols-3 gap-4"
+            >
               <div>
                 <label className="block font-medium mb-1">Voucher ID</label>
                 <input
@@ -728,7 +865,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={integrationForm.voucherId}
                   onChange={(e) =>
-                    setIntegrationForm({ ...integrationForm, voucherId: Number(e.target.value) })
+                    setIntegrationForm({
+                      ...integrationForm,
+                      voucherId: Number(e.target.value),
+                    })
                   }
                 />
               </div>
@@ -739,7 +879,10 @@ export default function PromoPage() {
                   className="border border-gray-300 rounded p-2 w-full"
                   value={integrationForm.productId}
                   onChange={(e) =>
-                    setIntegrationForm({ ...integrationForm, productId: Number(e.target.value) })
+                    setIntegrationForm({
+                      ...integrationForm,
+                      productId: Number(e.target.value),
+                    })
                   }
                 />
               </div>

@@ -219,4 +219,37 @@ export class UserController {
       return res.status(400).json({ success: false, error: error.message });
     }
   }
+
+  static async cancelOrder(req: Request, res: Response) {
+    try {
+      // Ambil userId dari token
+      const userId = UserController.getUserIdFromToken(req);
+  
+      // Ambil orderId dari parameter URL
+      const orderId = Number(req.params.orderId);
+  
+      // Validasi orderId
+      if (!orderId) {
+        return res.status(400).json({ success: false, error: "Order ID is required." });
+      }
+  
+      // Panggil service untuk membatalkan pesanan
+      const result = await userService.cancelOrder(userId, orderId);
+  
+      // Cek hasil dari service
+      if (result.success) {
+        return res.status(200).json(result);
+      }
+  
+      // Jika pembatalan gagal, kembalikan respons error
+      return res.status(400).json(result);
+    } catch (error: any) {
+      console.error("Error in cancelOrder:", error);
+      return res.status(500).json({
+        success: false,
+        error: "An unexpected error occurred while canceling the order.",
+      });
+    }
+  }
+  
 }

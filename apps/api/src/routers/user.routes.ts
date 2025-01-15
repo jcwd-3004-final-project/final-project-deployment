@@ -127,7 +127,6 @@ router.put(
   asyncWrap(UserController.updateProfilePhoto)
 );
 
-
 router.delete(
   "/profile",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
@@ -148,7 +147,9 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 router.get(
   "/items",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  authenticateJwt.authorizeRole(["USER", "SUPER_ADMIN"]).bind(authenticateJwt),
+  authenticateJwt
+    .authorizeRole(["USER", "SUPER_ADMIN", "STORE_ADMIN"])
+    .bind(authenticateJwt),
   asyncWrap(CartController.getCart)
 );
 
@@ -170,7 +171,7 @@ router.delete(
   "/items/:productId",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
   authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
-  asyncWrap(CartController.deleteItem) // <= Pastikan ada method deleteItem di CartController
+  asyncWrap(CartController.deleteItem)
 );
 
 router.put(
@@ -188,6 +189,13 @@ router.get(
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
   authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
   asyncWrap(PurchaseController.getPurchases)
+);
+
+router.post(
+  "/order/cancel/:orderId",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(UserController.cancelOrder)
 );
 
 export default router;

@@ -128,11 +128,6 @@ export class DiscountService {
     });
   }
 
-  /**
-   * Mengupdate voucher berdasarkan ID.
-   * @param id - ID voucher
-   * @param data - Data yang akan diupdate
-   */
   async updateVoucher(id: number, data: any) {
     // Validasi tanggal
     if (data.startDate && data.endDate) {
@@ -147,19 +142,12 @@ export class DiscountService {
     });
   }
 
-  /**
-   * Menghapus voucher berdasarkan ID.
-   * @param id - ID voucher
-   */
   async deleteVoucher(id: number) {
     return prisma.voucher.delete({
       where: { id },
     });
   }
 
-  /**
-   * Mendapatkan semua voucher beserta produk-produknya.
-   */
   async getVouchers() {
     return prisma.voucher.findMany({
       include: { products: true },
@@ -167,13 +155,6 @@ export class DiscountService {
   }
 
   // ------------------ Calculate Discount ------------------
-
-  /**
-   * Menghitung total diskon dan totalAmount setelah diskon & voucher.
-   * @param cartItems Array of items (productId, quantity) dalam keranjang
-   * @param userId ID user pemilik keranjang
-   * @param shippingCost Ongkos kirim
-   */
   async calculateDiscount(cartItems: any[], userId: number, shippingCost: number): Promise<any> {
     // Ambil voucher user yang masih berlaku
     const userVouchers = await prisma.userVoucher.findMany({
@@ -216,14 +197,11 @@ export class DiscountService {
         }
         // BUY_ONE_GET_ONE
         else if (discount.type === DiscountType.BUY_ONE_GET_ONE && quantity >= 2) {
-          // Beli satu gratis satu: untuk setiap 2 barang, satu gratis
           const freeCount = Math.floor(quantity / 2);
           productDiscount += price * freeCount;
         }
         // MIN_PURCHASE_DISCOUNT
         else if (discount.type === DiscountType.MIN_PURCHASE_DISCOUNT) {
-          // Diskon jenis ini biasanya menuntut minimal total pembelian,
-          // tapi di schema Anda `minPurchase` ada di discount, Anda bisa menyesuaikannya.
           if (discount.minPurchase && productPrice >= discount.minPurchase) {
             if (discount.valueType === DiscountValueType.PERCENTAGE) {
               productDiscount += productPrice * discount.value / 100;

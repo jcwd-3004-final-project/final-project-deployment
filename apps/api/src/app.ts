@@ -1,10 +1,9 @@
 import environment from "dotenv";
 import cors from "cors";
-
 import express from "express";
-import authRouter from "../src/routers/auth.router";
 import passport from "passport";
 import "../passport-config";
+import authRouter from "../src/routers/auth.router";
 import superAdminRouter from "./routers/superAdmin.router";
 import inventoryRouter from "./routers/inventory.router";
 import userRouter from "./routers/user.routes";
@@ -12,11 +11,10 @@ import productRouter from "./routers/product.router";
 import categoryRouter from "./routers/category.router";
 import cartRouter from "./routers/cart.router";
 import discountRouter from "./routers/discount.router";
-
 import storeRouter from "./routers/store.router";
 import orderRouter from "./routers/admin.order.router";
-
 import paymentRouter from "./routers/payment.router";
+import storeAdminRouter from "./routers/storeAdmin.router"; // Import Store Admin Router
 
 require("dotenv").config();
 
@@ -57,6 +55,7 @@ app.use("/v1/api/stores", storeRouter);
 app.use("/v1/api/orders", orderRouter);
 app.use("/v1/api/payment", paymentRouter);
 app.use("/v1/api/discounts", discountRouter);
+app.use("/v1/api/store-admin", storeAdminRouter); // Tambahkan router Store Admin
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);

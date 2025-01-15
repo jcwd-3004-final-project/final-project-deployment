@@ -1,14 +1,15 @@
 // pages/cart.tsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import { useCart } from "@/context/cartContext";
 import CartItem from "@/components/cartItem";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
-import Image from "next/image";
-import Link from "next/link";
 
-// Tipe data voucher (sesuai schema halaman voucher)
+// Tipe data Voucher (sesuai schema halaman voucher)
 interface Voucher {
   id: number;
   code: string;
@@ -33,16 +34,21 @@ interface ReferralInfo {
 }
 
 const CartPage = () => {
-  const { cart, totalItems, totalPrice } = useCart();
+  const {
+    cart,
+    totalItems,
+    totalPrice,
+    totalAfterDiscount,
+    setVoucherDiscount,
+    setReferralDiscount,
+  } = useCart();
 
-  // State untuk voucher (panel "Apply Voucher" tetap sama)
+  // State lokal untuk voucher dan referral
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [coupon, setCoupon] = useState("");
-  const [discount, setDiscount] = useState(0);
+  const [localDiscount, setLocalDiscount] = useState(0);
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
   const [couponError, setCouponError] = useState("");
-
-  // State untuk Referral Info dan penggunaan poin referral
   const [referral, setReferral] = useState<ReferralInfo | null>(null);
   const [useReferral, setUseReferral] = useState<boolean>(false);
 
@@ -59,7 +65,9 @@ const CartPage = () => {
   // Fetch voucher dari backend
   const fetchVouchers = async () => {
     try {
-      const res = await axios.get<Voucher[]>("http://localhost:8000/v1/api/discounts/vouchers");
+      const res = await axios.get<Voucher[]>(
+        "http://localhost:8000/v1/api/discounts/vouchers"
+      );
       setVouchers(res.data);
     } catch (err: any) {
       console.error("Error fetching vouchers:", err);
@@ -92,8 +100,9 @@ const CartPage = () => {
   // Handler untuk menerapkan voucher
   const handleApplyCoupon = () => {
     setCouponError("");
-    setDiscount(0);
+    setLocalDiscount(0);
     setAppliedVoucher(null);
+    setVoucherDiscount(0); // Reset diskon voucher di Context
 
     // Cari voucher berdasarkan kode (case-insensitive)
     const voucher = vouchers.find(
@@ -137,17 +146,17 @@ const CartPage = () => {
       calculatedDiscount = totalPrice;
     }
 
-    setDiscount(calculatedDiscount);
+    setLocalDiscount(calculatedDiscount);
     setAppliedVoucher(voucher);
+    setVoucherDiscount(calculatedDiscount); // Update nilai diskon di Context
   };
 
-  // Hitung total setelah diskon voucher dan referral (jika digunakan)
-  const voucherDiscount = discount;
-  const referralDiscount = useReferral && referral ? referral.usageCount * 10000 : 0;
-  const totalAfterDiscount =
-    totalPrice - voucherDiscount - referralDiscount < 0
-      ? 0
-      : totalPrice - voucherDiscount - referralDiscount;
+  // Update nilai referral discount di Context saat opsi useReferral berubah atau data referral diterima
+  useEffect(() => {
+    const calculatedReferralDiscount =
+      useReferral && referral ? referral.usageCount * 10000 : 0;
+    setReferralDiscount(calculatedReferralDiscount);
+  }, [useReferral, referral, setReferralDiscount]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -179,7 +188,7 @@ const CartPage = () => {
                 </div>
               </div>
 
-              {/* Panel Voucher (LETaknya tidak berubah) */}
+              {/* Panel Voucher */}
               <div className="bg-white p-6 rounded-lg shadow-md mt-4">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                   Apply Voucher
@@ -202,7 +211,7 @@ const CartPage = () => {
                 </button>
               </div>
 
-              {/* Panel Referral Info (tambahan, misalnya tepat di bawah voucher panel) */}
+              {/* Panel Referral Info */}
               <div className="bg-white p-6 rounded-lg shadow-md mt-4">
                 {referral ? (
                   <div className="flex items-center justify-between">
@@ -232,9 +241,9 @@ const CartPage = () => {
               </div>
 
               {/* Ringkasan Diskon & Total Bayar */}
-              {(voucherDiscount > 0 || referralDiscount > 0) && (
+              {(localDiscount > 0 || (referral && useReferral)) && (
                 <div className="bg-white p-6 rounded-lg shadow-md mt-4">
-                  {voucherDiscount > 0 && appliedVoucher && (
+                  {localDiscount > 0 && appliedVoucher && (
                     <>
                       <p className="text-lg text-gray-700">
                         Voucher Applied:{" "}
@@ -245,19 +254,21 @@ const CartPage = () => {
                       <p className="text-lg text-gray-700">
                         Voucher Discount:{" "}
                         <span className="font-semibold text-red-600">
-                          - {formatRupiah(voucherDiscount)}
+                          - {formatRupiah(localDiscount)}
                         </span>
                       </p>
                     </>
                   )}
-                  {referralDiscount > 0 && (
-                    <p className="text-lg text-gray-700">
-                      Referral Discount:{" "}
-                      <span className="font-semibold text-red-600">
-                        - {formatRupiah(referralDiscount)}
-                      </span>
-                    </p>
-                  )}
+                  {referral &&
+                    useReferral &&
+                    referral.usageCount > 0 && (
+                      <p className="text-lg text-gray-700">
+                        Referral Discount:{" "}
+                        <span className="font-semibold text-red-600">
+                          - {formatRupiah(referral.usageCount * 10000)}
+                        </span>
+                      </p>
+                    )}
                   <p className="text-2xl font-bold text-green-600 mt-2">
                     Total Bayar: {formatRupiah(totalAfterDiscount)}
                   </p>
