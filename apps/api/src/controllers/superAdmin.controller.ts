@@ -69,6 +69,7 @@ export class SuperAdminController {
         storeId,
         req.body
       );
+      console.log(req.body, "ini req body");
       if (store) {
         res.status(200).json({
           message: `Store with id ${storeId} was updated successfully`,

@@ -9,8 +9,7 @@ const AdminDashboard: React.FC = () => {
   const { storeId } = router.query; // storeId bisa berupa string | string[] | undefined
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
+    <div className="flex flex-col md:flex-row min-h-screen">
       <SuperAdminSidebar />
 
       {/* Konten Utama */}

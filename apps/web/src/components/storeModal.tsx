@@ -1,11 +1,18 @@
-// components/StoreModal.tsx
 import React from "react";
 
 interface StoreModalProps {
   title: string;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
-  data: any;
+  data: {
+    name?: string;
+    address?: string;
+    city?: string;
+    state?: string | null; // Tambahkan field state
+    latitude?: number;
+    longitude?: number;
+    maxDeliveryDistance?: number | null;
+  };
   onChange: (field: string, value: string | number) => void;
 }
 
@@ -21,6 +28,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
       <div className="bg-white w-full max-w-md p-6 rounded-md">
         <h2 className="text-xl font-bold mb-4">{title}</h2>
         <form onSubmit={onSubmit}>
+          {/* Name */}
           <div className="mb-3">
             <label className="block mb-1 font-semibold">Name</label>
             <input
@@ -32,6 +40,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
             />
           </div>
 
+          {/* Address */}
           <div className="mb-3">
             <label className="block mb-1 font-semibold">Address</label>
             <input
@@ -54,6 +63,17 @@ const StoreModal: React.FC<StoreModalProps> = ({
             />
           </div>
 
+          {/* State */}
+          <div className="mb-3">
+            <label className="block mb-1 font-semibold">State</label>
+            <input
+              className="border w-full p-2"
+              type="text"
+              value={data.state || ""}
+              onChange={(e) => onChange("state", e.target.value)}
+            />
+          </div>
+
           {/* Latitude */}
           <div className="mb-3">
             <label className="block mb-1 font-semibold">Latitude</label>
@@ -62,7 +82,9 @@ const StoreModal: React.FC<StoreModalProps> = ({
               type="number"
               step="any"
               value={data.latitude || ""}
-              onChange={(e) => onChange("latitude", parseFloat(e.target.value))}
+              onChange={(e) =>
+                onChange("latitude", parseFloat(e.target.value) || 0)
+              }
               required
             />
           </div>
@@ -75,12 +97,29 @@ const StoreModal: React.FC<StoreModalProps> = ({
               type="number"
               step="any"
               value={data.longitude || ""}
-              onChange={(e) => onChange("longitude", parseFloat(e.target.value))}
+              onChange={(e) =>
+                onChange("longitude", parseFloat(e.target.value) || 0)
+              }
               required
             />
           </div>
 
-          {/* Tambahkan field lain jika perlu (state, postalCode, dsb) */}
+          {/* Max Delivery Distance */}
+          <div className="mb-3">
+            <label className="block mb-1 font-semibold">
+              Max Delivery Distance (km)
+            </label>
+            <input
+              className="border w-full p-2"
+              type="number"
+              step="any"
+              value={data.maxDeliveryDistance || ""}
+              onChange={(e) =>
+                onChange("maxDeliveryDistance", parseFloat(e.target.value) || 0)
+              }
+              required
+            />
+          </div>
 
           <div className="flex justify-end mt-4">
             <button
@@ -90,7 +129,10 @@ const StoreModal: React.FC<StoreModalProps> = ({
             >
               Cancel
             </button>
-            <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
+            <button
+              type="submit"
+              className="bg-blue-500 text-white py-2 px-4 rounded"
+            >
               Save
             </button>
           </div>

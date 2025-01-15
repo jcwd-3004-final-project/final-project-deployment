@@ -12,16 +12,15 @@ interface Product {
 
 // Tipe data untuk Stock Log
 interface StockLog {
-  id: number;
-  productId: number;
-  changeQuantity: number;
-  reason: string;
-  createdAt: string;
+  id: number; // ID dari log
+  storeProductId: number; // ID produk terkait log (dari storeProduct)
+  adjustmentType: "INCREASE" | "DECREASE"; // Tipe perubahan stok
+  quantity: number; // Jumlah perubahan stok
+  reason: string; // Alasan perubahan stok
+  createdAt: string; // Tanggal perubahan
 }
 
 export default function AdminDashboardPage() {
-  // Contoh: storeId didapat setelah login, di sini kita pakai localStorage atau hard-coded
-  // Misal, kita asumsikan localStorage key: "assignedStoreId"
   const [storeId, setStoreId] = useState<number | null>(null);
 
   // Data produk
@@ -42,15 +41,41 @@ export default function AdminDashboardPage() {
   // Contoh base URL sesuai rute backend
   const BASE_URL = "http://localhost:8000/v1/api/inventory";
 
-  // 1. Ambil storeId dari localStorage (atau user context, dsb.)
+  // Tambahkan state untuk menyimpan storeId
+
+  // Ambil storeId dari endpoint
   useEffect(() => {
-    const localStoreId = localStorage.getItem("assignedStoreId");
-    if (localStoreId) {
-      setStoreId(Number(localStoreId));
-    } else {
-      // Jika tidak ada, mungkin redirect ke halaman login atau tampilkan pesan
-      setMessage("Store ID not found. Please login or contact super admin.");
-    }
+    const fetchStoreDetails = async () => {
+      try {
+        const token = localStorage.getItem("accessToken"); // Simpan token setelah login
+        if (!token) {
+          setMessage("Access token missing. Please log in.");
+          return;
+        }
+
+        const res = await fetch(
+          "http://localhost:8000/v1/api/store-admin/details",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Gunakan token untuk autentikasi
+            },
+          }
+        );
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.message || "Failed to fetch store details.");
+        }
+
+        // Set storeId dari respons API
+        setStoreId(data?.data?.store?.store_id);
+        setMessage("Store details fetched successfully!");
+      } catch (error: any) {
+        setMessage(error.message);
+      }
+    };
+
+    fetchStoreDetails();
   }, []);
 
   // 2. Fetch products untuk storeId tertentu
@@ -60,13 +85,21 @@ export default function AdminDashboardPage() {
       setMessage("");
 
       // GET /stores/:storeId/products
-      const res = await fetch(`${BASE_URL}/stores/${storeId}/products`);
+      const res = await fetch(
+        `http://localhost:8000/v1/api/stores/${storeId}/products`
+      );
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.message || "Failed to fetch products");
       }
 
-      setProducts(data.data || []);
+      const mappedProducts = data.storeProducts.map((item: any) => ({
+        productId: item.product.id,
+        name: item.product.name,
+        stock: item.stock,
+      }));
+
+      setProducts(mappedProducts);
       setMessage("Products fetched successfully!");
     } catch (error: any) {
       setMessage(error.message);
@@ -100,6 +133,7 @@ export default function AdminDashboardPage() {
       );
 
       const result = await res.json();
+      console.log(result, "ini result<<");
       if (!res.ok) {
         throw new Error(result?.message || "Failed to update stock");
       }
@@ -130,6 +164,7 @@ export default function AdminDashboardPage() {
         `${BASE_URL}/stores/${storeId}/products/${productId}/logs`
       );
       const data = await res.json();
+      console.log(data, "ini data logs");
       if (!res.ok) {
         throw new Error(data?.message || "Failed to fetch logs");
       }
@@ -158,6 +193,17 @@ export default function AdminDashboardPage() {
       setLogs([]);
     }
   }, [selectedProductId]);
+
+  if (storeId === null) {
+    return (
+      <div className="min-h-screen bg-green-50 p-8">
+        <h1 className="text-4xl font-bold text-green-800 mb-6">
+          Store Admin Dashboard
+        </h1>
+        <p>Loading store details...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-green-50 p-8">
@@ -205,7 +251,9 @@ export default function AdminDashboardPage() {
           <table className="w-full border-collapse border text-sm">
             <thead>
               <tr className="bg-green-100 border-b">
-                <th className="py-2 px-4 text-left text-green-800">Product ID</th>
+                <th className="py-2 px-4 text-left text-green-800">
+                  Product ID
+                </th>
                 <th className="py-2 px-4 text-left text-green-800">Name</th>
                 <th className="py-2 px-4 text-left text-green-800">Stock</th>
                 <th className="py-2 px-4 text-left text-green-800">Actions</th>
@@ -254,7 +302,7 @@ export default function AdminDashboardPage() {
             <option value={0}>-- Choose a Product --</option>
             {products.map((prod) => (
               <option key={prod.productId} value={prod.productId}>
-                {prod.name} (ID: {prod.productId})
+                {prod.name}
               </option>
             ))}
           </select>
@@ -311,7 +359,9 @@ export default function AdminDashboardPage() {
             <thead>
               <tr className="bg-green-100 border-b">
                 <th className="py-2 px-4 text-left text-green-800">Log ID</th>
-                <th className="py-2 px-4 text-left text-green-800">Product ID</th>
+                <th className="py-2 px-4 text-left text-green-800">
+                  Product ID
+                </th>
                 <th className="py-2 px-4 text-left text-green-800">
                   Change Quantity
                 </th>
@@ -323,8 +373,11 @@ export default function AdminDashboardPage() {
               {logs.map((log) => (
                 <tr key={log.id} className="border-b hover:bg-green-50">
                   <td className="py-2 px-4">{log.id}</td>
-                  <td className="py-2 px-4">{log.productId}</td>
-                  <td className="py-2 px-4">{log.changeQuantity}</td>
+                  <td className="py-2 px-4">{log.storeProductId}</td>
+                  <td className="py-2 px-4">
+                    {log.adjustmentType === "DECREASE" ? "-" : "+"}
+                    {log.quantity}
+                  </td>
                   <td className="py-2 px-4">{log.reason}</td>
                   <td className="py-2 px-4">
                     {new Date(log.createdAt).toLocaleString()}

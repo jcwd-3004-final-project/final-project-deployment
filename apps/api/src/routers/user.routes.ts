@@ -127,7 +127,6 @@ router.put(
   asyncWrap(UserController.updateProfilePhoto)
 );
 
-
 router.delete(
   "/profile",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
@@ -148,7 +147,9 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 router.get(
   "/items",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  authenticateJwt.authorizeRole(["USER", "SUPER_ADMIN"]).bind(authenticateJwt),
+  authenticateJwt
+    .authorizeRole(["USER", "SUPER_ADMIN", "STORE_ADMIN"])
+    .bind(authenticateJwt),
   asyncWrap(CartController.getCart)
 );
 

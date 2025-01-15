@@ -51,7 +51,6 @@ export default function SuperAdminHome() {
   const [currentStore, setCurrentStore] = useState<Partial<Store>>({});
 
   const BASE_URL = "http://localhost:8000/v1/api/superadmin";
-  const BASE_URL_ASSIGN = "http://localhost:8000/v1/api";
 
   const [assignData, setAssignData] = useState({
     storeName: "",
@@ -63,9 +62,14 @@ export default function SuperAdminHome() {
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
 
-  // 1. Fetch token from localStorage (handle case if missing)
+  // 1. Ambil token dari localStorage (handle kasus jika tidak ada)
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+
+  // Misalnya, simpan role user di localStorage saat login
+  const userRole =
+    typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+  console.log("LocalStorage userRole:", userRole);
 
   // Helper: Returns an axios config object with the auth header
   const axiosConfig = {
@@ -73,6 +77,13 @@ export default function SuperAdminHome() {
       Authorization: `Bearer ${token}`,
     },
   };
+
+  // Lakukan pengecekan role user, jika bukan SUPER_ADMIN redirect ke halaman utama
+  useEffect(() => {
+    if (!userRole || userRole !== "SUPER_ADMIN") {
+      router.push("/");
+    }
+  }, [userRole, router]);
 
   // Fungsi untuk mengambil data admin berdasarkan ID
   const getAdminById = async (adminId: number): Promise<Admin | null> => {
@@ -85,7 +96,7 @@ export default function SuperAdminHome() {
     }
   };
 
-  // 2. Fetch stores with Authorization header
+  // Fungsi untuk fetch stores
   const fetchStores = async () => {
     try {
       if (!token) {
@@ -121,8 +132,11 @@ export default function SuperAdminHome() {
   };
 
   useEffect(() => {
-    fetchStores();
-  }, []);
+    // Panggil fetchStores hanya jika sudah terverifikasi sebagai SUPER_ADMIN
+    if (userRole === "SUPER_ADMIN") {
+      fetchStores();
+    }
+  }, [userRole]);
 
   const handleOpenCreateModal = () => {
     setIsEditMode(false);
@@ -131,18 +145,24 @@ export default function SuperAdminHome() {
       name: "",
       address: "",
       city: "",
+      state: "", // Tambahkan field state
       latitude: 0,
       longitude: 0,
+      maxDeliveryDistance: 10,
     });
   };
 
   const handleOpenEditModal = (store: Store) => {
     setIsEditMode(true);
     setIsModalOpen(true);
-    setCurrentStore(store);
+    setCurrentStore({
+      ...store,
+      state: store.state || "", // Tambahkan field state jika belum ada
+      maxDeliveryDistance: store.maxDeliveryDistance ?? 10, // Set nilai default jika null
+    });
   };
 
-  // 3. Submit modal (Create/Edit) with token
+  // 3. Submit modal (Create/Edit) dengan token
   const handleSubmitStore = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -151,17 +171,26 @@ export default function SuperAdminHome() {
         router.push("/auth/login");
         return;
       }
+      const payload = {
+        name: currentStore.name,
+        address: currentStore.address,
+        city: currentStore.city || "", // Pastikan field city ada
+        state: currentStore.state || "", // Tambahkan field state
+        latitude: currentStore.latitude,
+        longitude: currentStore.longitude,
+        maxDeliveryDistance: currentStore.maxDeliveryDistance,
+      };
 
       if (isEditMode && currentStore.store_id) {
         // Update store
         await axios.put(
-          `${BASE_URL}/stores/${currentStore.store_id}`,
-          currentStore,
+          `${BASE_URL}/store/${currentStore.store_id}`,
+          payload,
           axiosConfig
         );
       } else {
         // Create store
-        await axios.post(`${BASE_URL}/stores`, currentStore, axiosConfig);
+        await axios.post(`${BASE_URL}/store`, payload, axiosConfig);
       }
 
       setIsModalOpen(false);
@@ -171,7 +200,7 @@ export default function SuperAdminHome() {
     }
   };
 
-  // 4. Delete store with token
+  // 4. Delete store dengan token
   const handleDeleteStore = async (storeId: number) => {
     try {
       if (!token) {
@@ -179,14 +208,14 @@ export default function SuperAdminHome() {
         router.push("/auth/login");
         return;
       }
-      await axios.delete(`${BASE_URL}/stores/${storeId}`, axiosConfig);
+      await axios.delete(`${BASE_URL}/store/${storeId}`, axiosConfig);
       fetchStores();
     } catch (error) {
       console.error("Error deleting store:", error);
     }
   };
 
-  // 5. Assign admin with token
+  // 5. Assign admin dengan token
   const handleAssignAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -241,14 +270,13 @@ export default function SuperAdminHome() {
   };
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
+    <div className="flex flex-col md:flex-row min-h-screen">
       <SuperAdminSidebar />
 
       {/* Konten Utama */}
       <div className="flex-1 ml-0 md:ml-64 p-4">
         <h1 className="text-4xl font-extrabold text-gray-800 mb-6">
-          Store Management 🏬
+          Store Management 🏤
         </h1>
 
         {/* Tombol Aksi */}

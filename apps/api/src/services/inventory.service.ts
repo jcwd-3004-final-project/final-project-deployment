@@ -53,7 +53,7 @@ export class InventoryService {
     //    Tentukan reason enum:
     const adjustmentType = changeQuantity >= 0 ? "INCREASE" : "DECREASE";
 
-    // Misal logic: kalau stok berkurang -> SALE, stok bertambah -> PURCHASE
+    // Misal logic: kalau stok bertambah -> RESTOCK, stok berkurang -> SALE
     const stockAdjustmentReason = changeQuantity >= 0 ? "PURCHASE" : "SALE";
 
     await prisma.stockAdjustment.create({

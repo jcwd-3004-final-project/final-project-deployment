@@ -74,12 +74,32 @@ function USERDATA() {
   const usersPerPage = 9; // menampilkan 9 user per halaman
   const totalPages = Math.ceil(fullUsers.length / usersPerPage);
 
+  // Ambil token dari localStorage
+  const token = localStorage.getItem("accessToken");
+
+  // Fungsi konfigurasi header untuk Axios
+  const axiosConfig = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    // Jika backend memakai cookie, aktifkan withCredentials:
+    // withCredentials: true,
+  };
+
   // Fetch users dari API
   const fetchUsers = () => {
+    // Cek token, jika tidak ada, jangan lanjut request
+    if (!token) {
+      setError("Token tidak tersedia, mohon login terlebih dahulu.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     axios
-      .get("http://localhost:8000/v1/api/superadmin/users")
+      .get("http://localhost:8000/v1/api/superadmin/users", axiosConfig)
       .then((response) => {
+        console.log("Response:", response.data);
         setFullUsers(response.data.data);
         setLoading(false);
       })
@@ -90,8 +110,10 @@ function USERDATA() {
       });
   };
 
+  // Saat komponen dimount, ambil data user
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Hitung user yang akan ditampilkan untuk halaman saat ini
@@ -113,8 +135,19 @@ function USERDATA() {
   // Handler untuk submit create form
   const handleCreateSubmit = (e: FormEvent) => {
     e.preventDefault();
+
+    // Pastikan token tersedia untuk request ini juga
+    if (!token) {
+      setError("Token tidak tersedia, mohon login terlebih dahulu.");
+      return;
+    }
+
     axios
-      .post("http://localhost:8000/v1/api/superadmin/store-admin", formData)
+      .post(
+        "http://localhost:8000/v1/api/superadmin/store-admin",
+        formData,
+        axiosConfig
+      )
       .then((response) => {
         setShowCreateModal(false);
         setFormData({
@@ -128,6 +161,7 @@ function USERDATA() {
       })
       .catch((err) => {
         console.error("Error creating store admin:", err);
+        setError("Terjadi kesalahan saat membuat store admin.");
       });
   };
 
@@ -135,10 +169,18 @@ function USERDATA() {
   const handleUpdateSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
+
+    // Pastikan token tersedia untuk request ini juga
+    if (!token) {
+      setError("Token tidak tersedia, mohon login terlebih dahulu.");
+      return;
+    }
+
     axios
       .put(
         `http://localhost:8000/v1/api/superadmin/store-admin/${selectedUser.id}`,
-        formData
+        formData,
+        axiosConfig
       )
       .then((response) => {
         setShowEditModal(false);
@@ -154,20 +196,30 @@ function USERDATA() {
       })
       .catch((err) => {
         console.error("Error updating store admin:", err);
+        setError("Terjadi kesalahan saat mengupdate store admin.");
       });
   };
 
   // Handler untuk delete user
   const handleDeleteUser = (userId: number) => {
     if (!window.confirm("Apakah Anda yakin akan menghapus user ini?")) return;
+    if (!token) {
+      setError("Token tidak tersedia, mohon login terlebih dahulu.");
+      return;
+    }
+
     axios
-      .delete(`http://localhost:8000/v1/api/superadmin/store-admin/${userId}`)
+      .delete(
+        `http://localhost:8000/v1/api/superadmin/store-admin/${userId}`,
+        axiosConfig
+      )
       .then((response) => {
         setSelectedUser(null);
         fetchUsers();
       })
       .catch((err) => {
         console.error("Error deleting store admin:", err);
+        setError("Terjadi kesalahan saat menghapus store admin.");
       });
   };
 
@@ -184,25 +236,26 @@ function USERDATA() {
     setShowEditModal(true);
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-xl font-semibold">Loading...</div>
       </div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-xl text-red-600">{error}</div>
       </div>
     );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Bagian utama (sidebar & konten) */}
-      <div className="flex flex-1">
-        {/* Sidebar */}
+      <div className="flex flex-col md:flex-row min-h-screen">
         <SuperAdminSidebar />
 
         {/* Konten Utama */}

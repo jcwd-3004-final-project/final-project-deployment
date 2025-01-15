@@ -22,18 +22,18 @@ router.post(
 // Get all stores
 router.get(
   "/stores",
-  // Uncomment middleware JWT jika diperlukan
-  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  //Uncomment middleware JWT jika diperlukan
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.getAllStores.bind(superAdminController)
 );
 
 // Get store by ID
 router.get(
   "/store/:storeId",
-  // Uncomment middleware JWT jika diperlukan
-  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  //Uncomment middleware JWT jika diperlukan
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.getStoreById.bind(superAdminController)
 );
 
@@ -56,7 +56,8 @@ router.delete(
 // Add product to store
 router.post(
   "/:storeId/products",
-  // Middleware dapat ditambahkan jika diperlukan
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.addStoreProduct.bind(superAdminController)
 );
 
@@ -64,8 +65,8 @@ router.post(
 router.put(
   "/store/:storeId/admin",
   // Uncomment middleware JWT jika diperlukan
-  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.assignStoreAdmin.bind(superAdminController)
 );
 
@@ -77,24 +78,24 @@ router.put(
 router.post(
   "/store-admin",
   // Uncomment middleware JWT jika diperlukan
-  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.createStoreAdmin.bind(superAdminController)
 );
 
 // Update Store Admin
 router.put(
   "/store-admin/:userId",
-  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.updateStoreAdmin.bind(superAdminController)
 );
 
 // Delete Store Admin
 router.delete(
   "/store-admin/:userId",
-  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.deleteStoreAdmin.bind(superAdminController)
 );
 
@@ -104,8 +105,8 @@ router.delete(
 router.get(
   "/users",
   // Uncomment middleware JWT jika diperlukan
-  // authenticateJwt.authenticateJwt.bind(authenticateJwt),
-  // authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("SUPER_ADMIN").bind(authenticateJwt),
   superAdminController.getAllUsers.bind(superAdminController)
 );
 
