@@ -197,8 +197,6 @@ export class UserController {
       return res.status(500).json({ success: false, error: error.message });
     }
   }
-  
-  
 
   static async getUserProfile(req: Request, res: Response) {
     try {

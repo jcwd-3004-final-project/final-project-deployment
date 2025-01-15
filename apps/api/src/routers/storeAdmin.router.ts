@@ -1,22 +1,42 @@
 import { Router } from "express";
 import { StoreAdminMiddleware } from "../middlewares/storeAdmin.middleware";
-import { getStoreAdminDetails } from "../controllers/storeAdmin.controller";
+import {
+  getStoreAdminDetails,
+  confirmPayment,
+  shipOrder,
+} from "../controllers/storeAdmin.controller";
 
 const router = Router();
 const storeAdminMiddleware = new StoreAdminMiddleware();
 
-// ================================
-// Endpoints untuk Store Admin
-// ================================
-
 // Get Store Admin Details
 router.get(
   "/details",
-  storeAdminMiddleware.authenticateJwt.bind(storeAdminMiddleware), // Middleware untuk verifikasi token
+  storeAdminMiddleware.authenticateJwt.bind(storeAdminMiddleware),
   storeAdminMiddleware
     .authorizeRole(["STORE_ADMIN"])
-    .bind(storeAdminMiddleware), // Middleware untuk otorisasi role
-  getStoreAdminDetails // Controller untuk mengambil detail store admin
+    .bind(storeAdminMiddleware),
+  getStoreAdminDetails
+);
+
+// Konfirmasi pembayaran pesanan
+router.post(
+  "/orders/confirm/:orderId",
+  storeAdminMiddleware.authenticateJwt.bind(storeAdminMiddleware),
+  storeAdminMiddleware
+    .authorizeRole(["STORE_ADMIN"])
+    .bind(storeAdminMiddleware),
+  confirmPayment
+);
+
+// Tandai pesanan sebagai dikirim
+router.post(
+  "/orders/ship/:orderId",
+  storeAdminMiddleware.authenticateJwt.bind(storeAdminMiddleware),
+  storeAdminMiddleware
+    .authorizeRole(["STORE_ADMIN"])
+    .bind(storeAdminMiddleware),
+  shipOrder
 );
 
 export default router;
