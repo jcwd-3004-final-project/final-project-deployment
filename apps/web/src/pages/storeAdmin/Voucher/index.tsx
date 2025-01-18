@@ -92,7 +92,7 @@ export default function PromoPage() {
   const fetchProducts = async () => {
     try {
       const res = await axios.get("http://localhost:8000/v1/api/products");
-      console.log("Fetched products response:", res.data);
+    
 
       if (res.data && res.data.success === true && res.data.data) {
         // Set data langsung sebagai objek

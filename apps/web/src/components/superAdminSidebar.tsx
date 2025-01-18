@@ -1,11 +1,18 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { FiMenu, FiX } from "react-icons/fi"; // Icon untuk hamburger dan close
+import { FiMenu, FiX } from "react-icons/fi";
+import Swal from "sweetalert2";
+
+// Misal, import useUser dari context
+import { useUser } from "@/context/userContext";
 
 const SuperAdminSidebar = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Ambil logout() dari context
+  const { logout } = useUser();
 
   // Fungsi helper untuk menentukan style jika link aktif
   const getLinkClass = (path: string) => {
@@ -14,9 +21,27 @@ const SuperAdminSidebar = () => {
       : "font-normal hover:underline";
   };
 
+  // Handle logout - sama seperti di Navbar
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure you want to log out?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Panggil fungsi logout() dari context
+        logout();
+        // Redirect ke halaman utama
+        router.push("/");
+      }
+    });
+  };
+
   return (
     <>
-      {/* Tombol Hamburger hanya muncul di mobile (hidden di md ke atas) */}
+      {/* Tombol Hamburger (untuk mobile) */}
       <div className="md:hidden p-4 bg-gray-800 text-white">
         <button onClick={() => setIsOpen(true)}>
           <FiMenu size={24} />
@@ -34,7 +59,7 @@ const SuperAdminSidebar = () => {
       >
         <div className="p-4 font-bold text-2xl border-b border-gray-700 flex justify-between items-center md:justify-center">
           <span>SuperAdmin</span>
-          {/* Tombol Close muncul hanya di mobile */}
+          {/* Tombol Close (hanya di mobile) */}
           <button className="md:hidden" onClick={() => setIsOpen(false)}>
             <FiX size={24} />
           </button>
@@ -64,6 +89,14 @@ const SuperAdminSidebar = () => {
                   CRUD Category
                 </p>
               </Link>
+            </li>
+
+            {/* Tambahkan menu/tombol Logout */}
+            <li
+              className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
+              onClick={handleLogout}
+            >
+              <p className="font-normal hover:underline text-red-300">Logout</p>
             </li>
           </ul>
         </nav>

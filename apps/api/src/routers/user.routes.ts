@@ -28,7 +28,7 @@ function asyncWrap(
 
 // Optional logging middleware
 router.use((req: Request, res: Response, next: NextFunction) => {
-  // console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  
   next();
 });
 
@@ -137,7 +137,7 @@ router.delete(
 
 // OPTIONAL: Logging middleware
 router.use((req: Request, res: Response, next: NextFunction) => {
-  // console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+ 
   next();
 });
 

@@ -133,7 +133,7 @@ export default function AdminDashboardPage() {
       );
 
       const result = await res.json();
-      console.log(result, "ini result<<");
+
       if (!res.ok) {
         throw new Error(result?.message || "Failed to update stock");
       }
@@ -164,7 +164,7 @@ export default function AdminDashboardPage() {
         `${BASE_URL}/stores/${storeId}/products/${productId}/logs`
       );
       const data = await res.json();
-      console.log(data, "ini data logs");
+
       if (!res.ok) {
         throw new Error(data?.message || "Failed to fetch logs");
       }

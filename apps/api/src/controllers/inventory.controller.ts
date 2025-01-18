@@ -10,8 +10,6 @@ export class InventoryController {
 
   // Update stock quantity
   async updateStock(req: Request, res: Response) {
-    console.log("updateStock called");
-
     // storeId & productId dari URL
     const { storeId, productId } = req.params;
     // body
@@ -38,8 +36,6 @@ export class InventoryController {
 
   // Get stock logs
   async getStockLogs(req: Request, res: Response) {
-    console.log("getStockLogs called");
-
     // storeId & productId dari URL
     const { storeId, productId } = req.params;
 
