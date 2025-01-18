@@ -337,4 +337,30 @@ export class UserService {
       order: updatedOrder,
     };
   }
+  async confirmOrder(userId: number, orderId: number) {
+    // Temukan pesanan berdasarkan ID
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+  
+    // Periksa apakah pesanan ditemukan dan milik pengguna
+    if (!order || order.userId !== userId) {
+      return {
+        success: false,
+        message: "Order not found or not authorized",
+      };
+    }
+  
+    // Update status pesanan menjadi 'ORDER_CONFIRMED'
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { status: "ORDER_CONFIRMED" },
+    });
+  
+    return {
+      success: true,
+      message: "Order has been successfully confirmed (completed)",
+      order: updatedOrder,
+    };
+  }
 }

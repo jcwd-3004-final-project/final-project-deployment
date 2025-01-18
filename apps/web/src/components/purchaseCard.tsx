@@ -6,14 +6,14 @@ interface PurchaseCardProps {
   productImg?: string;
   variation?: string;
   quantity: number;
-  totalPrice?: number; // harga asli sebelum diskon
-  voucherDiscount?: number; // diskon dari voucher, jika ada
-  referralDiscount?: number; // diskon dari referral, jika ada
+  totalPrice?: number;
+  voucherDiscount?: number;
+  referralDiscount?: number;
   status: string;
   onConfirm?: () => void;
   onRefund?: () => void;
   onContactSeller?: () => void;
-  onDetail?: () => void; // handler untuk tombol Detail
+  onDetail?: () => void;
 }
 
 const PurchaseCard: React.FC<PurchaseCardProps> = ({
@@ -31,14 +31,14 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
   onContactSeller,
   onDetail,
 }) => {
-  // Hitung total diskon dan harga efektif setelah diskon
+  // Hitung total diskon dan harga efektif
   const totalDiscount = voucherDiscount + referralDiscount;
   const rawTotal = totalPrice ?? 0;
   const effectiveTotal = rawTotal - totalDiscount < 0 ? 0 : rawTotal - totalDiscount;
 
   return (
     <div className="border rounded-md p-4 shadow-sm mb-4">
-      {/* Header Toko */}
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between mb-2">
         <div className="font-semibold text-gray-700">
           {shopName || "Shop Name"}
@@ -46,7 +46,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
         <div className="text-sm text-orange-500 font-semibold">{status}</div>
       </div>
 
-      {/* Informasi Produk */}
+      {/* Info Produk */}
       <div className="flex flex-col sm:flex-row">
         <img
           src={productImg || "/placeholder.png"}
@@ -56,19 +56,17 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({
         <div className="flex flex-col justify-between">
           <div>
             <h3 className="font-medium text-gray-800">{productName}</h3>
-            {variation && (
-              <div className="text-sm text-gray-500">Variasi: {variation}</div>
-            )}
+            {variation && <div className="text-sm text-gray-500">Variasi: {variation}</div>}
             <div className="text-sm text-gray-500">x{quantity}</div>
           </div>
           <div className="text-lg font-bold text-gray-800">
             {totalDiscount > 0 ? (
-              <div>
+              <>
                 <span className="line-through text-sm text-gray-500">
                   Rp {rawTotal.toLocaleString()}
                 </span>{" "}
                 <span>Rp {effectiveTotal.toLocaleString()}</span>
-              </div>
+              </>
             ) : (
               <span>Rp {rawTotal.toLocaleString()}</span>
             )}
