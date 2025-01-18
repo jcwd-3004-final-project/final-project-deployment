@@ -1,0 +1,119 @@
+# This workflow will build and push a new container image to Amazon ECR,
+# and then will deploy a new task definition to Amazon ECS, when there is a push to the "main" branch.
+#
+# To use this workflow, you will need to complete the following set-up steps:
+#
+# 1. Create an ECR repository to store your images.
+#    For example: `aws ecr create-repository --repository-name my-ecr-repo --region us-east-2`.
+#    Replace the value of the `ECR_REPOSITORY` environment variable in the workflow below with your repository's name.
+#    Replace the value of the `AWS_REGION` environment variable in the workflow below with your repository's region.
+#
+# 2. Create an ECS task definition, an ECS cluster, and an ECS service.
+#    For example, follow the Getting Started guide on the ECS console:
+#      https://us-east-2.console.aws.amazon.com/ecs/home?region=us-east-2#/firstRun
+#    Replace the value of the `ECS_SERVICE` environment variable in the workflow below with the name you set for the Amazon ECS service.
+#    Replace the value of the `ECS_CLUSTER` environment variable in the workflow below with the name you set for the cluster.
+#
+# 3. Store your ECS task definition as a JSON file in your repository.
+#    The format should follow the output of `aws ecs register-task-definition --generate-cli-skeleton`.
+#    Replace the value of the `ECS_TASK_DEFINITION` environment variable in the workflow below with the path to the JSON file.
+#    Replace the value of the `CONTAINER_NAME` environment variable in the workflow below with the name of the container
+#    in the `containerDefinitions` section of the task definition.
+#
+# 4. Store an IAM user access key in GitHub Actions secrets named `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+#    See the documentation for each action used below for the recommended IAM policies for this IAM user,
+#    and best practices on handling the access key credentials.
+
+name: Deploy TurboRepo to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚀 Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: 🔧 Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: npm install
+
+
+    - name: 📡 Deploy Project to AWS EC2
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ${{ secrets.AWS_USER }}
+        key: ${{ secrets.AWS_PRIVATE_KEY }}
+        source: "."
+        target: "/home/ec2-user/final-project-3004"
+
+    - name: 🔑 SSH into EC2 and Configure Environment + Restart Apps
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ${{ secrets.AWS_USER }}
+        key: ${{ secrets.AWS_PRIVATE_KEY }}
+        script: |
+          # Go to project directory
+          cd /home/ec2-user/final-project-3004
+          
+          # Ensure latest dependencies
+          npm install
+          
+          # ✅ Create .env file for Backend (Express API)
+          cat <<EOF > apps/api/.env
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          EMAIL_PASS=${{ secrets.EMAIL_PASS }}
+          EMAIL_USER=${{ secrets.EMAIL_USER }}
+          ENV_CORS_ORIGIN=${{ secrets.ENV_CORS_ORIGIN }}
+          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          JWT_ACCESS_TOKEN_SECRET=${{ secrets.JWT_ACCESS_TOKEN_SECRET }}
+          JWT_REFRESH_TOKEN_SECRET=${{ secrets.JWT_REFRESH_TOKEN_SECRET }}
+          MIDTRANS_CLIENT=${{ secrets.MIDTRANS_CLIENT }}
+          MIDTRANS_CLIENT_KEY=${{ secrets.MIDTRANS_CLIENT_KEY }}
+          MIDTRANS_SERVER=${{ secrets.MIDTRANS_SERVER }}
+          MIDTRANS_SERVER_KEY=${{ secrets.MIDTRANS_SERVER_KEY }}
+          RAJA_ONGKIR_API_KEY=${{ secrets.RAJA_ONGKIR_API_KEY }}
+          SERVER_PORT_DEV=${{ secrets.SERVER_PORT_DEV }}
+          EOF
+          
+          # ✅ Create .env.local for Frontend (Next.js)
+          cat <<EOF > apps/web/.env.local
+          
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          EMAIL_PASS=${{ secrets.EMAIL_PASS }}
+          EMAIL_USER=${{ secrets.EMAIL_USER }}
+          ENV_CORS_ORIGIN=${{ secrets.ENV_CORS_ORIGIN }}
+          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          JWT_ACCESS_TOKEN_SECRET=${{ secrets.JWT_ACCESS_TOKEN_SECRET }}
+          JWT_REFRESH_TOKEN_SECRET=${{ secrets.JWT_REFRESH_TOKEN_SECRET }}
+          MIDTRANS_CLIENT=${{ secrets.MIDTRANS_CLIENT }}
+          MIDTRANS_CLIENT_KEY=${{ secrets.MIDTRANS_CLIENT_KEY }}
+          MIDTRANS_SERVER=${{ secrets.MIDTRANS_SERVER }}
+          MIDTRANS_SERVER_KEY=${{ secrets.MIDTRANS_SERVER_KEY }}
+          RAJA_ONGKIR_API_KEY=${{ secrets.RAJA_ONGKIR_API_KEY }}
+          SERVER_PORT_DEV=${{ secrets.SERVER_PORT_DEV }}
+          EOF
+
+          # ✅ Restart services using PM2
+          pm2 stop all || true
+          pm2 start "npm run dev --prefix apps/api" --name backend --watch
+          pm2 start "npm run dev --prefix apps/web" --name frontend --watch
+          pm2 save
+          pm2 restart all
+
