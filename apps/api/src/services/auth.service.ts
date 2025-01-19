@@ -28,10 +28,7 @@ export class AuthService {
   // ----------------------------------------------------
   // SIGN UP (USER)
   // ----------------------------------------------------
-  /**
-   * Registrasi user dengan opsi referralCode.
-   * Jika referralCode dikirim, maka akan diproses (pengecekan dan pemberian benefit)
-   */
+
   async signUp(
     data: SignUpInput & { referralCode?: string }
   ): Promise<AuthenticatedUser> {
@@ -145,9 +142,9 @@ export class AuthService {
       );
       throw new Error("Invalid email or password");
     }
-    console.log("User found:", user);
+  
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
-    console.log("Password valid?", isPasswordValid);
+   
     if (!isPasswordValid) {
       throw new Error("Invalid email or password");
     }
@@ -180,11 +177,6 @@ export class AuthService {
   // ----------------------------------------------------
   // SOCIAL LOGIN
   // ----------------------------------------------------
-  /**
-   * Social login / registration
-   * @param profile - data user dari provider
-   * @param provider - 'google' | 'facebook' | dsb.
-   */
   async socialLogin(
     profile: any,
     provider: string
@@ -232,10 +224,6 @@ export class AuthService {
   // ----------------------------------------------------
   // GET REFERRAL INFO
   // ----------------------------------------------------
-  /**
-   * Mengembalikan data referral untuk user yang terdaftar sebagai referrer.
-   * Dapat digunakan untuk menampilkan referral code dan poinnya.
-   */
   async getReferralInfo(userId: number) {
     const referral = await prisma.referral.findFirst({
       where: { referrerId: userId },
@@ -244,6 +232,30 @@ export class AuthService {
       throw new Error("Referral information not found for this user.");
     }
     return referral;
+  }
+
+  async redeemReferral(userId: number) {
+    // Cari data referral berdasarkan referrerId (user yang memberi referral)
+    const referral = await prisma.referral.findFirst({
+      where: { referrerId: userId },
+    });
+
+    if (!referral) {
+      throw new Error("Referral information not found for this user.");
+    }
+
+    // Jika tidak ada poin referral (usageCount sama dengan 0) maka lempar error
+    if (referral.usageCount === 0) {
+      throw new Error("No referral points to redeem.");
+    }
+
+    // Reset usageCount menjadi 0
+    const updatedReferral = await prisma.referral.update({
+      where: { id: referral.id },
+      data: { usageCount: 0 },
+    });
+
+    return updatedReferral;
   }
 
   // ----------------------------------------------------

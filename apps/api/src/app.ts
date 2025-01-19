@@ -38,9 +38,6 @@ app.use(passport.initialize());
 
 // Logging middleware
 app.use((req, res, next) => {
-  // console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  // console.log('Headers:', req.headers);
-  // console.log('Body:', req.body);
   next();
 });
 
@@ -55,7 +52,7 @@ app.use("/v1/api/stores", storeRouter);
 app.use("/v1/api/orders", orderRouter);
 app.use("/v1/api/payment", paymentRouter);
 app.use("/v1/api/discounts", discountRouter);
-app.use("/v1/api/store-admin", storeAdminRouter); // Tambahkan router Store Admin
+app.use("/v1/api/store-admin", storeAdminRouter); 
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on port : ${PORT}`);

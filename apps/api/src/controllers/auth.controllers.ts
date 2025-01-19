@@ -143,10 +143,6 @@ export class AuthController {
   }
 
   // --------------------- GET REFERRAL INFO (TANPA MENGGUNAKAN MIDDLEWARE 'authenticate') ---------------------
-  /**
-   * Verifikasi token dilakukan secara langsung di dalam controller.
-   * Token diambil dari header "Authorization" dengan format "Bearer <token>".
-   */
   async getReferralInfo(req: Request, res: Response): Promise<Response> {
     // 1. Periksa header Authorization
     const authHeader = req.headers.authorization;
@@ -178,6 +174,22 @@ export class AuthController {
       return res.status(200).json(referralData);
     } catch (err: any) {
       return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+  }
+
+  public async redeemReferral(req: Request, res: Response) {
+    try {
+      // Ambil userId dari token
+      const token = req.headers.authorization?.split(" ")[1];
+      if (!token) throw new Error("Authorization token is missing");
+      const decoded: any = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET as string);
+      const userId = decoded.userId;
+      
+      // Panggil service untuk redeem referral points
+      const updatedReferral = await authService.redeemReferral(userId);
+      res.json({ success: true, data: updatedReferral });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
     }
   }
 }

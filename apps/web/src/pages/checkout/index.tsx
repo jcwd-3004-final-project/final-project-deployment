@@ -1,15 +1,12 @@
-// pages/checkout.tsx
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
 import { useCart } from "@/context/cartContext";
 
-// Tipe untuk Shipping dan Payment Method
 const shippingMethods = ["REGULAR", "EXPRESS", "OVERNIGHT"] as const;
 const paymentMethods = ["TRANSFER", "PAYMENT_GATEWAY"] as const;
 
-// Tipe untuk alamat pengiriman
 interface Address {
   address_id: number;
   addressLine?: string;
@@ -17,7 +14,6 @@ interface Address {
   state?: string;
 }
 
-// Tipe untuk data Store
 interface Store {
   store_id: number;
   name: string;
@@ -41,22 +37,24 @@ export default function CheckoutPage() {
     totalAfterDiscount,
   } = useCart();
 
-  // State untuk alamat
+  // State
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<number | null>(null);
-
-  // State untuk metode pengiriman dan pembayaran
   const [selectedShipping, setSelectedShipping] = useState<string>("REGULAR");
   const [selectedPayment, setSelectedPayment] = useState<string>("TRANSFER");
-
-  // State untuk stores dan storeId yang dipilih
   const [stores, setStores] = useState<Store[]>([]);
   const [storeId, setStoreId] = useState<number>(0);
+
+  // Tambahkan state untuk shippingCost
+  const [shippingCost, setShippingCost] = useState<number>(0);
+
+  // Tambahkan state untuk loading
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
-  // Fungsi format Rupiah
+  // Format Rupiah
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -66,9 +64,7 @@ export default function CheckoutPage() {
     }).format(num);
   };
 
-  // ===============================
-  // Fetch Data Alamat
-  // ===============================
+  // Ambil Data Alamat dari Backend
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!token) {
@@ -86,7 +82,6 @@ export default function CheckoutPage() {
             },
           }
         );
-
         const result = await response.json();
         if (result.success) {
           setAddresses(result.data || []);
@@ -100,13 +95,10 @@ export default function CheckoutPage() {
         console.error("Error fetching addresses:", error);
       }
     };
-
     fetchAddresses();
   }, [token]);
 
-  // ===============================
-  // Fetch Data Store dari Backend
-  // ===============================
+  // Ambil Data Store dari Backend
   useEffect(() => {
     const fetchStores = async () => {
       if (!token) {
@@ -137,36 +129,51 @@ export default function CheckoutPage() {
         console.error("Error fetching stores:", error);
       }
     };
-
     fetchStores();
   }, [token]);
 
-  // ===============================
-  // Handle Checkout
-  // ===============================
+  // Update shippingCost setiap kali metode pengiriman berubah
+  useEffect(() => {
+    let cost = 0;
+    switch (selectedShipping) {
+      case "REGULAR":
+        cost = 10000;
+        break;
+      case "EXPRESS":
+        cost = 20000;
+        break;
+      case "OVERNIGHT":
+        cost = 30000;
+        break;
+      default:
+        cost = 0;
+    }
+    setShippingCost(cost);
+  }, [selectedShipping]);
+
+  // Fungsi Checkout
   const handleCheckout = async () => {
     if (!token) {
       alert("No access token found. Please log in first.");
       return;
     }
-
     if (!selectedAddress) {
       alert("Please select a shipping address");
       return;
     }
-
     if (cart.length === 0) {
       alert("Your cart is empty");
       return;
     }
 
-    // Buat payload untuk item order
+    // Set isLoading menjadi true ketika proses dimulai
+    setIsLoading(true);
+
     const itemsPayload = cart.map((item) => ({
       productId: item.id,
       quantity: item.quantity,
     }));
 
-    // Perhatikan bahwa total order dikirim setelah diskon (totalAfterDiscount)
     const orderBody = {
       storeId,
       shippingAddressId: selectedAddress,
@@ -176,6 +183,7 @@ export default function CheckoutPage() {
       voucherDiscount,
       referralDiscount,
       total: totalAfterDiscount,
+      shippingCost,
     };
 
     try {
@@ -196,8 +204,10 @@ export default function CheckoutPage() {
       const orderId = newOrder.id;
 
       if (selectedPayment === "TRANSFER") {
+        // Jika pembayaran manual, redirect ke halaman konfirmasi transfer
         router.push(`/payment?orderId=${orderId}`);
       } else {
+        // Jika pakai payment gateway, jalankan request payment lalu redirect
         const paymentRes = await fetch(
           "http://localhost:8000/v1/api/payment/create",
           {
@@ -219,8 +229,13 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error("Checkout error:", error);
       alert("Could not complete your order. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Hitung total keseluruhan termasuk shipping
+  const grandTotal = totalAfterDiscount + shippingCost;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -311,18 +326,57 @@ export default function CheckoutPage() {
                 </p>
               </div>
             ))}
-            <p className="mt-4 font-bold">Voucher Discount: {formatRupiah(voucherDiscount)}</p>
-            <p className="mt-2 font-bold">Referral Discount: {formatRupiah(referralDiscount)}</p>
-            <p className="mt-2 font-bold">Total: {formatRupiah(totalAfterDiscount)}</p>
+            <p className="mt-4 font-bold">
+              Voucher Discount: {formatRupiah(voucherDiscount)}
+            </p>
+            <p className="mt-2 font-bold">
+              Referral Discount: {formatRupiah(referralDiscount)}
+            </p>
+
+            {/* Tampilkan shipping cost dan grand total */}
+            <p className="mt-2 font-bold">
+              Shipping Cost: {formatRupiah(shippingCost)}
+            </p>
+            <p className="mt-2 font-bold">
+              Grand Total: {formatRupiah(grandTotal)}
+            </p>
           </div>
         </section>
 
-        {/* Tombol Place Order */}
         <button
           onClick={handleCheckout}
-          className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
+          disabled={isLoading}
+          className={`${
+            isLoading ? "bg-green-600" : "bg-green-600 hover:bg-green-700"
+          } text-white py-2 px-4 rounded flex items-center justify-center`}
         >
-          Place Order
+          {isLoading ? (
+            <>
+              <svg
+                className="animate-spin h-5 w-5 mr-3 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4l2-2-2-2V0C5.477 0 0 5.477 0 12h4z"
+                ></path>
+              </svg>
+              Loading...
+            </>
+          ) : (
+            "Place Order"
+          )}
         </button>
       </main>
       <Footer />

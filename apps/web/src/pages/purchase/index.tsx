@@ -18,9 +18,10 @@ const STATUSES = [
 type Purchase = {
   id: number;
   store: { name: string } | null;
-  totalAmount: number;
-  voucherDiscount?: number; // diskon dari voucher (opsional)
-  referralDiscount?: number; // diskon dari referral (opsional)
+  totalAmount: number;             // Total harga produk (bisa sudah termasuk diskon, tergantung backend)
+  voucherDiscount?: number;        // diskon dari voucher, jika ada
+  referralDiscount?: number;       // diskon dari referral, jika ada
+  shippingCost?: number;           // tambahkan biaya kirim
   status: string;
   items: Array<{
     quantity: number;
@@ -60,10 +61,27 @@ const PurchasesPage: React.FC = () => {
     fetchPurchases();
   }, [filterStatus]);
 
-  // Button handlers (sesuaikan jika diperlukan)
-  const handleConfirm = (purchaseId: number) => {
-    console.log("Pesanan Selesai untuk purchaseId:", purchaseId);
-    // Tambahkan API call atau logika konfirmasi pesanan di sini
+  // Button handler: Konfirmasi pesanan (set status => "ORDER_CONFIRMED")
+  // menyesuaikan endpoint di backend: POST /v1/api/user/order/confirm/:id
+  const handleConfirm = async (purchaseId: number) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.post(
+        `http://localhost:8000/v1/api/user/order/confirm/${purchaseId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      // Update status pesanan di state agar langsung berubah di UI
+      setPurchases((prev) =>
+        prev.map((p) =>
+          p.id === purchaseId ? { ...p, status: "ORDER_CONFIRMED" } : p
+        )
+      );
+    } catch (error) {
+      console.error("Error confirming order:", error);
+    }
   };
 
   const handleRefund = (purchaseId: number) => {
@@ -114,21 +132,26 @@ const PurchasesPage: React.FC = () => {
           </div>
         ) : (
           purchases.map((purchase) => {
+            // Ambil item pertama (untuk display ringkas)
             const firstItem =
               purchase.items && purchase.items.length > 0
                 ? purchase.items[0]
                 : null;
 
-            // Perhitungan total diskon (default 0 jika tidak ada)
+            // Perhitungan diskon (jika ada)
             const voucherDisc = purchase.voucherDiscount || 0;
             const referralDisc = purchase.referralDiscount || 0;
             const totalDiscount = voucherDisc + referralDisc;
 
-            // Perhitungan total bayar setelah diskon (tidak kurang dari 0)
+            // Perhitungan subtotal setelah diskon (tidak kurang dari 0)
             const adjustedTotal =
               purchase.totalAmount - totalDiscount < 0
                 ? 0
                 : purchase.totalAmount - totalDiscount;
+
+            // Tambahkan biaya kirim agar total sama dengan detail
+            const shippingCost = purchase.shippingCost || 0;
+            const finalTotal = adjustedTotal + shippingCost;
 
             // Format data untuk PurchaseCard
             const formattedPurchase = {
@@ -141,7 +164,7 @@ const PurchasesPage: React.FC = () => {
                   : undefined,
               variation: firstItem ? firstItem.variation || "" : "",
               quantity: firstItem ? firstItem.quantity : 0,
-              totalPrice: adjustedTotal, // Nilai akhir setelah diskon
+              totalPrice: finalTotal, // Nilai akhir setelah diskon + ongkir
               status: purchase.status,
             };
 
@@ -157,7 +180,9 @@ const PurchasesPage: React.FC = () => {
                 status={formattedPurchase.status}
                 onConfirm={() => handleConfirm(formattedPurchase.id)}
                 onRefund={() => handleRefund(formattedPurchase.id)}
-                onContactSeller={() => handleContactSeller(formattedPurchase.id)}
+                onContactSeller={() =>
+                  handleContactSeller(formattedPurchase.id)
+                }
                 onDetail={() => handleDetail(formattedPurchase.id)}
               />
             );

@@ -69,7 +69,7 @@ export default function SuperAdminHome() {
   // Misalnya, simpan role user di localStorage saat login
   const userRole =
     typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
-  console.log("LocalStorage userRole:", userRole);
+
 
   // Helper: Returns an axios config object with the auth header
   const axiosConfig = {
@@ -106,7 +106,7 @@ export default function SuperAdminHome() {
       }
       const res = await axios.get(`${BASE_URL}/stores`, axiosConfig);
       setStores(res.data.data);
-      console.log("Fetched Stores:", res.data.data); // Untuk verifikasi data
+     
 
       // Ekstrak semua admin dari storeAdmins
       const fetchedAdmins: Admin[] = res.data.data.flatMap(
@@ -121,7 +121,7 @@ export default function SuperAdminHome() {
 
       const uniqueAdmins = Object.values(uniqueAdminsMap);
       setAllAdmins(uniqueAdmins);
-      console.log("Unique Admins:", uniqueAdmins); // Untuk verifikasi admin
+     
     } catch (error) {
       console.error("Error fetching stores:", error);
       if ((error as any)?.response?.status === 401) {

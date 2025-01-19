@@ -37,7 +37,7 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
   const PRODUCT_URL = `${BASE_URL}/products`; // Pastikan endpoint benar
 
   useEffect(() => {
-    console.log("useEffect triggered with storeId:", storeId); // Debugging
+   
     fetchProducts();
   }, [storeId]);
 
@@ -46,7 +46,7 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
     try {
       if (storeId) {
         const id = Array.isArray(storeId) ? storeId[0] : storeId;
-        console.log(`Fetching products for store ID: ${id}`);
+       
         const res = await axios.get(`${BASE_URL}/stores/${id}/products`, {
           headers: {
             "Content-Type": "application/json",

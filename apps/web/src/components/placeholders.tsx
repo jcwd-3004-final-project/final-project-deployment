@@ -13,13 +13,13 @@ export function PlaceholdersAndVanishInputDemo() {
 
   // Fungsi menerima string, sesuai dengan tipe yang diharapkan
   const handleChange = (value: string) => {
-    console.log("Current input value:", value);
+   
     // Anda dapat menambahkan logika tambahan di sini
   };
 
   // Fungsi menerima string, sesuai dengan tipe yang diharapkan
   const onSubmit = (value: string) => {
-    console.log("Submitted value:", value);
+   
     // Tambahkan logika pengiriman data atau tindakan lainnya di sini
   };
 

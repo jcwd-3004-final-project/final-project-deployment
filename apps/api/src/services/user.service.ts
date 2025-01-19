@@ -135,7 +135,7 @@ export class UserService {
     const found = provinces.find(
       (p: any) => p.province.toLowerCase() === provinceName.toLowerCase()
     );
-    // console.log(found)
+   
 
     if (!found) {
       throw new Error(`Province not found for name: ${provinceName}`);
@@ -172,7 +172,7 @@ export class UserService {
         `City not found for name: ${cityName}, in province_id: ${provinceId}`
       );
     }
-    // console.log(foundCity)
+  
     return foundCity.city_id; // e.g. "176"
   }
 
@@ -194,7 +194,7 @@ export class UserService {
   }: ShippingCostInput) {
     const RAJA_ONGKIR_API_KEY = process.env.RAJA_ONGKIR_API_KEY;
     const RAJA_ONGKIR_COST_URL = `https://api.rajaongkir.com/starter/cost`;
-    // console.log("origin : ", origin, "destination : ", destination, "weight :", weight, "courier : ", courier )
+    
     const response = await axios.post(
       RAJA_ONGKIR_COST_URL,
       { origin, destination, weight, courier },
@@ -205,7 +205,7 @@ export class UserService {
         },
       }
     );
-    // console.log(response.data)
+   
     const costs = response.data?.rajaongkir?.results?.[0]?.costs;
     if (!costs || costs.length === 0) {
       throw new Error("No shipping cost found from RajaOngkir");
@@ -334,6 +334,32 @@ export class UserService {
     return {
       success: true,
       message: "Order has been successfully canceled",
+      order: updatedOrder,
+    };
+  }
+  async confirmOrder(userId: number, orderId: number) {
+    // Temukan pesanan berdasarkan ID
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+  
+    // Periksa apakah pesanan ditemukan dan milik pengguna
+    if (!order || order.userId !== userId) {
+      return {
+        success: false,
+        message: "Order not found or not authorized",
+      };
+    }
+  
+    // Update status pesanan menjadi 'ORDER_CONFIRMED'
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { status: "ORDER_CONFIRMED" },
+    });
+  
+    return {
+      success: true,
+      message: "Order has been successfully confirmed (completed)",
       order: updatedOrder,
     };
   }

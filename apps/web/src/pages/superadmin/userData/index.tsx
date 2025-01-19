@@ -99,7 +99,6 @@ function USERDATA() {
     axios
       .get("http://localhost:8000/v1/api/superadmin/users", axiosConfig)
       .then((response) => {
-        console.log("Response:", response.data);
         setFullUsers(response.data.data);
         setLoading(false);
       })

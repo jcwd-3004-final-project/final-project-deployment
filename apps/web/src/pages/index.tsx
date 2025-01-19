@@ -21,7 +21,7 @@ const Home = () => {
     if (accessToken && refreshToken) {
       localStorage.setItem("accessToken", accessToken as string);
       localStorage.setItem("refreshToken", refreshToken as string);
-      console.log("Tokens stored from query params:", { accessToken, refreshToken });
+     
 
       // Optionally remove them from the URL so they don’t stay visible
       router.replace("/", undefined, { shallow: true });
@@ -86,7 +86,7 @@ const Home = () => {
           setLatitude(latString);
           setLongitude(lngString);
 
-          console.log("Location stored in localStorage:", { latitude, longitude });
+         
         },
         (error) => {
           console.error("Error retrieving location:", error);
@@ -130,7 +130,7 @@ const Home = () => {
           },
         }
       );
-      console.log("Item added to cart:", response.data);
+     
       setCart((prevCart) => [...prevCart, response.data.data]); // Update cart state
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -151,7 +151,7 @@ const Home = () => {
   };
 
   const handleCategoryChange = (category: string) => {
-    console.log("handleCategoryChange:", category);
+   
     setSelectedCategory(category);
   };
 
