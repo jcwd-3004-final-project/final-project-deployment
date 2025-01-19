@@ -7,10 +7,6 @@ export class InventoryService {
     changeQuantity: number,
     reason: string // <- param reason tetap ada, tapi akan diabaikan, atau dipakai logika tertentu
   ) {
-    console.log(
-      `Attempting to update stock for Store ID: ${storeId}, Product ID: ${productId}`
-    );
-
     // 1. Cek StoreProduct
     const storeProduct = await prisma.storeProduct.findFirst({
       where: {
@@ -24,10 +20,6 @@ export class InventoryService {
       );
       throw new Error("StoreProduct not found");
     }
-
-    console.log(
-      `Current stock: ${storeProduct.stock} (storeId=${storeId}, productId=${productId})`
-    );
 
     // 2. Hitung stok baru
     const newStock = storeProduct.stock + changeQuantity;
@@ -47,7 +39,6 @@ export class InventoryService {
         stock: newStock,
       },
     });
-    console.log(`Stock updated to: ${updatedStoreProduct.stock}`);
 
     // 4. Buat log / penyesuaian stok (StockAdjustment)
     //    Tentukan reason enum:
@@ -65,10 +56,6 @@ export class InventoryService {
       },
     });
 
-    console.log(
-      `Stock log created (StockAdjustment) for storeProductId=${storeProduct.id}`
-    );
-
     return updatedStoreProduct;
   }
 
@@ -78,10 +65,6 @@ export class InventoryService {
    * @param productId ID Produk
    */
   async getStockLogs(storeId: number, productId: number) {
-    console.log(
-      `Fetching stock logs for Store ID: ${storeId}, Product ID: ${productId}`
-    );
-
     // Pastikan storeProduct ada
     const storeProduct = await prisma.storeProduct.findFirst({
       where: {

@@ -161,7 +161,7 @@ export class SuperAdminServices {
    * Menghapus user dengan role STORE_ADMIN.
    */
   async deleteStoreAdmin(userId: number) {
-    // Pastikan terlebih dahulu bahwa user tersebut ada dan berperan sebagai STORE_ADMIN
+    // 1. Pastikan user ada dan berperan sebagai STORE_ADMIN
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -170,12 +170,19 @@ export class SuperAdminServices {
     if (user.role !== Role.STORE_ADMIN)
       throw new Error("User is not a store admin");
 
-    // Hapus semua token yang terkait dengan user ini
+    // 2. Hapus semua data cart yang terkait user ini (karena itulah yang menimbulkan foreign key constraint)
+    await this.prisma.cart.deleteMany({
+      where: {
+        userId: userId,
+      },
+    });
+
+    // 3. Hapus semua token yang terkait dengan user ini
     await this.prisma.token.deleteMany({
       where: { userId: userId },
     });
 
-    // Setelah token-token terkait dihapus, hapus user tersebut
+    // 4. Hapus user tersebut
     return this.prisma.user.delete({
       where: { id: userId },
     });
@@ -187,8 +194,6 @@ export class SuperAdminServices {
 
   // Assign a user as a store admin
   async assignStoreAdmin(storeId: number, userId: number): Promise<void> {
-    console.log(typeof userId, userId); // Cek tipe data userId
-
     const store = await this.prisma.store.findUnique({
       where: { store_id: storeId },
     });

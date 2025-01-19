@@ -1,11 +1,13 @@
 // pages/products.tsx
-import React, { useEffect, useState, createContext, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
+import { useCart } from "@/context/cartContext";
+
 // --------------------
 // Utilitas: formatRupiah
 // --------------------
@@ -15,56 +17,6 @@ const formatRupiah = (value: number): string => {
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(value);
-};
-
-// --------------------
-// Konteks: CartContext
-// --------------------
-interface CartItem extends Product {}
-
-interface CartContextProps {
-  cart: CartItem[];
-  addToCart: (product: Product) => void;
-}
-
-const CartContext = createContext<CartContextProps | undefined>(undefined);
-
-const CartProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-
-  const addToCart = (product: Product) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.id === product.id
-            ? { ...item, stockQuantity: item.stockQuantity - 1 }
-            : item
-        );
-      } else {
-        return [
-          ...prevCart,
-          { ...product, stockQuantity: product.stockQuantity - 1 },
-        ];
-      }
-    });
-  };
-
-  return (
-    <CartContext.Provider value={{ cart, addToCart }}>
-      {children}
-    </CartContext.Provider>
-  );
-};
-
-const useCart = (): CartContextProps => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
-  return context;
 };
 
 // --------------------
@@ -94,7 +46,7 @@ type ProductListProps = {
 };
 
 const ProductList: React.FC<ProductListProps> = ({ products }) => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCart(); // Menggunakan cart context yang diimpor
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
@@ -182,39 +134,33 @@ const ProductsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <CartProvider>
-        <div className="flex justify-center items-center h-screen">
-          <p className="text-xl">Memuat produk...</p>
-        </div>
-      </CartProvider>
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-xl">Memuat produk...</p>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <CartProvider>
-        <div className="flex justify-center items-center h-screen">
-          <p className="text-xl text-red-500">Error: {error}</p>
-        </div>
-      </CartProvider>
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-xl text-red-500">Error: {error}</p>
+      </div>
     );
   }
 
   return (
-    <CartProvider>
-      <>
-        <Head>
-          <title>Produk Kami</title>
-          <meta name="description" content="Daftar produk terbaru kami" />
-        </Head>
-        <Navbar />
-        <main className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6 text-center">Daftar Produk</h1>
-          <ProductList products={products} />
-        </main>
-        <Footer />
-      </>
-    </CartProvider>
+    <>
+      <Head>
+        <title>Produk Kami</title>
+        <meta name="description" content="Daftar produk terbaru kami" />
+      </Head>
+      <Navbar />
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6 text-center">Daftar Produk</h1>
+        <ProductList products={products} />
+      </main>
+      <Footer />
+    </>
   );
 };
 

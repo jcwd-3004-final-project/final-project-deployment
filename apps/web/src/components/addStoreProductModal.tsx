@@ -50,18 +50,39 @@ const AddStoreProductModal: React.FC<AddStoreProductModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (selectedProductId === "" || stock <= 0) {
       alert("Silakan pilih produk dan isi stok dengan benar");
       return;
     }
 
+    // Ambil token dari localStorage
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
+
+    if (!token) {
+      alert("Token tidak ditemukan, silakan login kembali.");
+      return;
+    }
+
+    // Buat konfigurasi axios dengan header Authorization
+    const axiosConfig = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
     try {
-      const res = await axios.post(
+      // Sertakan axiosConfig sebagai parameter ketiga
+      await axios.post(
         `${BASE_URL}/superadmin/${storeId}/products`,
         {
           productId: selectedProductId,
           stock,
-        }
+        },
+        axiosConfig
       );
 
       alert("Produk berhasil ditambahkan ke toko");

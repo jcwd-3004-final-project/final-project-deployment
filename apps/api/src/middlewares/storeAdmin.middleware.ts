@@ -26,7 +26,7 @@ export class StoreAdminMiddleware {
       }
 
       // Pastikan decoded token memiliki `id` dan `role`
-      console.log("Decoded token:", decoded); // Debug token
+     
 
       (req as any).user = decoded; // Tambahkan user ke request
       next();
@@ -39,10 +39,7 @@ export class StoreAdminMiddleware {
     return (req: Request, res: Response, next: NextFunction): void => {
       const user = (req as any).user;
 
-      console.log("User from token:", user);
-      console.log("Allowed roles:", roles);
-      console.log("Role Match:", roles.includes(user.role)); // Tambahkan log ini
-
+     
       if (!user || !roles.includes(user.role)) {
         res.status(403).json({
           message:

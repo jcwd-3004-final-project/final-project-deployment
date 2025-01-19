@@ -69,7 +69,7 @@ export class SuperAdminController {
         storeId,
         req.body
       );
-      console.log(req.body, "ini req body");
+     
       if (store) {
         res.status(200).json({
           message: `Store with id ${storeId} was updated successfully`,
@@ -211,10 +211,7 @@ export class SuperAdminController {
       const userId = parseInt(req.body.userId, 10);
 
       // Debugging: Memastikan nilai yang diterima
-      console.log("Store ID:", storeId);
-      console.log("User ID:", userId);
-      console.log("Request Body:", req.body);
-
+     
       // Validasi storeId dan userId
       if (isNaN(storeId)) {
         throw new Error("Invalid storeId");

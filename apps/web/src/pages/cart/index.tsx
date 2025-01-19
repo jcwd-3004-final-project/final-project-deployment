@@ -82,9 +82,12 @@ const CartPage = () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-      const res = await fetch("http://localhost:8000/v1/api/auth/referral-info", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        "http://localhost:8000/v1/api/auth/referral-info",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (!res.ok) {
         throw new Error("Failed to fetch referral information");
       }
@@ -290,7 +293,9 @@ const CartPage = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-600">Loading referral information...</p>
+                  <p className="text-gray-600">
+                    Loading referral information...
+                  </p>
                 )}
               </div>
 
@@ -351,7 +356,7 @@ const CartPage = () => {
           <div className="flex flex-col items-center justify-center min-h-[50vh] bg-gray-100 p-4">
             <div className="flex flex-col items-center justify-center bg-white rounded-lg shadow-md p-6 max-w-sm w-full">
               <Image
-                src="/empty-cart.jpg"
+                src="https://i.pinimg.com/474x/81/c4/fc/81c4fc9a4c06cf57abf23606689f7426.jpg"
                 alt="Empty Cart"
                 width={200}
                 height={200}

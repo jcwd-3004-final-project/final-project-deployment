@@ -86,10 +86,12 @@ export default function PromoPage() {
   // 1. Ambil store details untuk mendapatkan storeId (sama seperti halaman Store Admin)
   const fetchStoreDetails = async () => {
     try {
+
       const token = localStorage.getItem("accessToken");
       if (!token) {
         setErrorMsg("Access token missing. Please log in.");
         return;
+
       }
       const res = await fetch("http://localhost:8000/v1/api/store-admin/details", {
         headers: {

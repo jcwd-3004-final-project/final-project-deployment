@@ -132,6 +132,7 @@ export default function AdminDashboardPage() {
         }
       );
       const result = await res.json();
+
       if (!res.ok) {
         throw new Error(result?.message || "Failed to update stock");
       }
@@ -158,6 +159,7 @@ export default function AdminDashboardPage() {
         `${BASE_URL}/stores/${storeId}/products/${productId}/logs`
       );
       const data = await res.json();
+
       if (!res.ok) {
         throw new Error(data?.message || "Failed to fetch logs");
       }

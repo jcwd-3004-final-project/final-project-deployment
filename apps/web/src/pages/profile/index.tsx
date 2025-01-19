@@ -109,7 +109,7 @@ export default function ProfilePage() {
           throw new Error("Failed to fetch addresses");
         }
         const result = await response.json();
-        console.log("Fetched Addresses:", result.data);
+       
         setAddresses(result.data);
       } catch (error) {
         console.error(error);
