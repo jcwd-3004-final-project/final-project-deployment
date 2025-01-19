@@ -16,6 +16,10 @@ import orderRouter from "./routers/admin.order.router";
 import paymentRouter from "./routers/payment.router";
 import storeAdminRouter from "./routers/storeAdmin.router"; // Import Store Admin Router
 
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",")
+  : [];
+
 require("dotenv").config();
 
 const app = express();
@@ -25,11 +29,13 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://event-idham-gilang.vercel.app/",
-      "http://localhost:3000",
-    ],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
