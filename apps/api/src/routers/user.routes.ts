@@ -105,9 +105,7 @@ router.get(
   asyncWrap(OrderController.getOrder)
 );
 
-// ---------------------------
 // PROFILE ENDPOINTS
-// ---------------------------
 router.get(
   "/profile",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
@@ -133,17 +131,12 @@ router.delete(
   asyncWrap(UserController.deleteProfile)
 );
 
-//CART
-
-// OPTIONAL: Logging middleware
 router.use((req: Request, res: Response, next: NextFunction) => {
  
   next();
 });
 
-// ---------------------------
 // CART ENDPOINTS
-// ---------------------------
 router.get(
   "/items",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
@@ -181,9 +174,7 @@ router.put(
   asyncWrap(CartController.incrementItem)
 );
 
-// ---------------------------
 // purchase ENDPOINTS
-// ---------------------------
 router.get(
   "/purchases",
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
@@ -196,6 +187,12 @@ router.post(
   authenticateJwt.authenticateJwt.bind(authenticateJwt),
   authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
   asyncWrap(UserController.cancelOrder)
+);
+router.post(
+  "/order/confirm/:orderId",
+  authenticateJwt.authenticateJwt.bind(authenticateJwt),
+  authenticateJwt.authorizeRole("USER").bind(authenticateJwt),
+  asyncWrap(UserController.confirmOrder)
 );
 
 export default router;

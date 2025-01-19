@@ -8,6 +8,7 @@ import { useCart } from "@/context/cartContext";
 import CartItem from "@/components/cartItem";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
+import Swal from "sweetalert2";
 
 // Tipe data Voucher (sesuai schema halaman voucher)
 interface Voucher {
@@ -52,6 +53,8 @@ const CartPage = () => {
   const [referral, setReferral] = useState<ReferralInfo | null>(null);
   const [useReferral, setUseReferral] = useState<boolean>(false);
 
+  const router = useRouter();
+
   // Fungsi format Rupiah
   const formatRupiah = (number: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -89,7 +92,8 @@ const CartPage = () => {
         throw new Error("Failed to fetch referral information");
       }
       const result = await res.json();
-      setReferral(result);
+      // Jika backend mengembalikan objek dengan property data, maka gunakan result.data
+      setReferral(result.data ? result.data : result);
     } catch (err: any) {
       console.error("Error fetching referral:", err);
     }
@@ -154,12 +158,62 @@ const CartPage = () => {
     setVoucherDiscount(calculatedDiscount); // Update nilai diskon di Context
   };
 
-  // Update nilai referral discount di Context saat opsi useReferral berubah atau data referral diterima
-  useEffect(() => {
-    const calculatedReferralDiscount =
-      useReferral && referral ? referral.usageCount * 10000 : 0;
-    setReferralDiscount(calculatedReferralDiscount);
-  }, [useReferral, referral, setReferralDiscount]);
+  // Handler untuk redeem referral points
+  const handleRedeemReferral = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      Swal.fire("Error", "Token tidak ditemukan. Silakan login kembali.", "error");
+      router.push("/auth/login");
+      return;
+    }
+    if (!referral) return;
+
+    try {
+      // Hitung dulu nilai discount dari referral sebelum redeem
+      const discountAmount = referral.usageCount * 10000;
+
+      const response = await fetch("http://localhost:8000/v1/api/auth/use-referral", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Periksa header content-type sebelum memanggil response.json()
+      const contentType = response.headers.get("Content-Type");
+      let result;
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      } else {
+        // Fallback: jika tidak ada JSON, kita gunakan nilai default (usageCount 0)
+        result = { data: { ...referral, usageCount: 0 } };
+      }
+
+      if (!response.ok) {
+        throw new Error(result.error || "Gagal menggunakan poin referral");
+      }
+
+      // Update context dan state referral:
+      // Set diskon referral di context berdasarkan nilai discountAmount
+      setReferralDiscount(discountAmount);
+      // Update state referral agar mencerminkan bahwa poin sudah digunakan (usageCount = 0)
+      setReferral(result.data);
+      Swal.fire("Sukses", "Poin referral berhasil digunakan.", "success");
+    } catch (error: any) {
+      Swal.fire("Error", error.message || "Terjadi kesalahan saat menggunakan poin referral.", "error");
+    }
+  };
+
+  // Handler untuk perubahan checkbox referral
+  const handleReferralCheckboxChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setUseReferral(checked);
+    if (checked && referral && referral.usageCount > 0) {
+      // Jika diceklis, panggil redeem referral
+      await handleRedeemReferral();
+    } else {
+      // Jika tidak digunakan, hapus diskon referral
+      setReferralDiscount(0);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -231,7 +285,7 @@ const CartPage = () => {
                         <input
                           type="checkbox"
                           checked={useReferral}
-                          onChange={(e) => setUseReferral(e.target.checked)}
+                          onChange={handleReferralCheckboxChange}
                           className="form-checkbox"
                         />
                         <span className="text-gray-700">Use Points</span>

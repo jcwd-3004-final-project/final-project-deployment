@@ -155,10 +155,8 @@ export class UserController {
 
   static async updateProfilePhoto(req: Request, res: Response) {
     try {
-      // Mendapatkan userId dari token yang ada di header Authorization
       const userId = UserController.getUserIdFromToken(req);
   
-      // Pastikan file telah berhasil diupload melalui multer dan tersedia di req.file
       if (!req.file) {
         return res.status(400).json({ success: false, error: "No file uploaded" });
       }
@@ -167,15 +165,11 @@ export class UserController {
   
       // Upload gambar ke Cloudinary
       const result = await cloudinary.v2.uploader.upload(avatarFile.path, {
-        folder: 'user_avatars', // Folder tempat gambar disimpan di Cloudinary
-        use_filename: true,     // Gunakan nama file asli dari file yang diupload
-        unique_filename: true,  // Gunakan nama file unik agar tidak ada konflik
+        folder: 'user_avatars',
+        use_filename: true,   
+        unique_filename: true,
       });
-  
-      // Mendapatkan URL gambar dari hasil upload Cloudinary
       const avatarUrl = result.secure_url;
-  
-      // Mengupdate data avatar pengguna di database dengan URL dari Cloudinary
       const updatedUser = await userService.updateUserProfilePicture(userId, avatarUrl);
   
       // Menanggapi dengan data pengguna yang telah diperbarui
@@ -197,8 +191,6 @@ export class UserController {
       return res.status(500).json({ success: false, error: error.message });
     }
   }
-  
-  
 
   static async getUserProfile(req: Request, res: Response) {
     try {
@@ -232,22 +224,45 @@ export class UserController {
       if (!orderId) {
         return res.status(400).json({ success: false, error: "Order ID is required." });
       }
-  
-      // Panggil service untuk membatalkan pesanan
       const result = await userService.cancelOrder(userId, orderId);
-  
-      // Cek hasil dari service
       if (result.success) {
         return res.status(200).json(result);
       }
-  
-      // Jika pembatalan gagal, kembalikan respons error
       return res.status(400).json(result);
     } catch (error: any) {
       console.error("Error in cancelOrder:", error);
       return res.status(500).json({
         success: false,
         error: "An unexpected error occurred while canceling the order.",
+      });
+    }
+  }
+
+  static async confirmOrder(req: Request, res: Response) {
+    try {
+      // Ambil userId dari token
+      const userId = UserController.getUserIdFromToken(req);
+  
+      // Ambil orderId dari parameter URL
+      const orderId = Number(req.params.orderId);
+  
+      if (!orderId) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Order ID is required." });
+      }
+  
+      const result = await userService.confirmOrder(userId, orderId);
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(400).json(result);
+      }
+    } catch (error: any) {
+      console.error("Error in confirmOrder:", error);
+      return res.status(500).json({
+        success: false,
+        error: "An unexpected error occurred while confirming the order.",
       });
     }
   }
