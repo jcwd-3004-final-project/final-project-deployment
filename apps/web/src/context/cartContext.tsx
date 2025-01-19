@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import axios from "axios";
 
 export type Category = {
@@ -30,8 +36,8 @@ type CartContextType = {
   totalPrice: number;
   voucherDiscount: number;
   referralDiscount: number;
-  discount: number; // Total diskon (voucher + referral)
-  totalAfterDiscount: number; // Total harga setelah diskon
+  discount: number; // Total discount (voucher + referral)
+  totalAfterDiscount: number; // Total price after discount
   setVoucherDiscount: (discount: number) => void;
   setReferralDiscount: (discount: number) => void;
 };
@@ -43,22 +49,36 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [referralDiscount, setReferralDiscount] = useState(0);
 
-  // Fungsi fetchCart: mengambil data dari API atau fallback ke localStorage
+  // Utility function to load cart from localStorage
+  const loadCartFromLocalStorage = () => {
+    const storedCart = localStorage.getItem("cart");
+    if (storedCart) {
+      setCart(JSON.parse(storedCart));
+    } else {
+      setCart([]);
+    }
+  };
+
+  // FetchCart: Tries to fetch from the API if token exists, otherwise from localStorage
   const fetchCart = async () => {
+    const token = localStorage.getItem("accessToken");
+
+    // If no token, load cart from local storage only
+    if (!token) {
+      loadCartFromLocalStorage();
+      return;
+    }
+
     try {
-      const response = await axios.get(
-        "http://localhost:8000/v1/api/user/items",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
+      const response = await axios.get("http://localhost:8000/v1/api/user/items", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const apiCart = response.data.data.items || [];
-
       if (apiCart.length > 0) {
-        // Jika API mengembalikan data, gunakan data dari API
+        // Use API data if available
         setCart(
           apiCart.map((item: any) => ({
             ...item.product,
@@ -66,30 +86,31 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }))
         );
       } else {
-        // Jika data API kosong, coba ambil data dari localStorage
-        const storedCart = localStorage.getItem("cart");
-        if (storedCart) {
-          setCart(JSON.parse(storedCart));
-        } else {
-          setCart([]);
-        }
+        // If API data is empty, try local storage
+        loadCartFromLocalStorage();
       }
-    } catch (error) {
-      console.error("Failed to fetch cart from API:", error);
-      // Jika terjadi error, ambil data dari localStorage
-      const storedCart = localStorage.getItem("cart");
-      if (storedCart) {
-        setCart(JSON.parse(storedCart));
+    } catch (error: any) {
+      // If 401, you might want to handle token removal or redirection to login
+      if (error.response && error.response.status === 401) {
+        console.error("Unauthorized access - token may be invalid.");
+        // Optionally clear token:
+        // localStorage.removeItem("accessToken");
+        // Possibly redirect to login, etc.
+      } else {
+        console.error("Failed to fetch cart from API:", error);
       }
+      // In any case of error, fall back to localStorage
+      loadCartFromLocalStorage();
     }
   };
 
-  // Panggil fetchCart saat pertama kali provider di-mount
+  // Call fetchCart when the provider mounts
   useEffect(() => {
     fetchCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Simpan data cart ke localStorage setiap kali terjadi perubahan
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem("cart", JSON.stringify(cart));
@@ -98,23 +119,42 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [cart]);
 
-  // Tambahkan produk ke cart dan sinkronkan dengan API
+  // Add to cart, prefer API if token exists
   const addToCart = async (product: Product) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      // Not logged in, fallback to local
+      setCart((prev) => {
+        const existingItem = prev.find((item) => item.id === product.id);
+        if (existingItem) {
+          return prev.map((item) =>
+            item.id === product.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+        } else {
+          return [...prev, { ...product, quantity: 1 }];
+        }
+      });
+      return;
+    }
+
+    // If token, try the API
     try {
       await axios.post(
         "http://localhost:8000/v1/api/user/items",
         { productId: product.id, quantity: 1 },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      // Setelah berhasil tambah ke API, perbarui data cart
+      // Refresh local state from the server
       await fetchCart();
     } catch (error) {
       console.error("Failed to add item to cart via API:", error);
-      // Fallback: update cart secara lokal
+      // Fallback: update cart locally
       setCart((prev) => {
         const existingItem = prev.find((item) => item.id === product.id);
         if (existingItem) {
@@ -130,61 +170,81 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Hapus produk dari cart dan sinkronkan dengan API
+  // Remove from cart
   const removeFromCart = async (id: number) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      // Not logged in, remove locally
+      setCart((prev) => prev.filter((item) => item.id !== id));
+      return;
+    }
+
     try {
-      await axios.delete(`http://localhost:8000/v1/api/user/items/${id}`);
-      // Setelah berhasil menghapus dari API, perbarui data cart
+      await axios.delete(`http://localhost:8000/v1/api/user/items/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       await fetchCart();
     } catch (error) {
-      console.error("Failed to remove item from cart via API:", error);
-      // Fallback: update cart secara lokal
+      console.error("Failed to remove item via API:", error);
+      // Fallback: remove locally
       setCart((prev) => prev.filter((item) => item.id !== id));
     }
   };
 
-  // Perbarui jumlah produk pada cart dan sinkronkan dengan API
+  // Update quantity
   const updateQuantity = async (id: number, quantity: number) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      // Not logged in, update locally
+      setCart((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+      );
+      return;
+    }
+
     try {
       await axios.put(
         "http://localhost:8000/v1/api/user/items/remove",
         { productId: id, quantity },
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // Setelah pembaruan, refresh data cart
       await fetchCart();
     } catch (error) {
       console.error("Failed to update item quantity via API:", error);
-      // Fallback: update cart secara lokal
+      // Fallback: update locally
       setCart((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, quantity: quantity } : item
-        )
+        prev.map((item) => (item.id === id ? { ...item, quantity } : item))
       );
     }
   };
 
-  // Increment jumlah produk dan sinkronkan dengan API
+  // Increment quantity
   const incrementQuantity = async (id: number) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      // Not logged in, increment locally
+      setCart((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+        )
+      );
+      return;
+    }
+
     try {
       await axios.put(
         "http://localhost:8000/v1/api/user/items/increment",
         { productId: id },
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // Setelah berhasil, refresh data cart
       await fetchCart();
     } catch (error) {
-      console.error("Failed to increment item quantity via API:", error);
-      // Fallback: update cart secara lokal
+      console.error("Failed to increment item via API:", error);
+      // Fallback: increment locally
       setCart((prev) =>
         prev.map((item) =>
           item.id === id ? { ...item, quantity: item.quantity + 1 } : item
@@ -199,7 +259,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     0
   );
   const discount = voucherDiscount + referralDiscount;
-  const totalAfterDiscount = totalPrice - discount < 0 ? 0 : totalPrice - discount;
+  const totalAfterDiscount = Math.max(0, totalPrice - discount);
 
   return (
     <CartContext.Provider
