@@ -70,7 +70,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      const response = await axios.get("http://localhost:8000/v1/api/user/items", {
+      const response = await axios.get("http://18.136.205.218:8000/v1/api/user/items", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -142,7 +142,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // If token, try the API
     try {
       await axios.post(
-        "http://localhost:8000/v1/api/user/items",
+        "http://18.136.205.218:8000/v1/api/user/items",
         { productId: product.id, quantity: 1 },
         {
           headers: {
@@ -180,7 +180,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      await axios.delete(`http://localhost:8000/v1/api/user/items/${id}`, {
+      await axios.delete(`http://18.136.205.218:8000/v1/api/user/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await fetchCart();
@@ -204,7 +204,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       await axios.put(
-        "http://localhost:8000/v1/api/user/items/remove",
+        "http://18.136.205.218:8000/v1/api/user/items/remove",
         { productId: id, quantity },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -235,7 +235,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       await axios.put(
-        "http://localhost:8000/v1/api/user/items/increment",
+        "http://18.136.205.218:8000/v1/api/user/items/increment",
         { productId: id },
         {
           headers: { Authorization: `Bearer ${token}` },

@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
   const [shipmentOrders, setShipmentOrders] = useState<Order[]>([]);
 
   // Base URL untuk API inventory (untuk update stock & logs)
-  const BASE_URL = "http://localhost:8000/v1/api/inventory";
+  const BASE_URL = "http://18.136.205.218:8000/v1/api/inventory";
 
   // Ambil storeId dari endpoint store-admin
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
           return;
         }
         const res = await fetch(
-          "http://localhost:8000/v1/api/store-admin/details",
+          "http://18.136.205.218:8000/v1/api/store-admin/details",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ export default function AdminDashboardPage() {
       setLoading(true);
       setMessage("");
       const res = await fetch(
-        `http://localhost:8000/v1/api/stores/${storeId}/products`
+        `http://18.136.205.218:8000/v1/api/stores/${storeId}/products`
       );
       const data = await res.json();
       if (!res.ok) {
@@ -181,7 +181,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        "http://localhost:8000/v1/api/store-admin/orders?status=WAITING_FOR_PAYMENT_CONFIRMATION",
+        "http://18.136.205.218:8000/v1/api/store-admin/orders?status=WAITING_FOR_PAYMENT_CONFIRMATION",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -205,7 +205,7 @@ export default function AdminDashboardPage() {
         return;
       }
       // Ambil semua pesanan dari store-admin (tanpa filter status di query)
-      const res = await fetch("http://localhost:8000/v1/api/store-admin/orders", {
+      const res = await fetch("http://18.136.205.218:8000/v1/api/store-admin/orders", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        `http://localhost:8000/v1/api/store-admin/orders/confirm/${orderId}`,
+        `http://18.136.205.218:8000/v1/api/store-admin/orders/confirm/${orderId}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -262,7 +262,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        `http://localhost:8000/v1/api/store-admin/orders/ship/${orderId}`,
+        `http://18.136.205.218:8000/v1/api/store-admin/orders/ship/${orderId}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

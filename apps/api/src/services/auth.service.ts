@@ -291,7 +291,7 @@ export class AuthService {
       expiresIn: "1d",
     });
 
-    const confirmationUrl = `http://localhost:8000/v1/api/auth/confirm-email?token=${token}`;
+    const confirmationUrl = `http://18.136.205.218:8000/v1/api/auth/confirm-email?token=${token}`;
 
     const transporter = nodemailer.createTransport({
       service: "Gmail", // or another email service

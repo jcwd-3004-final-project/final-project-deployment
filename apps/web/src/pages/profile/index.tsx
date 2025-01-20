@@ -43,7 +43,7 @@ const getAvatarUrl = (avatar?: string): string => {
   if (!avatar) return "/images/default-profile.png";
   return avatar.startsWith("http")
     ? avatar
-    : `http://localhost:8000/${avatar.replace(/\\/g, "/")}`;
+    : `http://18.136.205.218:8000/${avatar.replace(/\\/g, "/")}`;
 };
 
 export default function ProfilePage() {
@@ -86,7 +86,7 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        const response = await fetch("http://localhost:8000/v1/api/user/profile", {
+        const response = await fetch("http://18.136.205.218:8000/v1/api/user/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
@@ -102,7 +102,7 @@ export default function ProfilePage() {
 
     const fetchAddresses = async () => {
       try {
-        const response = await fetch("http://localhost:8000/v1/api/user/addresses", {
+        const response = await fetch("http://18.136.205.218:8000/v1/api/user/addresses", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
@@ -119,7 +119,7 @@ export default function ProfilePage() {
 
     const fetchReferral = async () => {
       try {
-        const response = await fetch("http://localhost:8000/v1/api/auth/referral-info", {
+        const response = await fetch("http://18.136.205.218:8000/v1/api/auth/referral-info", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
@@ -148,7 +148,7 @@ export default function ProfilePage() {
       return;
     }
     try {
-      const response = await fetch("http://localhost:8000/v1/api/auth/use-referral", {
+      const response = await fetch("http://18.136.205.218:8000/v1/api/auth/use-referral", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -207,7 +207,7 @@ export default function ProfilePage() {
       return;
     }
     try {
-      const response = await fetch("http://localhost:8000/v1/api/user/addresses", {
+      const response = await fetch("http://18.136.205.218:8000/v1/api/user/addresses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -295,7 +295,7 @@ export default function ProfilePage() {
     }
     try {
       const response = await fetch(
-        `http://localhost:8000/v1/api/user/addresses/${editingAddressId}`,
+        `http://18.136.205.218:8000/v1/api/user/addresses/${editingAddressId}`,
         {
           method: "PUT",
           headers: {
@@ -353,7 +353,7 @@ export default function ProfilePage() {
     try {
       const addressToDelete = addresses.find((addr) => addr.address_id === addressId);
       const isDefault = addressToDelete?.isDefault;
-      const response = await fetch(`http://localhost:8000/v1/api/user/addresses/${addressId}`, {
+      const response = await fetch(`http://18.136.205.218:8000/v1/api/user/addresses/${addressId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -369,7 +369,7 @@ export default function ProfilePage() {
         if (remainingAddresses.length > 0) {
           const newDefaultAddress = remainingAddresses[0];
           await fetch(
-            `http://localhost:8000/v1/api/user/addresses/${newDefaultAddress.address_id}`,
+            `http://18.136.205.218:8000/v1/api/user/addresses/${newDefaultAddress.address_id}`,
             {
               method: "PUT",
               headers: {
