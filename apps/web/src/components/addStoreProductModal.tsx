@@ -27,7 +27,7 @@ const AddStoreProductModal: React.FC<AddStoreProductModalProps> = ({
   const [stock, setStock] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const BASE_URL = "http://localhost:8000/v1/api";
+  const BASE_URL = "http://18.136.205.218:8000/v1/api";
 
   useEffect(() => {
     if (isOpen) {

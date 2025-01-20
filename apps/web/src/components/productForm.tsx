@@ -74,7 +74,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
             const urlPattern = new RegExp(
               "^(https?:\\/\\/)" + // protocol
                 "((([a-zA-Z0-9\\-\\.]+)\\.([a-zA-Z]{2,}))|" + // domain name
-                "localhost)" + // OR localhost
+                "18.136.205.218)" + // OR 18.136.205.218
                 "(\\:[0-9]{1,5})?" + // port
                 "(\\/.*)?$" // path
             );

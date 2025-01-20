@@ -42,7 +42,7 @@ const PurchasesPage: React.FC = () => {
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
-        let url = "http://localhost:8000/v1/api/user/purchases";
+        let url = "http://18.136.205.218:8000/v1/api/user/purchases";
         if (filterStatus !== "ALL") {
           url += `?status=${filterStatus}`;
         }
@@ -67,7 +67,7 @@ const PurchasesPage: React.FC = () => {
     try {
       const token = localStorage.getItem("accessToken");
       await axios.post(
-        `http://localhost:8000/v1/api/user/order/confirm/${purchaseId}`,
+        `http://18.136.205.218:8000/v1/api/user/order/confirm/${purchaseId}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

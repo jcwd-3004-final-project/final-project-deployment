@@ -33,7 +33,7 @@ const ProductList: React.FC<ProductListProps> = ({ storeId }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [currentProduct, setCurrentProduct] = useState<Partial<Product>>({});
 
-  const BASE_URL = "http://localhost:8000/v1/api";
+  const BASE_URL = "http://18.136.205.218:8000/v1/api";
   const PRODUCT_URL = `${BASE_URL}/products`; // Pastikan endpoint benar
 
   useEffect(() => {

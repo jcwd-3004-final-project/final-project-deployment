@@ -50,7 +50,7 @@ export default function SuperAdminHome() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStore, setCurrentStore] = useState<Partial<Store>>({});
 
-  const BASE_URL = "http://localhost:8000/v1/api/superadmin";
+  const BASE_URL = "http://18.136.205.218:8000/v1/api/superadmin";
 
   const [assignData, setAssignData] = useState({
     storeName: "",

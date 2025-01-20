@@ -97,7 +97,7 @@ function USERDATA() {
 
     setLoading(true);
     axios
-      .get("http://localhost:8000/v1/api/superadmin/users", axiosConfig)
+      .get("http://18.136.205.218:8000/v1/api/superadmin/users", axiosConfig)
       .then((response) => {
         setFullUsers(response.data.data);
         setLoading(false);
@@ -143,7 +143,7 @@ function USERDATA() {
 
     axios
       .post(
-        "http://localhost:8000/v1/api/superadmin/store-admin",
+        "http://18.136.205.218:8000/v1/api/superadmin/store-admin",
         formData,
         axiosConfig
       )
@@ -177,7 +177,7 @@ function USERDATA() {
 
     axios
       .put(
-        `http://localhost:8000/v1/api/superadmin/store-admin/${selectedUser.id}`,
+        `http://18.136.205.218:8000/v1/api/superadmin/store-admin/${selectedUser.id}`,
         formData,
         axiosConfig
       )
@@ -209,7 +209,7 @@ function USERDATA() {
 
     axios
       .delete(
-        `http://localhost:8000/v1/api/superadmin/store-admin/${userId}`,
+        `http://18.136.205.218:8000/v1/api/superadmin/store-admin/${userId}`,
         axiosConfig
       )
       .then((response) => {
