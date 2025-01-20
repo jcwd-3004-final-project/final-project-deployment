@@ -44,7 +44,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/v1/api/products`);
+        const response = await axios.get(`http://18.136.205.218:8000/v1/api/products`);
         const fetchedProducts: Product[] = response.data.data.map((item: any) => ({
           id: item.id,
           name: item.name,
@@ -122,7 +122,7 @@ const Home = () => {
   const addToCart = async (productId: number) => {
     try {
       const response = await axios.post(
-        "http://localhost:8000/v1/api/user/items",
+        "http://18.136.205.218:8000/v1/api/user/items",
         { productId, quantity: 1 },
         {
           headers: {
