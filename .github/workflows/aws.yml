@@ -112,8 +112,14 @@ jobs:
 
           # ✅ Restart services using PM2
           pm2 stop all || true
-          pm2 start "npm run dev --prefix apps/api" --name backend --watch
-          pm2 start "npm run dev --prefix apps/web" --name frontend --watch
+          pm2 delete backend
+          pm2 delete frontend
+          cd apps/api
+          pm2 start "npm run dev" --name backend --watch
+          cd .. 
+          cd ..
+          cd apps/web
+          pm2 start "npm run dev" --name frontend --watch
           pm2 save
           pm2 restart all
 
