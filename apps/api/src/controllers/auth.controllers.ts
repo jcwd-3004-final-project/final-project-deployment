@@ -70,7 +70,7 @@ export class AuthController {
         <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
           <h1>Email Confirmation Failed ❌</h1>
           <p style="color: red;">Missing confirmation token.</p>
-          <a href="http://localhost:3000/" style="color: #28a745; text-decoration: none;">Go to Homepage</a>
+          <a href="http://18.136.205.218:3000/" style="color: #28a745; text-decoration: none;">Go to Homepage</a>
         </div>
       `);
       return;
@@ -83,7 +83,7 @@ export class AuthController {
           <h1>Email Confirmed Successfully! ✅</h1>
           <p>Thank you for confirming your email. You will be redirected shortly.</p>
           <script>
-            setTimeout(() => window.location.href = "http://localhost:3000/", 3000);
+            setTimeout(() => window.location.href = "http://18.136.205.218:3000/", 3000);
           </script>
         </div>
       `);
@@ -92,7 +92,7 @@ export class AuthController {
         <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
           <h1>Email Confirmation Failed ❌</h1>
           <p style="color: red;">${err.message}</p>
-          <a href="http://localhost:3000/" style="color: #28a745; text-decoration: none;">Go to Homepage</a>
+          <a href="http://18.136.205.218:3000/" style="color: #28a745; text-decoration: none;">Go to Homepage</a>
         </div>
       `);
     }
@@ -131,8 +131,8 @@ export class AuthController {
     // Asumsi: req.user telah diisi oleh middleware seperti Passport
     const { accessToken, refreshToken, user } = await authService.socialLogin(req.user, req.params.provider);
     const userStr = encodeURIComponent(JSON.stringify(user));
-    // Replace `http://localhost:3000` with the URL your frontend is using
-    res.redirect(`http://localhost:3000/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${userStr}`);
+    // Replace `http://18.136.205.218:3000` with the URL your frontend is using
+    res.redirect(`http://18.136.205.218:3000/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${userStr}`);
   }
 
   // --------------------- JSON-BASED SOCIAL CALLBACK ---------------------

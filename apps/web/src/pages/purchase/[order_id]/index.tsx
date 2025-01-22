@@ -100,14 +100,13 @@ export default function PurchaseDetailPage() {
           return;
         }
 
-        const response = await axios.get(
-          "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/purchases",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+
+        const response = await axios.get("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/purchases", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
 
         const allPurchases: PurchaseDetail[] = response.data.data;
         const found = allPurchases.find((p) => p.id === Number(order_id));

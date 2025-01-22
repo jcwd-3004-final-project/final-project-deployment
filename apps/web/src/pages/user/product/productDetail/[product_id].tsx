@@ -91,9 +91,11 @@ export default ProductDetail;
 // Mendefinisikan semua path yang tersedia berdasarkan id produk
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
+
     const res = await fetch(
       "https://d29jci2p0msjlf.cloudfront.net/v1/api/products"
     );
+
     if (!res.ok) {
       throw new Error("Failed to fetch products");
     }
@@ -128,9 +130,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const { product_id } = context.params!; // Sesuaikan dengan nama file dinamis
 
   try {
-    const res = await fetch(
-      "https://d29jci2p0msjlf.cloudfront.net/v1/api/products"
-    );
+
+    const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/products");
+
     if (!res.ok) {
       throw new Error("Failed to fetch products");
     }

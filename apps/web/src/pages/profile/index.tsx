@@ -86,12 +86,11 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        const response = await fetch(
-          "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+
+        const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
         if (!response.ok) {
           throw new Error("Failed to fetch profile");
         }
@@ -105,12 +104,11 @@ export default function ProfilePage() {
 
     const fetchAddresses = async () => {
       try {
-        const response = await fetch(
-          "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+
+        const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
         if (!response.ok) {
           throw new Error("Failed to fetch addresses");
         }
@@ -125,12 +123,11 @@ export default function ProfilePage() {
 
     const fetchReferral = async () => {
       try {
-        const response = await fetch(
-          "https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/referral-info",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+
+        const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/referral-info", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
         if (!response.ok) {
           throw new Error("Failed to fetch referral information");
         }
@@ -161,13 +158,12 @@ export default function ProfilePage() {
       return;
     }
     try {
-      const response = await fetch(
-        "https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/use-referral",
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+
+      const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/use-referral", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Gagal menggunakan poin referral");
@@ -233,17 +229,16 @@ export default function ProfilePage() {
       return;
     }
     try {
-      const response = await fetch(
-        "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(newAddress),
-        }
-      );
+
+      const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newAddress),
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Gagal menambahkan alamat");
@@ -406,16 +401,15 @@ export default function ProfilePage() {
         (addr) => addr.address_id === addressId
       );
       const isDefault = addressToDelete?.isDefault;
-      const response = await fetch(
-        `https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses/${addressId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+
+      const response = await fetch(`https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses/${addressId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Gagal menghapus alamat");

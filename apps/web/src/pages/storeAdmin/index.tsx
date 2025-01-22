@@ -224,12 +224,12 @@ export default function AdminDashboardPage() {
         setMessage("Access token missing. Please log in.");
         return;
       }
-      const res = await fetch(
-        "https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+
+      // Ambil semua pesanan dari store-admin (tanpa filter status di query)
+      const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || "Failed to fetch orders");
