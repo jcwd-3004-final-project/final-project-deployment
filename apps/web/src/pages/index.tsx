@@ -21,7 +21,6 @@ const Home = () => {
     if (accessToken && refreshToken) {
       localStorage.setItem("accessToken", accessToken as string);
       localStorage.setItem("refreshToken", refreshToken as string);
-     
 
       // Optionally remove them from the URL so they don’t stay visible
       router.replace("/", undefined, { shallow: true });
@@ -44,6 +43,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+
         const response = await axios.get(`https://d29jci2p0msjlf.cloudfront.net/v1/api/products`);
         const fetchedProducts: Product[] = response.data.data.map((item: any) => ({
           id: item.id,
@@ -53,6 +53,7 @@ const Home = () => {
           category: item.category,
           images: item.images,
         }));
+
 
         setProducts(fetchedProducts);
       } catch (error) {
@@ -85,8 +86,6 @@ const Home = () => {
           // Update local state for display
           setLatitude(latString);
           setLongitude(lngString);
-
-         
         },
         (error) => {
           console.error("Error retrieving location:", error);
@@ -106,7 +105,6 @@ const Home = () => {
     const matchCategory = selectedCategory
       ? product.category?.name === selectedCategory
       : true;
-
 
     // Filter by name
     const matchName = product.name
@@ -130,12 +128,15 @@ const Home = () => {
           },
         }
       );
-     
+
       setCart((prevCart) => [...prevCart, response.data.data]); // Update cart state
     } catch (error) {
       if (axios.isAxiosError(error)) {
         // Axios-specific error handling
-        console.error("Error adding item to cart:", error.response?.data || error.message);
+        console.error(
+          "Error adding item to cart:",
+          error.response?.data || error.message
+        );
       } else {
         // Generic error handling
         console.error("An unexpected error occurred:", error);
@@ -151,7 +152,6 @@ const Home = () => {
   };
 
   const handleCategoryChange = (category: string) => {
-   
     setSelectedCategory(category);
   };
 
@@ -181,7 +181,7 @@ const Home = () => {
         <section id="product-section" className="my-12">
           <ProductList products={filteredProducts} />
         </section>
-{/* 
+        {/* 
         <section className="location-display my-12">
           <h2>Your Location</h2>
           <p>Latitude: {latitude || "N/A"}</p>

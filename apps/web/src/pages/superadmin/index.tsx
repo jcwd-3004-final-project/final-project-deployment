@@ -70,7 +70,6 @@ export default function SuperAdminHome() {
   const userRole =
     typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
 
-
   // Helper: Returns an axios config object with the auth header
   const axiosConfig = {
     headers: {
@@ -106,7 +105,6 @@ export default function SuperAdminHome() {
       }
       const res = await axios.get(`${BASE_URL}/stores`, axiosConfig);
       setStores(res.data.data);
-     
 
       // Ekstrak semua admin dari storeAdmins
       const fetchedAdmins: Admin[] = res.data.data.flatMap(
@@ -121,7 +119,6 @@ export default function SuperAdminHome() {
 
       const uniqueAdmins = Object.values(uniqueAdminsMap);
       setAllAdmins(uniqueAdmins);
-     
     } catch (error) {
       console.error("Error fetching stores:", error);
       if ((error as any)?.response?.status === 401) {

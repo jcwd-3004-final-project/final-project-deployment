@@ -32,9 +32,11 @@ export default function EditProfilePage() {
 
     const fetchProfile = async () => {
       try {
+
         const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         if (!res.ok) throw new Error("Failed to fetch profile");
         const data = await res.json();
         const { firstName, lastName, email } = data.data;
@@ -75,6 +77,7 @@ export default function EditProfilePage() {
       if (!token) throw new Error("No token found");
 
       // Update profile info (firstName, lastName, email, password)
+
       const profileResponse = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
         method: "PUT",
         headers: {
@@ -83,6 +86,7 @@ export default function EditProfilePage() {
         },
         body: JSON.stringify(formData),
       });
+
 
       if (!profileResponse.ok) {
         const errData = await profileResponse.json();
@@ -94,6 +98,7 @@ export default function EditProfilePage() {
         const formDataFile = new FormData();
         formDataFile.append("avatar", selectedImage);
 
+
         const photoResponse = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile/photo", {
           method: "PUT",
           headers: {
@@ -101,6 +106,7 @@ export default function EditProfilePage() {
           },
           body: formDataFile,
         });
+\
 
         if (!photoResponse.ok) {
           const errData = await photoResponse.json();
@@ -142,20 +148,24 @@ export default function EditProfilePage() {
           const token = localStorage.getItem("accessToken");
           if (!token) throw new Error("No token found");
 
+
           const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           });
+
 
           if (!response.ok) {
             const errData = await response.json();
             throw new Error(errData.error || "Failed to delete account");
           }
 
-          Swal.fire("Terhapus!", "Akun Anda telah dihapus.", "success").then(() => {
-            localStorage.removeItem("accessToken");
-            router.push("/");
-          });
+          Swal.fire("Terhapus!", "Akun Anda telah dihapus.", "success").then(
+            () => {
+              localStorage.removeItem("accessToken");
+              router.push("/");
+            }
+          );
         } catch (error: any) {
           Swal.fire({
             icon: "error",

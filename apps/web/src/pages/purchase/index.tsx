@@ -18,10 +18,10 @@ const STATUSES = [
 type Purchase = {
   id: number;
   store: { name: string } | null;
-  totalAmount: number;             // Total harga produk (bisa sudah termasuk diskon, tergantung backend)
-  voucherDiscount?: number;        // diskon dari voucher, jika ada
-  referralDiscount?: number;       // diskon dari referral, jika ada
-  shippingCost?: number;           // tambahkan biaya kirim
+  totalAmount: number; // Total harga produk (bisa sudah termasuk diskon, tergantung backend)
+  voucherDiscount?: number; // diskon dari voucher, jika ada
+  referralDiscount?: number; // diskon dari referral, jika ada
+  shippingCost?: number; // tambahkan biaya kirim
   status: string;
   items: Array<{
     quantity: number;

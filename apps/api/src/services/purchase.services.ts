@@ -25,7 +25,7 @@ export class PurchaseService {
     });
 
     const ordersWithFinalTotal = orders.map((order) => {
-      const computedDiscount = 0; // Gantilah perhitungan ini jika ada logika diskon
+      const computedDiscount = 0; 
       const finalTotal =
         order.totalAmount - computedDiscount < 0
           ? 0

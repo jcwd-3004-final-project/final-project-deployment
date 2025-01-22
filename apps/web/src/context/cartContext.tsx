@@ -44,7 +44,9 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const CartProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [cart, setCart] = useState<CartProductItem[]>([]);
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [referralDiscount, setReferralDiscount] = useState(0);
@@ -70,11 +72,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
+
       const response = await axios.get("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/items", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
 
       const apiCart = response.data.data.items || [];
       if (apiCart.length > 0) {
@@ -180,9 +184,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
+
       await axios.delete(`https://d29jci2p0msjlf.cloudfront.net/v1/api/user/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       await fetchCart();
     } catch (error) {
       console.error("Failed to remove item via API:", error);

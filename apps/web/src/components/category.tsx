@@ -21,7 +21,9 @@ export const SelectScrollable: React.FC<SelectScrollableProps> = ({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+
         const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/categories");
+
         const data: CategoryData[] = await res.json();
         // data bisa jadi: [{ id: 1, name: 'Fruits', products: [...]}, ...]
         const categoryNames = data.map((cat) => cat.name);
