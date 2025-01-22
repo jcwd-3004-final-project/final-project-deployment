@@ -1,9 +1,17 @@
-// components/ProductForm.tsx
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { TextField, Button, Grid, Box } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Grid,
+  Box,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+} from "@mui/material";
+import axios from "axios";
 
 export interface Category {
   id: number;
@@ -17,18 +25,17 @@ export interface Product {
   price: number;
   categoryId: number;
   stockQuantity: number;
-  images: string[]; // Ubah menjadi array string
+  images: string[];
   category?: Category;
 }
 
-// Definisikan tipe data untuk Formik
 interface ProductFormValues {
   name: string;
   description: string;
   price: number;
   categoryId: number;
   stockQuantity: number;
-  images: string; // Gunakan string untuk Formik
+  images: string;
 }
 
 interface ProductFormProps {
@@ -42,6 +49,22 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8000/v1/api/categories"
+        );
+        setCategories(response.data);
+      } catch (error) {
+        console.error("Gagal mengambil kategori:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const formik = useFormik<ProductFormValues>({
     initialValues: {
       name: initialValues.name || "",
@@ -49,9 +72,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       price: initialValues.price || 0,
       categoryId: initialValues.categoryId || 0,
       stockQuantity: initialValues.stockQuantity || 0,
-      images: initialValues.images
-        ? initialValues.images.join(", ") // Convert array of strings to comma-separated
-        : "",
+      images: initialValues.images ? initialValues.images.join(", ") : "",
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Wajib diisi"),
@@ -72,18 +93,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
             if (!value) return false;
             const urls = value.split(",").map((url) => url.trim());
             const urlPattern = new RegExp(
-              "^(https?:\\/\\/)" + // protocol
-                "((([a-zA-Z0-9\\-\\.]+)\\.([a-zA-Z]{2,}))|" + // domain name
-                "localhost)" + // OR localhost
-                "(\\:[0-9]{1,5})?" + // port
-                "(\\/.*)?$" // path
+              "^(https?:\\/\\/)" +
+                "((([a-zA-Z0-9\\-\\.]+)\\.([a-zA-Z]{2,}))|" +
+                "localhost)" +
+                "(\\:[0-9]{1,5})?" +
+                "(\\/.*)?$"
             );
             return urls.every((url) => urlPattern.test(url));
           }
         ),
     }),
     onSubmit: (values) => {
-      // Konversi string images menjadi array string
       const imagesArray: string[] = values.images
         .split(",")
         .map((url) => url.trim())
@@ -146,21 +166,27 @@ const ProductForm: React.FC<ProductFormProps> = ({
             />
           </Grid>
 
-          {/* ID Kategori */}
+          {/* Kategori */}
           <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              id="categoryId"
-              name="categoryId"
-              label="ID Kategori"
-              type="number"
-              value={formik.values.categoryId}
-              onChange={formik.handleChange}
-              error={
-                formik.touched.categoryId && Boolean(formik.errors.categoryId)
-              }
-              helperText={formik.touched.categoryId && formik.errors.categoryId}
-            />
+            <FormControl fullWidth>
+              <InputLabel id="categoryId-label">Kategori</InputLabel>
+              <Select
+                labelId="categoryId-label"
+                id="categoryId"
+                name="categoryId"
+                value={formik.values.categoryId}
+                onChange={formik.handleChange}
+                error={
+                  formik.touched.categoryId && Boolean(formik.errors.categoryId)
+                }
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
 
           {/* Jumlah Stok */}
