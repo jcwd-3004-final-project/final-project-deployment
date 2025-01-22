@@ -14,72 +14,72 @@ const formatRupiah = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-  interface PurchaseItem {
+interface PurchaseItem {
+  id: number;
+  orderId: number;
+  productId: number;
+  quantity: number;
+  price: number;
+  product: {
     id: number;
-    orderId: number;
-    productId: number;
-    quantity: number;
-    price: number;
-    product: {
-      id: number;
-      name: string;
-      description: string;
-      price: number;
-      stockQuantity: number;
-      createdAt: string;
-      updatedAt: string;
-    };
-  }
-  
-  interface StoreInfo {
-    store_id: number;
     name: string;
-    address: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    latitude: number;
-    longitude: number;
-    maxDeliveryDistance: number;
+    description: string;
+    price: number;
+    stockQuantity: number;
     createdAt: string;
     updatedAt: string;
-  }
-  
-  interface AddressInfo {
-    address_id: number;
-    userId: number;
-    addressLine: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    latitude: number;
-    longitude: number;
-    isDefault: boolean;
-    createdAt: string;
-    updatedAt: string;
-  }
-  
-  interface PurchaseDetail {
-    id: number;
-    userId: number;
-    storeId: number;
-    status: string;
-    totalAmount: number;
-    shippingCost: number;
-    shippingAddressId: number;
-    shippingMethod: string;
-    paymentProof: string | null;
-    paymentMethod: string;
-    userVoucherId: number | null;
-    createdAt: string;
-    updatedAt: string;
-    items: PurchaseItem[];
-    store: StoreInfo | null;
-    shippingAddress: AddressInfo | null;
-  } 
-  
+  };
+}
+
+interface StoreInfo {
+  store_id: number;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  maxDeliveryDistance: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AddressInfo {
+  address_id: number;
+  userId: number;
+  addressLine: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PurchaseDetail {
+  id: number;
+  userId: number;
+  storeId: number;
+  status: string;
+  totalAmount: number;
+  shippingCost: number;
+  shippingAddressId: number;
+  shippingMethod: string;
+  paymentProof: string | null;
+  paymentMethod: string;
+  userVoucherId: number | null;
+  createdAt: string;
+  updatedAt: string;
+  items: PurchaseItem[];
+  store: StoreInfo | null;
+  shippingAddress: AddressInfo | null;
+}
+
 export default function PurchaseDetailPage() {
   const router = useRouter();
   const { order_id } = router.query;
@@ -100,11 +100,14 @@ export default function PurchaseDetailPage() {
           return;
         }
 
-        const response = await axios.get("http://localhost:8000/v1/api/user/purchases", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/purchases",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         const allPurchases: PurchaseDetail[] = response.data.data;
         const found = allPurchases.find((p) => p.id === Number(order_id));

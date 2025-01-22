@@ -69,7 +69,7 @@ export default function PaymentPage() {
         return;
       }
       const res = await fetch(
-        "http://localhost:8000/v1/api/user/order/upload",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/order/upload",
         {
           method: "POST",
           body: formData,
@@ -125,7 +125,7 @@ export default function PaymentPage() {
 
       // Kirim permintaan pembatalan ke backend
       const res = await fetch(
-        `http://localhost:8000/v1/api/user/order/cancel/${orderId}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/user/order/cancel/${orderId}`,
         {
           method: "POST", // Gunakan metode POST untuk pembatalan
           headers: {

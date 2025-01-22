@@ -69,7 +69,7 @@ const CartPage = () => {
   const fetchVouchers = async () => {
     try {
       const res = await axios.get<Voucher[]>(
-        "http://localhost:8000/v1/api/discounts/vouchers"
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers"
       );
       setVouchers(res.data);
     } catch (err: any) {
@@ -83,7 +83,7 @@ const CartPage = () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
       const res = await fetch(
-        "http://localhost:8000/v1/api/auth/referral-info",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/referral-info",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -162,7 +162,11 @@ const CartPage = () => {
   const handleRedeemReferral = async () => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      Swal.fire("Error", "Token tidak ditemukan. Silakan login kembali.", "error");
+      Swal.fire(
+        "Error",
+        "Token tidak ditemukan. Silakan login kembali.",
+        "error"
+      );
       router.push("/auth/login");
       return;
     }
@@ -172,10 +176,13 @@ const CartPage = () => {
       // Hitung dulu nilai discount dari referral sebelum redeem
       const discountAmount = referral.usageCount * 10000;
 
-      const response = await fetch("http://localhost:8000/v1/api/auth/use-referral", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/use-referral",
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       // Periksa header content-type sebelum memanggil response.json()
       const contentType = response.headers.get("Content-Type");
@@ -198,12 +205,18 @@ const CartPage = () => {
       setReferral(result.data);
       Swal.fire("Sukses", "Poin referral berhasil digunakan.", "success");
     } catch (error: any) {
-      Swal.fire("Error", error.message || "Terjadi kesalahan saat menggunakan poin referral.", "error");
+      Swal.fire(
+        "Error",
+        error.message || "Terjadi kesalahan saat menggunakan poin referral.",
+        "error"
+      );
     }
   };
 
   // Handler untuk perubahan checkbox referral
-  const handleReferralCheckboxChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReferralCheckboxChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const checked = e.target.checked;
     setUseReferral(checked);
     if (checked && referral && referral.usageCount > 0) {

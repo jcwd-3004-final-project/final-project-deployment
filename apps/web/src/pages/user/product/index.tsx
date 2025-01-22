@@ -115,7 +115,7 @@ const ProductsPage: React.FC = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get<{ message: string; data: Product[] }>(
-          "http://localhost:8000/v1/api/products"
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/products"
         );
         setProducts(response.data.data);
       } catch (err) {

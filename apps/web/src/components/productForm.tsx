@@ -55,7 +55,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8000/v1/api/categories"
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/categories"
         );
         setCategories(response.data);
       } catch (error) {

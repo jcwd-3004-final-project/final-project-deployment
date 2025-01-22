@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
   const [shipmentOrders, setShipmentOrders] = useState<Order[]>([]);
 
   // Base URL untuk API inventory (untuk update stock & logs)
-  const BASE_URL = "http://localhost:8000/v1/api/inventory";
+  const BASE_URL = "https://d29jci2p0msjlf.cloudfront.net/v1/api/inventory";
 
   // Ambil storeId dari endpoint store-admin
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
           return;
         }
         const res = await fetch(
-          "http://localhost:8000/v1/api/store-admin/details",
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/details",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ export default function AdminDashboardPage() {
       setLoading(true);
       setMessage("");
       const res = await fetch(
-        `http://localhost:8000/v1/api/stores/${storeId}/products`
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/stores/${storeId}/products`
       );
       const data = await res.json();
       if (!res.ok) {
@@ -181,7 +181,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        "http://localhost:8000/v1/api/store-admin/orders?status=WAITING_FOR_PAYMENT_CONFIRMATION",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders?status=WAITING_FOR_PAYMENT_CONFIRMATION",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -205,16 +205,21 @@ export default function AdminDashboardPage() {
         return;
       }
       // Ambil semua pesanan dari store-admin (tanpa filter status di query)
-      const res = await fetch("http://localhost:8000/v1/api/store-admin/orders", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || "Failed to fetch orders");
       }
       // Filter order yang statusnya WAITING_FOR_PAYMENT_CONFIRMATION atau PROCESSING
-      const ordersForShipment = data.data.filter((order: Order) =>
-        order.status === "PROCESSING" || order.status === "WAITING_FOR_PAYMENT_CONFIRMATION"
+      const ordersForShipment = data.data.filter(
+        (order: Order) =>
+          order.status === "PROCESSING" ||
+          order.status === "WAITING_FOR_PAYMENT_CONFIRMATION"
       );
       setShipmentOrders(ordersForShipment);
     } catch (error: any) {
@@ -231,7 +236,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        `http://localhost:8000/v1/api/store-admin/orders/confirm/${orderId}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders/confirm/${orderId}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -262,7 +267,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        `http://localhost:8000/v1/api/store-admin/orders/ship/${orderId}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders/ship/${orderId}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -447,23 +452,14 @@ export default function AdminDashboardPage() {
                 <th className="py-2 px-4 text-left text-green-800">
                   Product ID
                 </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Name
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Stock
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Actions
-                </th>
+                <th className="py-2 px-4 text-left text-green-800">Name</th>
+                <th className="py-2 px-4 text-left text-green-800">Stock</th>
+                <th className="py-2 px-4 text-left text-green-800">Actions</th>
               </tr>
             </thead>
             <tbody>
               {products.map((prod) => (
-                <tr
-                  key={prod.productId}
-                  className="border-b hover:bg-green-50"
-                >
+                <tr key={prod.productId} className="border-b hover:bg-green-50">
                   <td className="py-2 px-4">{prod.productId}</td>
                   <td className="py-2 px-4">{prod.name}</td>
                   <td className="py-2 px-4">{prod.stock}</td>
@@ -557,28 +553,20 @@ export default function AdminDashboardPage() {
           Stock Logs
         </h2>
         {logs.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No logs for selected product.
-          </p>
+          <p className="text-sm text-gray-500">No logs for selected product.</p>
         ) : (
           <table className="w-full border-collapse border text-sm">
             <thead>
               <tr className="bg-green-100 border-b">
-                <th className="py-2 px-4 text-left text-green-800">
-                  Log ID
-                </th>
+                <th className="py-2 px-4 text-left text-green-800">Log ID</th>
                 <th className="py-2 px-4 text-left text-green-800">
                   Product ID
                 </th>
                 <th className="py-2 px-4 text-left text-green-800">
                   Change Quantity
                 </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Reason
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Date
-                </th>
+                <th className="py-2 px-4 text-left text-green-800">Reason</th>
+                <th className="py-2 px-4 text-left text-green-800">Date</th>
               </tr>
             </thead>
             <tbody>
