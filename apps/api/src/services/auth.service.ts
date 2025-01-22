@@ -142,9 +142,9 @@ export class AuthService {
       );
       throw new Error("Invalid email or password");
     }
-  
+
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
-   
+
     if (!isPasswordValid) {
       throw new Error("Invalid email or password");
     }
@@ -291,7 +291,7 @@ export class AuthService {
       expiresIn: "1d",
     });
 
-    const confirmationUrl = `http://18.136.205.218:8000/v1/api/auth/confirm-email?token=${token}`;
+    const confirmationUrl = `https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/confirm-email?token=${token}`;
 
     const transporter = nodemailer.createTransport({
       service: "Gmail", // or another email service

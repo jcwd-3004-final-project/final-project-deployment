@@ -18,10 +18,10 @@ const STATUSES = [
 type Purchase = {
   id: number;
   store: { name: string } | null;
-  totalAmount: number;             // Total harga produk (bisa sudah termasuk diskon, tergantung backend)
-  voucherDiscount?: number;        // diskon dari voucher, jika ada
-  referralDiscount?: number;       // diskon dari referral, jika ada
-  shippingCost?: number;           // tambahkan biaya kirim
+  totalAmount: number; // Total harga produk (bisa sudah termasuk diskon, tergantung backend)
+  voucherDiscount?: number; // diskon dari voucher, jika ada
+  referralDiscount?: number; // diskon dari referral, jika ada
+  shippingCost?: number; // tambahkan biaya kirim
   status: string;
   items: Array<{
     quantity: number;
@@ -42,7 +42,7 @@ const PurchasesPage: React.FC = () => {
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
-        let url = "http://18.136.205.218:8000/v1/api/user/purchases";
+        let url = "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/purchases";
         if (filterStatus !== "ALL") {
           url += `?status=${filterStatus}`;
         }
@@ -67,7 +67,7 @@ const PurchasesPage: React.FC = () => {
     try {
       const token = localStorage.getItem("accessToken");
       await axios.post(
-        `http://18.136.205.218:8000/v1/api/user/order/confirm/${purchaseId}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/user/order/confirm/${purchaseId}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
