@@ -64,6 +64,13 @@ export default function AdminDashboardPage() {
   // Base URL untuk API inventory (untuk update stock & logs)
   const BASE_URL = "http://localhost:8000/v1/api/inventory";
 
+  // Tambahkan handler logout
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    // Redirect ke halaman login atau landing page
+    window.location.href = "/";
+  };
+
   // 1. Ambil storeId dari endpoint store-admin
   useEffect(() => {
     const fetchStoreDetails = async () => {
@@ -322,13 +329,19 @@ export default function AdminDashboardPage() {
         Store Admin Dashboard
       </h1>
 
-      {/* Link ke halaman Voucher */}
-      <div className="mb-4">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mb-4">
         <Link href="/storeAdmin/Voucher">
           <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Go to Voucher Page
           </button>
         </Link>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Logout
+        </button>
       </div>
 
       {/* Notifikasi */}
@@ -463,18 +476,10 @@ export default function AdminDashboardPage() {
           <table className="w-full border-collapse border text-sm">
             <thead>
               <tr className="bg-green-100 border-b">
-                <th className="py-2 px-4 text-left text-green-800">
-                  Product ID
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Name
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Stock
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Actions
-                </th>
+                <th className="py-2 px-4 text-left text-green-800">Product ID</th>
+                <th className="py-2 px-4 text-left text-green-800">Name</th>
+                <th className="py-2 px-4 text-left text-green-800">Stock</th>
+                <th className="py-2 px-4 text-left text-green-800">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -581,21 +586,11 @@ export default function AdminDashboardPage() {
           <table className="w-full border-collapse border text-sm">
             <thead>
               <tr className="bg-green-100 border-b">
-                <th className="py-2 px-4 text-left text-green-800">
-                  Log ID
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Product ID
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Change Quantity
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Reason
-                </th>
-                <th className="py-2 px-4 text-left text-green-800">
-                  Date
-                </th>
+                <th className="py-2 px-4 text-left text-green-800">Log ID</th>
+                <th className="py-2 px-4 text-left text-green-800">Product ID</th>
+                <th className="py-2 px-4 text-left text-green-800">Change Quantity</th>
+                <th className="py-2 px-4 text-left text-green-800">Reason</th>
+                <th className="py-2 px-4 text-left text-green-800">Date</th>
               </tr>
             </thead>
             <tbody>
