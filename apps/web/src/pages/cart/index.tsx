@@ -175,10 +175,12 @@ const CartPage = () => {
       const discountAmount = referral.usageCount * 10000;
 
 
+
       const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/use-referral", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
+
 
 
       // Periksa header content-type sebelum memanggil response.json()

@@ -92,9 +92,11 @@ export default ProductDetail;
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
 
+
     const res = await fetch(
       "https://d29jci2p0msjlf.cloudfront.net/v1/api/products"
     );
+
 
     if (!res.ok) {
       throw new Error("Failed to fetch products");
@@ -131,7 +133,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   try {
 
+
     const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/products");
+
 
     if (!res.ok) {
       throw new Error("Failed to fetch products");

@@ -3,8 +3,10 @@ import React from "react";
 import { FaGoogle } from "react-icons/fa";
 
 
+
 const GOOGLE_LOGIN_URL =
   "https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/google";
+
 
 
 const SocialLoginButton: React.FC = () => {

@@ -64,12 +64,14 @@ export default function AdminDashboardPage() {
   // Base URL untuk API inventory (untuk update stock & logs)
   const BASE_URL = "https://d29jci2p0msjlf.cloudfront.net/v1/api/inventory";
 
+
   // Tambahkan handler logout
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     // Redirect ke halaman login atau landing page
     window.location.href = "/";
   };
+
 
   // 1. Ambil storeId dari endpoint store-admin
   useEffect(() => {
@@ -226,14 +228,17 @@ export default function AdminDashboardPage() {
       }
 
       // Ambil semua pesanan dari store-admin (tanpa filter status di query)
+
       const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders", {
         headers: { Authorization: `Bearer ${token}` },
       });
+
 
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || "Failed to fetch orders");
       }
+
       const ordersForShipment = data.data.filter(
         (order: Order) =>
           order.status === "PROCESSING" ||

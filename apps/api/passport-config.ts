@@ -18,7 +18,9 @@ passport.use(
       clientID: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
 
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/google/callback',
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL ||
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/google/callback",
 
     },
     (accessToken, refreshToken, profile, done) => {

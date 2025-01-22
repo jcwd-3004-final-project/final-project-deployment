@@ -73,11 +73,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
 
+
       const response = await axios.get("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/items", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
 
 
       const apiCart = response.data.data.items || [];
@@ -185,9 +187,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
 
+
       await axios.delete(`https://d29jci2p0msjlf.cloudfront.net/v1/api/user/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
 
       await fetchCart();
     } catch (error) {

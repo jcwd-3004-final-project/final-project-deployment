@@ -33,9 +33,11 @@ export default function EditProfilePage() {
     const fetchProfile = async () => {
       try {
 
+
         const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
 
         if (!res.ok) throw new Error("Failed to fetch profile");
         const data = await res.json();
@@ -78,14 +80,18 @@ export default function EditProfilePage() {
 
       // Update profile info (firstName, lastName, email, password)
 
-      const profileResponse = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
+      const profileResponse = await fetch(
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
 
 
       if (!profileResponse.ok) {
@@ -99,14 +105,17 @@ export default function EditProfilePage() {
         formDataFile.append("avatar", selectedImage);
 
 
-        const photoResponse = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile/photo", {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formDataFile,
-        });
-\
+        const photoResponse = await fetch(
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile/photo",
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formDataFile,
+          }
+        );
+
 
         if (!photoResponse.ok) {
           const errData = await photoResponse.json();
@@ -149,10 +158,12 @@ export default function EditProfilePage() {
           if (!token) throw new Error("No token found");
 
 
+
           const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           });
+
 
 
           if (!response.ok) {

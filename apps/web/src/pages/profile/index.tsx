@@ -87,9 +87,11 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
 
+
         const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
 
         if (!response.ok) {
           throw new Error("Failed to fetch profile");
@@ -105,9 +107,11 @@ export default function ProfilePage() {
     const fetchAddresses = async () => {
       try {
 
+
         const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
 
         if (!response.ok) {
           throw new Error("Failed to fetch addresses");
@@ -124,9 +128,12 @@ export default function ProfilePage() {
     const fetchReferral = async () => {
       try {
 
-        const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/referral-info", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/referral-info",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Failed to fetch referral information");
@@ -158,6 +165,7 @@ export default function ProfilePage() {
       return;
     }
     try {
+
 
       const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/use-referral", {
         method: "POST",
@@ -230,6 +238,7 @@ export default function ProfilePage() {
     }
     try {
 
+
       const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses", {
         method: "POST",
         headers: {
@@ -238,6 +247,7 @@ export default function ProfilePage() {
         },
         body: JSON.stringify(newAddress),
       });
+
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -402,6 +412,7 @@ export default function ProfilePage() {
       );
       const isDefault = addressToDelete?.isDefault;
 
+
       const response = await fetch(`https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses/${addressId}`, {
         method: "DELETE",
         headers: {
@@ -409,6 +420,7 @@ export default function ProfilePage() {
           Authorization: `Bearer ${token}`,
         },
       });
+
 
       if (!response.ok) {
         const errorData = await response.json();

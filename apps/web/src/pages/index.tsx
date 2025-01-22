@@ -44,6 +44,7 @@ const Home = () => {
     const fetchProducts = async () => {
       try {
 
+
         const response = await axios.get(`https://d29jci2p0msjlf.cloudfront.net/v1/api/products`);
         const fetchedProducts: Product[] = response.data.data.map((item: any) => ({
           id: item.id,
@@ -53,6 +54,7 @@ const Home = () => {
           category: item.category,
           images: item.images,
         }));
+
 
 
         setProducts(fetchedProducts);
