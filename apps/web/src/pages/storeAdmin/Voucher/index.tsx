@@ -93,7 +93,7 @@ export default function PromoPage() {
         return;
 
       }
-      const res = await fetch("http://18.136.205.218:8000/v1/api/store-admin/details", {
+      const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/details", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -111,7 +111,7 @@ export default function PromoPage() {
   // 2. Fetch produk berdasarkan storeId
   const fetchProducts = async (storeId: number) => {
     try {
-      const res = await fetch(`http://18.136.205.218:8000/v1/api/stores/${storeId}/products`);
+      const res = await fetch(`https://d29jci2p0msjlf.cloudfront.net/v1/api/stores/${storeId}/products`);
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.message || "Failed to fetch products");
@@ -130,7 +130,7 @@ export default function PromoPage() {
   // 3. Fetch Discounts
   const fetchDiscounts = async () => {
     try {
-      const res = await axios.get<Discount[]>("http://18.136.205.218:8000/v1/api/discounts/discounts");
+      const res = await axios.get<Discount[]>("https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/discounts");
       setDiscounts(res.data);
     } catch (err: any) {
       setErrorMsg(err.message || "Error fetching discounts");
@@ -140,7 +140,7 @@ export default function PromoPage() {
   // 4. Fetch Vouchers
   const fetchVouchers = async () => {
     try {
-      const res = await axios.get<Voucher[]>("http://18.136.205.218:8000/v1/api/discounts/vouchers");
+      const res = await axios.get<Voucher[]>("https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers");
       // Filter voucher jika tidak diawali dengan "REF-REDEEM" ataupun "REF-BENEFIT"
       const filteredVouchers = res.data.filter(
         (voucher) =>
@@ -186,7 +186,7 @@ export default function PromoPage() {
     setMessage(null);
     setErrorMsg(null);
     try {
-      await axios.post("http://18.136.205.218:8000/v1/api/discounts/discounts", {
+      await axios.post("https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/discounts", {
         ...discountForm,
         value: Number(discountForm.value),
         maxDiscount: Number(discountForm.maxDiscount),
@@ -216,7 +216,7 @@ export default function PromoPage() {
     setMessage(null);
     setErrorMsg(null);
     try {
-      await axios.delete(`http://18.136.205.218:8000/v1/api/discounts/discounts/${id}`);
+      await axios.delete(`https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/discounts/${id}`);
       setMessage("Discount deleted successfully");
       fetchDiscounts();
     } catch (err: any) {
@@ -232,7 +232,7 @@ export default function PromoPage() {
     setMessage(null);
     setErrorMsg(null);
     try {
-      await axios.post("http://18.136.205.218:8000/v1/api/discounts/vouchers", {
+      await axios.post("https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers", {
         ...voucherForm,
         value: Number(voucherForm.value),
         minPurchaseAmount: Number(voucherForm.minPurchaseAmount),
@@ -265,7 +265,7 @@ export default function PromoPage() {
     setMessage(null);
     setErrorMsg(null);
     try {
-      await axios.delete(`http://18.136.205.218:8000/v1/api/discounts/vouchers/${id}`);
+      await axios.delete(`https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers/${id}`);
       setMessage("Voucher deleted successfully");
       fetchVouchers();
     } catch (err: any) {
@@ -283,7 +283,7 @@ export default function PromoPage() {
     try {
       const { discountId, productId } = integrationForm;
       await axios.post(
-        `http://18.136.205.218:8000/v1/api/discounts/discounts/${discountId}/assign`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/discounts/${discountId}/assign`,
         {
           productId: Number(productId),
         }
@@ -304,7 +304,7 @@ export default function PromoPage() {
     try {
       const { voucherId, productId } = integrationForm;
       await axios.post(
-        `http://18.136.205.218:8000/v1/api/discounts/vouchers/${voucherId}/assign`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers/${voucherId}/assign`,
         {
           productId: Number(productId),
         }

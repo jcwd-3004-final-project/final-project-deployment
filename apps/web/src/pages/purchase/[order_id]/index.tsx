@@ -100,7 +100,7 @@ export default function PurchaseDetailPage() {
           return;
         }
 
-        const response = await axios.get("http://18.136.205.218:8000/v1/api/user/purchases", {
+        const response = await axios.get("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/purchases", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

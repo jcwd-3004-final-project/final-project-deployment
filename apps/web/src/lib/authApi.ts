@@ -44,7 +44,7 @@ interface ProfileData {
 }
 
 const api = axios.create({
-  baseURL: 'http://18.136.205.218:8000/v1/api/auth', // Ganti dengan URL backend Anda
+  baseURL: 'https://d29jci2p0msjlf.cloudfront.net/v1/api/auth', // Ganti dengan URL backend Anda
   headers: {
     'Content-Type': 'application/json',
   },

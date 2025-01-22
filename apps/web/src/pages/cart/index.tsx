@@ -69,7 +69,7 @@ const CartPage = () => {
   const fetchVouchers = async () => {
     try {
       const res = await axios.get<Voucher[]>(
-        "http://18.136.205.218:8000/v1/api/discounts/vouchers"
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers"
       );
       setVouchers(res.data);
     } catch (err: any) {
@@ -83,7 +83,7 @@ const CartPage = () => {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
       const res = await fetch(
-        "http://18.136.205.218:8000/v1/api/auth/referral-info",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/referral-info",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -172,7 +172,7 @@ const CartPage = () => {
       // Hitung dulu nilai discount dari referral sebelum redeem
       const discountAmount = referral.usageCount * 10000;
 
-      const response = await fetch("http://18.136.205.218:8000/v1/api/auth/use-referral", {
+      const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/auth/use-referral", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });

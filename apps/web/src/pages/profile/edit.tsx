@@ -32,7 +32,7 @@ export default function EditProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://18.136.205.218:8000/v1/api/user/profile", {
+        const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch profile");
@@ -75,7 +75,7 @@ export default function EditProfilePage() {
       if (!token) throw new Error("No token found");
 
       // Update profile info (firstName, lastName, email, password)
-      const profileResponse = await fetch("http://18.136.205.218:8000/v1/api/user/profile", {
+      const profileResponse = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +94,7 @@ export default function EditProfilePage() {
         const formDataFile = new FormData();
         formDataFile.append("avatar", selectedImage);
 
-        const photoResponse = await fetch("http://18.136.205.218:8000/v1/api/user/profile/photo", {
+        const photoResponse = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile/photo", {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -142,7 +142,7 @@ export default function EditProfilePage() {
           const token = localStorage.getItem("accessToken");
           if (!token) throw new Error("No token found");
 
-          const response = await fetch("http://18.136.205.218:8000/v1/api/user/profile", {
+          const response = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/profile", {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           });
