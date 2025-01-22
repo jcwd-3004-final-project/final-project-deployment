@@ -10,7 +10,6 @@ import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
 import Swal from "sweetalert2";
 
-// Tipe data Voucher (sesuai schema halaman voucher)
 interface Voucher {
   id: number;
   code: string;
@@ -25,7 +24,6 @@ interface Voucher {
   expiryDate?: string;
 }
 
-// Interface untuk Referral Information
 interface ReferralInfo {
   id: number;
   referrerId: number;
@@ -155,7 +153,7 @@ const CartPage = () => {
 
     setLocalDiscount(calculatedDiscount);
     setAppliedVoucher(voucher);
-    setVoucherDiscount(calculatedDiscount); // Update nilai diskon di Context
+    setVoucherDiscount(calculatedDiscount);
   };
 
   // Handler untuk redeem referral points
@@ -183,7 +181,6 @@ const CartPage = () => {
       if (contentType && contentType.includes("application/json")) {
         result = await response.json();
       } else {
-        // Fallback: jika tidak ada JSON, kita gunakan nilai default (usageCount 0)
         result = { data: { ...referral, usageCount: 0 } };
       }
 

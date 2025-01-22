@@ -450,14 +450,7 @@ export default function ProfilePage() {
                   (Setiap penggunaan referral memberikan potongan 10.000, maksimal 30.000)
                 </p>
                 {/* Tambahkan tombol untuk menggunakan/redeem poin jika masih ada usage */}
-                {referral.usageCount > 0 && (
-                  <button
-                    onClick={handleRedeemReferral}
-                    className="mt-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
-                  >
-                    Gunakan Poin Referral
-                  </button>
-                )}
+               
               </div>
             ) : (
               <p className="text-gray-600">Loading referral information...</p>

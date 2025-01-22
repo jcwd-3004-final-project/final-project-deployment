@@ -141,7 +141,6 @@ export default function PromoPage() {
   const fetchVouchers = async () => {
     try {
       const res = await axios.get<Voucher[]>("http://localhost:8000/v1/api/discounts/vouchers");
-      // Filter voucher jika tidak diawali dengan "REF-REDEEM" ataupun "REF-BENEFIT"
       const filteredVouchers = res.data.filter(
         (voucher) =>
           !voucher.code.startsWith("REF-REDEEM") &&
