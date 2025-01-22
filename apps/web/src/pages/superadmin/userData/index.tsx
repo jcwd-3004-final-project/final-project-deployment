@@ -97,7 +97,10 @@ function USERDATA() {
 
     setLoading(true);
     axios
-      .get("http://localhost:8000/v1/api/superadmin/users", axiosConfig)
+      .get(
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/superadmin/users",
+        axiosConfig
+      )
       .then((response) => {
         setFullUsers(response.data.data);
         setLoading(false);
@@ -143,7 +146,7 @@ function USERDATA() {
 
     axios
       .post(
-        "http://localhost:8000/v1/api/superadmin/store-admin",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/superadmin/store-admin",
         formData,
         axiosConfig
       )
@@ -177,7 +180,7 @@ function USERDATA() {
 
     axios
       .put(
-        `http://localhost:8000/v1/api/superadmin/store-admin/${selectedUser.id}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/superadmin/store-admin/${selectedUser.id}`,
         formData,
         axiosConfig
       )
@@ -209,7 +212,7 @@ function USERDATA() {
 
     axios
       .delete(
-        `http://localhost:8000/v1/api/superadmin/store-admin/${userId}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/superadmin/store-admin/${userId}`,
         axiosConfig
       )
       .then((response) => {

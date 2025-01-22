@@ -73,7 +73,7 @@ export default function CheckoutPage() {
       }
       try {
         const response = await fetch(
-          "http://localhost:8000/v1/api/user/addresses",
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/addresses",
           {
             method: "GET",
             headers: {
@@ -107,7 +107,7 @@ export default function CheckoutPage() {
       }
       try {
         const response = await fetch(
-          "http://localhost:8000/v1/api/superadmin/stores",
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/superadmin/stores",
           {
             method: "GET",
             headers: {
@@ -187,14 +187,17 @@ export default function CheckoutPage() {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/v1/api/user/order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(orderBody),
-      });
+      const res = await fetch(
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/order",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(orderBody),
+        }
+      );
 
       const data = await res.json();
       if (!data.success) {
@@ -209,7 +212,7 @@ export default function CheckoutPage() {
       } else {
         // Jika pakai payment gateway, jalankan request payment lalu redirect
         const paymentRes = await fetch(
-          "http://localhost:8000/v1/api/payment/create",
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/payment/create",
           {
             method: "POST",
             headers: {

@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
   const [shipmentOrders, setShipmentOrders] = useState<Order[]>([]);
 
   // Base URL untuk API inventory (untuk update stock & logs)
-  const BASE_URL = "http://localhost:8000/v1/api/inventory";
+  const BASE_URL = "https://d29jci2p0msjlf.cloudfront.net/v1/api/inventory";
 
   // Tambahkan handler logout
   const handleLogout = () => {
@@ -80,11 +80,14 @@ export default function AdminDashboardPage() {
           setMessage("Access token missing. Please log in.");
           return;
         }
-        const res = await fetch("http://localhost:8000/v1/api/store-admin/details", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(
+          "https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/details",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data?.message || "Failed to fetch store details.");
@@ -105,7 +108,9 @@ export default function AdminDashboardPage() {
     try {
       setLoading(true);
       setMessage("");
-      const res = await fetch(`http://localhost:8000/v1/api/stores/${storeId}/products`);
+      const res = await fetch(
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/stores/${storeId}/products`
+      );
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.message || "Failed to fetch products");
@@ -169,7 +174,9 @@ export default function AdminDashboardPage() {
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch(`${BASE_URL}/stores/${storeId}/products/${productId}/logs`);
+      const res = await fetch(
+        `${BASE_URL}/stores/${storeId}/products/${productId}/logs`
+      );
       const data = await res.json();
 
       if (!res.ok) {
@@ -193,7 +200,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        "http://localhost:8000/v1/api/store-admin/orders?status=WAITING_FOR_PAYMENT_CONFIRMATION",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders?status=WAITING_FOR_PAYMENT_CONFIRMATION",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -217,9 +224,12 @@ export default function AdminDashboardPage() {
         setMessage("Access token missing. Please log in.");
         return;
       }
-      const res = await fetch("http://localhost:8000/v1/api/store-admin/orders", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || "Failed to fetch orders");
@@ -244,7 +254,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        `http://localhost:8000/v1/api/store-admin/orders/confirm/${orderId}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders/confirm/${orderId}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -273,7 +283,7 @@ export default function AdminDashboardPage() {
         return;
       }
       const res = await fetch(
-        `http://localhost:8000/v1/api/store-admin/orders/ship/${orderId}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders/ship/${orderId}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -476,7 +486,9 @@ export default function AdminDashboardPage() {
           <table className="w-full border-collapse border text-sm">
             <thead>
               <tr className="bg-green-100 border-b">
-                <th className="py-2 px-4 text-left text-green-800">Product ID</th>
+                <th className="py-2 px-4 text-left text-green-800">
+                  Product ID
+                </th>
                 <th className="py-2 px-4 text-left text-green-800">Name</th>
                 <th className="py-2 px-4 text-left text-green-800">Stock</th>
                 <th className="py-2 px-4 text-left text-green-800">Actions</th>
@@ -579,16 +591,18 @@ export default function AdminDashboardPage() {
           Stock Logs
         </h2>
         {logs.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No logs for selected product.
-          </p>
+          <p className="text-sm text-gray-500">No logs for selected product.</p>
         ) : (
           <table className="w-full border-collapse border text-sm">
             <thead>
               <tr className="bg-green-100 border-b">
                 <th className="py-2 px-4 text-left text-green-800">Log ID</th>
-                <th className="py-2 px-4 text-left text-green-800">Product ID</th>
-                <th className="py-2 px-4 text-left text-green-800">Change Quantity</th>
+                <th className="py-2 px-4 text-left text-green-800">
+                  Product ID
+                </th>
+                <th className="py-2 px-4 text-left text-green-800">
+                  Change Quantity
+                </th>
                 <th className="py-2 px-4 text-left text-green-800">Reason</th>
                 <th className="py-2 px-4 text-left text-green-800">Date</th>
               </tr>

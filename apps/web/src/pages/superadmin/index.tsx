@@ -50,7 +50,7 @@ export default function SuperAdminHome() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStore, setCurrentStore] = useState<Partial<Store>>({});
 
-  const BASE_URL = "http://localhost:8000/v1/api/superadmin";
+  const BASE_URL = "https://d29jci2p0msjlf.cloudfront.net/v1/api/superadmin";
 
   const [assignData, setAssignData] = useState({
     storeName: "",
@@ -69,7 +69,6 @@ export default function SuperAdminHome() {
   // Misalnya, simpan role user di localStorage saat login
   const userRole =
     typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
-
 
   // Helper: Returns an axios config object with the auth header
   const axiosConfig = {
@@ -106,7 +105,6 @@ export default function SuperAdminHome() {
       }
       const res = await axios.get(`${BASE_URL}/stores`, axiosConfig);
       setStores(res.data.data);
-     
 
       // Ekstrak semua admin dari storeAdmins
       const fetchedAdmins: Admin[] = res.data.data.flatMap(
@@ -121,7 +119,6 @@ export default function SuperAdminHome() {
 
       const uniqueAdmins = Object.values(uniqueAdminsMap);
       setAllAdmins(uniqueAdmins);
-     
     } catch (error) {
       console.error("Error fetching stores:", error);
       if ((error as any)?.response?.status === 401) {

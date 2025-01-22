@@ -40,7 +40,9 @@ export default function VoucherPage() {
   // ------------------ API FUNCTIONS ------------------
   const fetchVouchers = async () => {
     try {
-      const res = await axios.get<Voucher[]>("http://localhost:8000/v1/api/discounts/vouchers");
+      const res = await axios.get<Voucher[]>(
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers"
+      );
       // Filter voucher yang tidak memiliki prefix tertentu
       const filteredVouchers = res.data.filter(
         (voucher) =>
@@ -62,14 +64,17 @@ export default function VoucherPage() {
     setMessage("");
     setErrorMsg("");
     try {
-      await axios.post("http://localhost:8000/v1/api/discounts/vouchers", {
-        ...voucherForm,
-        value: Number(voucherForm.value),
-        minPurchaseAmount: Number(voucherForm.minPurchaseAmount),
-        maxDiscount: Number(voucherForm.maxDiscount),
-        startDate: new Date(voucherForm.startDate).toISOString(),
-        endDate: new Date(voucherForm.endDate).toISOString(),
-      });
+      await axios.post(
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers",
+        {
+          ...voucherForm,
+          value: Number(voucherForm.value),
+          minPurchaseAmount: Number(voucherForm.minPurchaseAmount),
+          maxDiscount: Number(voucherForm.maxDiscount),
+          startDate: new Date(voucherForm.startDate).toISOString(),
+          endDate: new Date(voucherForm.endDate).toISOString(),
+        }
+      );
       setMessage("Voucher created successfully!");
       setVoucherForm({
         code: "",
@@ -85,9 +90,7 @@ export default function VoucherPage() {
       fetchVouchers();
     } catch (err: any) {
       setErrorMsg(
-        err.response?.data?.error ||
-          err.message ||
-          "Error creating voucher"
+        err.response?.data?.error || err.message || "Error creating voucher"
       );
     }
   };
@@ -96,14 +99,14 @@ export default function VoucherPage() {
     setMessage("");
     setErrorMsg("");
     try {
-      await axios.delete(`http://localhost:8000/v1/api/discounts/vouchers/${id}`);
+      await axios.delete(
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/discounts/vouchers/${id}`
+      );
       setMessage("Voucher deleted successfully!");
       fetchVouchers();
     } catch (err: any) {
       setErrorMsg(
-        err.response?.data?.error ||
-          err.message ||
-          "Error deleting voucher"
+        err.response?.data?.error || err.message || "Error deleting voucher"
       );
     }
   };
@@ -111,7 +114,9 @@ export default function VoucherPage() {
   // ------------------ RENDER ------------------
   return (
     <div className="min-h-screen bg-green-50 p-8">
-      <h1 className="text-4xl font-bold text-green-800 mb-6">Voucher Management</h1>
+      <h1 className="text-4xl font-bold text-green-800 mb-6">
+        Voucher Management
+      </h1>
 
       {/* Tombol navigasi */}
       <div className="mb-6">
@@ -142,34 +147,47 @@ export default function VoucherPage() {
 
       {/* FORM: Create Voucher */}
       <div className="bg-white p-6 rounded shadow-md border border-green-200 mb-6">
-        <h2 className="text-2xl font-semibold text-green-800 mb-4">Create New Voucher</h2>
+        <h2 className="text-2xl font-semibold text-green-800 mb-4">
+          Create New Voucher
+        </h2>
         <form onSubmit={handleCreateVoucher} className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-green-800 mb-1">Code</label>
+            <label className="block text-sm font-medium text-green-800 mb-1">
+              Code
+            </label>
             <input
               type="text"
               required
               value={voucherForm.code}
-              onChange={(e) => setVoucherForm({ ...voucherForm, code: e.target.value })}
+              onChange={(e) =>
+                setVoucherForm({ ...voucherForm, code: e.target.value })
+              }
               className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-green-800 mb-1">Discount Type</label>
+            <label className="block text-sm font-medium text-green-800 mb-1">
+              Discount Type
+            </label>
             <select
               required
               value={voucherForm.discountType}
-              onChange={(e) => setVoucherForm({ ...voucherForm, discountType: e.target.value })}
+              onChange={(e) =>
+                setVoucherForm({ ...voucherForm, discountType: e.target.value })
+              }
               className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
             >
               <option value="">Select</option>
-              <option value="MIN_PURCHASE_DISCOUNT">MIN_PURCHASE_DISCOUNT</option>
+              <option value="MIN_PURCHASE_DISCOUNT">
+                MIN_PURCHASE_DISCOUNT
+              </option>
               <option value="PRODUCT_DISCOUNT">PRODUCT_DISCOUNT</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-green-800 mb-1">
-              Value {voucherForm.valueType === "PERCENTAGE" && <span>(% 0-100)</span>}
+              Value{" "}
+              {voucherForm.valueType === "PERCENTAGE" && <span>(% 0-100)</span>}
             </label>
             <input
               type="number"
@@ -177,16 +195,25 @@ export default function VoucherPage() {
               min={0}
               max={voucherForm.valueType === "PERCENTAGE" ? 100 : undefined}
               value={voucherForm.value}
-              onChange={(e) => setVoucherForm({ ...voucherForm, value: Number(e.target.value) })}
+              onChange={(e) =>
+                setVoucherForm({
+                  ...voucherForm,
+                  value: Number(e.target.value),
+                })
+              }
               className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-green-800 mb-1">Value Type</label>
+            <label className="block text-sm font-medium text-green-800 mb-1">
+              Value Type
+            </label>
             <select
               required
               value={voucherForm.valueType}
-              onChange={(e) => setVoucherForm({ ...voucherForm, valueType: e.target.value })}
+              onChange={(e) =>
+                setVoucherForm({ ...voucherForm, valueType: e.target.value })
+              }
               className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
             >
               <option value="">Select</option>
@@ -195,11 +222,15 @@ export default function VoucherPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-green-800 mb-1">Usage Type</label>
+            <label className="block text-sm font-medium text-green-800 mb-1">
+              Usage Type
+            </label>
             <select
               required
               value={voucherForm.usageType}
-              onChange={(e) => setVoucherForm({ ...voucherForm, usageType: e.target.value })}
+              onChange={(e) =>
+                setVoucherForm({ ...voucherForm, usageType: e.target.value })
+              }
               className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
             >
               <option value="">Select</option>
@@ -209,43 +240,61 @@ export default function VoucherPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-green-800 mb-1">Start Date</label>
+            <label className="block text-sm font-medium text-green-800 mb-1">
+              Start Date
+            </label>
             <input
               type="date"
               required
               value={voucherForm.startDate}
-              onChange={(e) => setVoucherForm({ ...voucherForm, startDate: e.target.value })}
-              className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-green-800 mb-1">End Date</label>
-            <input
-              type="date"
-              required
-              value={voucherForm.endDate}
-              onChange={(e) => setVoucherForm({ ...voucherForm, endDate: e.target.value })}
-              className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-green-800 mb-1">Min Purchase Amount</label>
-            <input
-              type="number"
-              value={voucherForm.minPurchaseAmount}
               onChange={(e) =>
-                setVoucherForm({ ...voucherForm, minPurchaseAmount: Number(e.target.value) })
+                setVoucherForm({ ...voucherForm, startDate: e.target.value })
               }
               className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-green-800 mb-1">Max Discount</label>
+            <label className="block text-sm font-medium text-green-800 mb-1">
+              End Date
+            </label>
+            <input
+              type="date"
+              required
+              value={voucherForm.endDate}
+              onChange={(e) =>
+                setVoucherForm({ ...voucherForm, endDate: e.target.value })
+              }
+              className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-green-800 mb-1">
+              Min Purchase Amount
+            </label>
+            <input
+              type="number"
+              value={voucherForm.minPurchaseAmount}
+              onChange={(e) =>
+                setVoucherForm({
+                  ...voucherForm,
+                  minPurchaseAmount: Number(e.target.value),
+                })
+              }
+              className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-green-800 mb-1">
+              Max Discount
+            </label>
             <input
               type="number"
               value={voucherForm.maxDiscount}
               onChange={(e) =>
-                setVoucherForm({ ...voucherForm, maxDiscount: Number(e.target.value) })
+                setVoucherForm({
+                  ...voucherForm,
+                  maxDiscount: Number(e.target.value),
+                })
               }
               className="w-full border rounded px-4 py-2 focus:ring focus:ring-green-200 focus:border-green-400"
             />
@@ -263,7 +312,9 @@ export default function VoucherPage() {
 
       {/* LIST VOUCHERS */}
       <div className="bg-white p-6 rounded shadow-md border border-green-200">
-        <h2 className="text-2xl font-semibold text-green-800 mb-4">List of Vouchers</h2>
+        <h2 className="text-2xl font-semibold text-green-800 mb-4">
+          List of Vouchers
+        </h2>
         {vouchers.length === 0 ? (
           <p className="text-sm text-gray-500">No vouchers available.</p>
         ) : (
