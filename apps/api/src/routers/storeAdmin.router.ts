@@ -1,7 +1,10 @@
+// src/routes/storeAdmin.routes.ts
+
 import { Router } from "express";
 import { StoreAdminMiddleware } from "../middlewares/storeAdmin.middleware";
 import {
   getStoreAdminDetails,
+  getStoreOrders,
   confirmPayment,
   shipOrder,
 } from "../controllers/storeAdmin.controller";
@@ -9,33 +12,35 @@ import {
 const router = Router();
 const storeAdminMiddleware = new StoreAdminMiddleware();
 
-// Get Store Admin Details
+// GET Store Admin Details
 router.get(
   "/details",
   storeAdminMiddleware.authenticateJwt.bind(storeAdminMiddleware),
-  storeAdminMiddleware
-    .authorizeRole(["STORE_ADMIN"])
-    .bind(storeAdminMiddleware),
+  storeAdminMiddleware.authorizeRole(["STORE_ADMIN"]).bind(storeAdminMiddleware),
   getStoreAdminDetails
 );
 
-// Konfirmasi pembayaran pesanan
+// GET Orders (opsional ?status=WAITING_FOR_PAYMENT_CONFIRMATION)
+router.get(
+  "/orders",
+  storeAdminMiddleware.authenticateJwt.bind(storeAdminMiddleware),
+  storeAdminMiddleware.authorizeRole(["STORE_ADMIN"]).bind(storeAdminMiddleware),
+  getStoreOrders
+);
+
+// POST confirm payment
 router.post(
   "/orders/confirm/:orderId",
   storeAdminMiddleware.authenticateJwt.bind(storeAdminMiddleware),
-  storeAdminMiddleware
-    .authorizeRole(["STORE_ADMIN"])
-    .bind(storeAdminMiddleware),
+  storeAdminMiddleware.authorizeRole(["STORE_ADMIN"]).bind(storeAdminMiddleware),
   confirmPayment
 );
 
-// Tandai pesanan sebagai dikirim
+// POST ship order
 router.post(
   "/orders/ship/:orderId",
   storeAdminMiddleware.authenticateJwt.bind(storeAdminMiddleware),
-  storeAdminMiddleware
-    .authorizeRole(["STORE_ADMIN"])
-    .bind(storeAdminMiddleware),
+  storeAdminMiddleware.authorizeRole(["STORE_ADMIN"]).bind(storeAdminMiddleware),
   shipOrder
 );
 

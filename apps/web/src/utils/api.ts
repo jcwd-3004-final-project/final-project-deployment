@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000/v1/api/discounts',
+  baseURL: 'http://18.136.205.218:3000/v1/api/discounts',
 });
 
 // Tambahkan interceptor untuk menyertakan token jika ada

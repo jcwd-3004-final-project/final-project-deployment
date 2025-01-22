@@ -97,10 +97,11 @@ function USERDATA() {
 
     setLoading(true);
     axios
-      .get(
-        "https://d29jci2p0msjlf.cloudfront.net/v1/api/superadmin/users",
-        axiosConfig
-      )
+
+
+      .get("https://d29jci2p0msjlf.cloudfront.net/v1/api/superadmin/users", axiosConfig)
+
+
       .then((response) => {
         setFullUsers(response.data.data);
         setLoading(false);

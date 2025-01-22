@@ -187,17 +187,18 @@ export default function CheckoutPage() {
     };
 
     try {
-      const res = await fetch(
-        "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/order",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(orderBody),
-        }
-      );
+
+
+      const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/user/order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderBody),
+      });
+
+
 
       const data = await res.json();
       if (!data.success) {

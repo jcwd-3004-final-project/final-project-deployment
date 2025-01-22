@@ -1,9 +1,10 @@
 "use client";
+
 import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 
-// Tipe data untuk Product
+// Tipe data untuk Product (di menu Inventory)
 interface Product {
   productId: number;
   name: string;
@@ -12,21 +13,30 @@ interface Product {
 
 // Tipe data untuk Stock Log
 interface StockLog {
-  id: number; // ID dari log
-  storeProductId: number; // ID produk terkait log (dari storeProduct)
-  adjustmentType: "INCREASE" | "DECREASE"; // Tipe perubahan stok
-  quantity: number; // Jumlah perubahan stok
-  reason: string; // Alasan perubahan stok
-  createdAt: string; // Tanggal perubahan
+  id: number;
+  storeProductId: number;
+  adjustmentType: "INCREASE" | "DECREASE";
+  quantity: number;
+  reason: string;
+  createdAt: string;
 }
 
-// Tipe data untuk Order (untuk konfirmasi pembayaran dan pengiriman)
+// Tipe data untuk item di dalam pesanan
+interface OrderItem {
+  productName: string;
+  quantity: number;
+}
+
+// Tipe data untuk Order
 interface Order {
   id: number;
   orderId: string;
-  paymentProofUrl: string;
   status: string;
-  // properti tambahan bisa ditambahkan sesuai kebutuhan
+  paymentProofUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  // Tambahkan array items di sini
+  items?: OrderItem[];
 }
 
 export default function AdminDashboardPage() {
@@ -37,22 +47,33 @@ export default function AdminDashboardPage() {
   // Untuk update stock
   const [selectedProductId, setSelectedProductId] = useState<number>(0);
   const [changeQuantity, setChangeQuantity] = useState<number>(0);
-  const [reason, setReason] = useState<string>("");
+  // Gunakan dropdown untuk reason
+  const [reason, setReason] = useState<string>("sale");
+
   // Untuk menampilkan logs
   const [logs, setLogs] = useState<StockLog[]>([]);
-  // Untuk notifikasi
+
+  // Untuk notifikasi / pesan
   const [message, setMessage] = useState<string>("");
-  // Loading state
   const [loading, setLoading] = useState<boolean>(false);
-  // Daftar pesanan yang menunggu konfirmasi pembayaran (khusus ditampilkan jika diperlukan)
+
+  // Daftar pesanan menunggu konfirmasi & siap kirim
   const [paymentOrders, setPaymentOrders] = useState<Order[]>([]);
-  // Daftar pesanan untuk pengiriman (menyertakan order dengan status PROCESSING atau WAITING_FOR_PAYMENT_CONFIRMATION)
   const [shipmentOrders, setShipmentOrders] = useState<Order[]>([]);
 
   // Base URL untuk API inventory (untuk update stock & logs)
   const BASE_URL = "https://d29jci2p0msjlf.cloudfront.net/v1/api/inventory";
 
-  // Ambil storeId dari endpoint store-admin
+
+  // Tambahkan handler logout
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    // Redirect ke halaman login atau landing page
+    window.location.href = "/";
+  };
+
+
+  // 1. Ambil storeId dari endpoint store-admin
   useEffect(() => {
     const fetchStoreDetails = async () => {
       try {
@@ -73,7 +94,7 @@ export default function AdminDashboardPage() {
         if (!res.ok) {
           throw new Error(data?.message || "Failed to fetch store details.");
         }
-        // Pastikan field ini sesuai dengan response backend Anda
+        // Ambil store_id
         setStoreId(data?.data?.store?.store_id);
         setMessage("Store details fetched successfully!");
       } catch (error: any) {
@@ -84,7 +105,7 @@ export default function AdminDashboardPage() {
     fetchStoreDetails();
   }, []);
 
-  // 1. Fetch produk untuk store tertentu
+  // 2. Fetch produk untuk store tertentu
   const fetchProducts = async (storeId: number) => {
     try {
       setLoading(true);
@@ -110,7 +131,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 2. Update stock untuk produk tertentu
+  // 3. Update stock untuk produk tertentu
   const handleUpdateStock = async (e: FormEvent) => {
     e.preventDefault();
     if (!storeId || !selectedProductId) {
@@ -138,8 +159,8 @@ export default function AdminDashboardPage() {
       }
       setMessage("Stock updated successfully!");
       setChangeQuantity(0);
-      setReason("");
-      // Refresh daftar produk dan log
+      setReason("sale"); // set ulang ke default
+      // Refresh daftar produk & logs
       fetchProducts(storeId);
       handleFetchLogs(selectedProductId);
     } catch (error: any) {
@@ -149,7 +170,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 3. Fetch logs untuk produk tertentu
+  // 4. Fetch logs untuk produk tertentu
   const handleFetchLogs = async (productId: number) => {
     if (!storeId || !productId) return;
     setLoading(true);
@@ -172,7 +193,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 4. Fetch pesanan yang menunggu konfirmasi pembayaran (jika diperlukan terpisah)
+  // 5a. Fetch pesanan yang menunggu konfirmasi pembayaran
   const fetchPaymentOrders = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -190,13 +211,14 @@ export default function AdminDashboardPage() {
       if (!res.ok) {
         throw new Error(data.message || "Failed to fetch payment orders");
       }
+      // Pastikan data.data menyertakan items
       setPaymentOrders(data.data || []);
     } catch (error: any) {
       console.error("Error fetching payment orders:", error.message);
     }
   };
 
-  // 5. Fetch pesanan untuk pengiriman (gabungkan order dengan status WAITING_FOR_PAYMENT_CONFIRMATION atau PROCESSING)
+  // 5b. Fetch pesanan untuk pengiriman (status PROCESSING atau WAITING_FOR_PAYMENT_CONFIRMATION)
   const fetchShipmentOrders = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -204,18 +226,19 @@ export default function AdminDashboardPage() {
         setMessage("Access token missing. Please log in.");
         return;
       }
+
       // Ambil semua pesanan dari store-admin (tanpa filter status di query)
-      const res = await fetch(
-        "https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+
+      const res = await fetch("https://d29jci2p0msjlf.cloudfront.net/v1/api/store-admin/orders", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || "Failed to fetch orders");
       }
-      // Filter order yang statusnya WAITING_FOR_PAYMENT_CONFIRMATION atau PROCESSING
+
       const ordersForShipment = data.data.filter(
         (order: Order) =>
           order.status === "PROCESSING" ||
@@ -227,7 +250,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 6. Handler untuk mengonfirmasi pembayaran pesanan
+  // 6. Handler konfirmasi pembayaran
   const handleConfirmPayment = async (orderId: number) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -256,9 +279,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 7. Handler untuk menandai pesanan sebagai dikirim.
-  // Dengan logika backend yang telah diperbarui, bila order masih WAITING_FOR_PAYMENT_CONFIRMATION,
-  // maka backend akan otomatis mengonfirmasi sebelum mengupdate status ke SHIPPED.
+  // 7. Handler menandai pesanan sebagai dikirim
   const handleMarkShipped = async (orderId: number) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -280,7 +301,6 @@ export default function AdminDashboardPage() {
       alert(
         "Order marked as shipped. Payment was confirmed automatically if required."
       );
-      // Refresh daftar pesanan untuk pengiriman
       fetchShipmentOrders();
     } catch (error: any) {
       console.error("Error marking order as shipped:", error.message);
@@ -288,7 +308,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Ketika storeId sudah tersedia, fetch produk dan daftar pesanan
+  // 8. Ketika storeId sudah tersedia, fetch produk & orders
   useEffect(() => {
     if (storeId) {
       fetchProducts(storeId);
@@ -297,7 +317,7 @@ export default function AdminDashboardPage() {
     }
   }, [storeId]);
 
-  // Jika user memilih produk, fetch logs terkait secara otomatis
+  // 9. Jika user memilih produk, fetch logs terkait
   useEffect(() => {
     if (selectedProductId > 0) {
       handleFetchLogs(selectedProductId);
@@ -306,6 +326,7 @@ export default function AdminDashboardPage() {
     }
   }, [selectedProductId]);
 
+  // Tampilkan halaman loading jika storeId belum ada
   if (storeId === null) {
     return (
       <div className="min-h-screen bg-green-50 p-8">
@@ -323,13 +344,19 @@ export default function AdminDashboardPage() {
         Store Admin Dashboard
       </h1>
 
-      {/* Link ke halaman Voucher */}
-      <div className="mb-4">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mb-4">
         <Link href="/storeAdmin/Voucher">
           <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Go to Voucher Page
           </button>
         </Link>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Logout
+        </button>
       </div>
 
       {/* Notifikasi */}
@@ -350,9 +377,7 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ============================== */}
       {/* SECTION: Orders Ready for Shipment */}
-      {/* ============================== */}
       <div className="bg-white p-6 rounded shadow-md border border-green-200 mb-6">
         <h2 className="text-xl font-semibold text-green-700 mb-4">
           Orders Ready for Shipment
@@ -378,7 +403,7 @@ export default function AdminDashboardPage() {
                   <td className="py-2 px-4">
                     <button
                       onClick={() => handleMarkShipped(order.id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                     >
                       Mark as Shipped
                     </button>
@@ -390,8 +415,7 @@ export default function AdminDashboardPage() {
         )}
       </div>
 
-      {/* ============================== */}
-      {/* SECTION: Payment Confirmations (Opsional, jika ingin ditampilkan terpisah) */}
+      {/* SECTION: Payment Confirmations */}
       <div className="bg-white p-6 rounded shadow-md border border-green-200 mb-6">
         <h2 className="text-xl font-semibold text-green-700 mb-4">
           Payment Confirmations
@@ -405,7 +429,8 @@ export default function AdminDashboardPage() {
             <thead>
               <tr className="bg-green-100 border-b">
                 <th className="py-2 px-4 text-left">Order ID</th>
-                <th className="py-2 px-4 text-left">Bukti Pembayaran</th>
+                <th className="py-2 px-4 text-left">Payment Proof</th>
+                <th className="py-2 px-4 text-left">Items</th>
                 <th className="py-2 px-4 text-left">Actions</th>
               </tr>
             </thead>
@@ -414,16 +439,34 @@ export default function AdminDashboardPage() {
                 <tr key={order.id} className="border-b hover:bg-green-50">
                   <td className="py-2 px-4">{order.orderId}</td>
                   <td className="py-2 px-4">
-                    <img
-                      src={order.paymentProofUrl}
-                      alt="Payment Proof"
-                      className="h-20"
-                    />
+                    {order.paymentProofUrl ? (
+                      <a
+                        href={order.paymentProofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        View Proof
+                      </a>
+                    ) : (
+                      <span>No proof uploaded</span>
+                    )}
+                  </td>
+                  <td className="py-2 px-4">
+                    {order.items && order.items.length > 0 ? (
+                      order.items.map((item, idx) => (
+                        <div key={idx}>
+                          {item.productName} x {item.quantity}
+                        </div>
+                      ))
+                    ) : (
+                      <span>No items</span>
+                    )}
                   </td>
                   <td className="py-2 px-4">
                     <button
                       onClick={() => handleConfirmPayment(order.id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                     >
                       Confirm Payment
                     </button>
@@ -435,7 +478,6 @@ export default function AdminDashboardPage() {
         )}
       </div>
 
-      {/* ============================== */}
       {/* SECTION: Inventory Management */}
       <div className="bg-white p-6 rounded shadow-md border border-green-200 mb-6">
         <h2 className="text-xl font-semibold text-green-700 mb-4">
@@ -478,8 +520,7 @@ export default function AdminDashboardPage() {
         )}
       </div>
 
-      {/* ============================== */}
-      {/* Form Update Stock */}
+      {/* SECTION: Form Update Stock */}
       <form
         onSubmit={handleUpdateStock}
         className="bg-white p-6 rounded shadow-md border border-green-200 space-y-4 mb-6"
@@ -524,13 +565,16 @@ export default function AdminDashboardPage() {
           <label className="block text-sm font-medium text-green-800 mb-1">
             Reason
           </label>
-          <input
-            type="text"
+          {/* Dropdown untuk Reason dengan opsi "sale" dan "purchase" */}
+          <select
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             className="border rounded px-4 py-2 w-full focus:ring focus:ring-green-200 focus:border-green-400"
             required
-          />
+          >
+            <option value="sale">Sale</option>
+            <option value="purchase">Purchase</option>
+          </select>
         </div>
 
         <button
@@ -546,8 +590,7 @@ export default function AdminDashboardPage() {
         </button>
       </form>
 
-      {/* ============================== */}
-      {/* Logs Table */}
+      {/* SECTION: Logs Table */}
       <div className="bg-white p-6 rounded shadow-md border border-green-200">
         <h2 className="text-xl font-semibold text-green-700 mb-4">
           Stock Logs

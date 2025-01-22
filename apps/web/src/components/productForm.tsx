@@ -93,11 +93,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
             if (!value) return false;
             const urls = value.split(",").map((url) => url.trim());
             const urlPattern = new RegExp(
-              "^(https?:\\/\\/)" +
-                "((([a-zA-Z0-9\\-\\.]+)\\.([a-zA-Z]{2,}))|" +
-                "localhost)" +
-                "(\\:[0-9]{1,5})?" +
-                "(\\/.*)?$"
+
+              "^(https?:\\/\\/)" + // protocol
+                "((([a-zA-Z0-9\\-\\.]+)\\.([a-zA-Z]{2,}))|" + // domain name
+                "pesanaja.link)" + // OR 18.136.205.218
+                "(\\:[0-9]{1,5})?" + // port
+                "(\\/.*)?$" // path
+
             );
             return urls.every((url) => urlPattern.test(url));
           }
