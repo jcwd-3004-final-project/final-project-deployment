@@ -63,7 +63,7 @@ function Category() {
     }
     try {
       const response = await axios.get(
-        "http://18.136.205.218:8000/v1/api/categories",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/categories",
         axiosConfig
       );
       setCategories(response.data);
@@ -84,7 +84,7 @@ function Category() {
     }
     try {
       const response = await axios.post(
-        "http://18.136.205.218:8000/v1/api/categories",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/categories",
         { name: newCategory },
         axiosConfig
       );
@@ -119,7 +119,7 @@ function Category() {
 
       if (confirm.isConfirmed) {
         await axios.delete(
-          `http://18.136.205.218:8000/v1/api/categories/${id}`,
+          `https://d29jci2p0msjlf.cloudfront.net/v1/api/categories/${id}`,
           axiosConfig
         );
         setCategories(categories.filter((category) => category.id !== id));
@@ -144,7 +144,7 @@ function Category() {
 
     try {
       const response = await axios.put(
-        `http://18.136.205.218:8000/v1/api/categories/${editCategory.id}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/categories/${editCategory.id}`,
         { name: editName },
         axiosConfig
       );

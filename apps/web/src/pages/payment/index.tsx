@@ -69,7 +69,7 @@ export default function PaymentPage() {
         return;
       }
       const res = await fetch(
-        "http://18.136.205.218:8000/v1/api/user/order/upload",
+        "https://d29jci2p0msjlf.cloudfront.net/v1/api/user/order/upload",
         {
           method: "POST",
           body: formData,
@@ -113,7 +113,7 @@ export default function PaymentPage() {
         });
         return;
       }
-  
+
       if (!orderId) {
         Swal.fire({
           icon: "error",
@@ -122,10 +122,10 @@ export default function PaymentPage() {
         });
         return;
       }
-  
+
       // Kirim permintaan pembatalan ke backend
       const res = await fetch(
-        `http://18.136.205.218:8000/v1/api/user/order/cancel/${orderId}`,
+        `https://d29jci2p0msjlf.cloudfront.net/v1/api/user/order/cancel/${orderId}`,
         {
           method: "POST", // Gunakan metode POST untuk pembatalan
           headers: {
@@ -134,9 +134,9 @@ export default function PaymentPage() {
           },
         }
       );
-  
+
       const data = await res.json();
-  
+
       if (!res.ok || !data.success) {
         Swal.fire({
           icon: "error",
